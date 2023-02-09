@@ -1,0 +1,92 @@
+#wrapper{
+    font-size: 0.8rem;
+}
+table.dataTable tbody > tr.selected, table.dataTable tbody > tr > .selected {
+    background-color: #d9edf7;
+    /*color: white;*/
+    font-weight: bold;
+}
+.check{
+    width: 25px;
+    height: 25px;
+}
+.panel-rojo{
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+    padding: 15px;
+    border-radius: 4px;
+}
+html body#page-top form#form_crear_usu_control div#wrapper div#content-wrapper.d-flex.flex-column div#content div.container-fluid div.row div.col-xl-8.col-lg-8 div.card.shadow.mb-12 div.card-body div#field_wrapper3 div.row div.col-xl-12.col-lg-12 div.table-responsive.table-est div#grid_est_wrapper.dataTables_wrapper.dt-bootstrap4.no-footer div.row div.col-sm-12.col-md-6 div#grid_est_filter.dataTables_filter{
+    float: right;
+}
+.hidden{
+    display: none;
+}
+.visible{
+    display: inherit;
+}
+
+.right{
+    float: right;
+}
+
+.radiobutton-deselect{
+    padding-top: 22px; 
+    color: #858796;
+    font-size: 35px;
+}
+
+.radiobutton-select {
+    padding-top: 22px;
+    color: blue;
+    font-size: 35px;
+}
+
+.verde {
+    color: green;
+}
+
+.rojo {
+    color: red;
+}
+
+.gris {
+    color: gray;
+}
+
+.alerta-fijo {
+    position: fixed;
+    width: 500px;
+    height: auto;
+    right: 0px;
+    z-index: 100;
+}
+
+.my-error-class {
+    background:url("../jquery-validation-1.19.2/demo/images/unchecked.gif");
+    background-repeat: no-repeat;
+    padding-left: 16px;
+    padding-bottom: 2px;
+    font-weight: bold;
+    color: #EA5200;
+}
+
+.standby {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 199;
+    background-color: white;
+    opacity: 0.5;
+}
+
+.spinner-center {
+    margin-top: 20%; 
+    z-index: 200;
+    background-color: black;
+}
+
+#modal_tamaño {
+    width: 95% !important;
+}

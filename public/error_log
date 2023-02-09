@@ -1,0 +1,1 @@
+[27-Oct-2022 15:07:43 UTC] PHP Fatal error:  require(): Failed opening required '/home/hckwqroy/public_html/vendor/composer/../ezyang/htmlpurifier/library/HTMLPurifier.composer.php' (include_path='.:/opt/cpanel/ea-php74/root/usr/share/pear') in /home/hckwqroy/public_html/vendor/composer/autoload_real.php on line 76
