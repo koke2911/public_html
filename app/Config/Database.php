@@ -30,9 +30,9 @@ class Database extends \CodeIgniter\Database\Config {
    */
   public $default = [
    'DSN'      => '',
-   'hostname' => 'localhost',
-   'username' => 'root',
-   'password' => 'sso&koke_2911',
+   'hostname' => '75.102.22.121',
+   'username' => 'hckwqroy_apr',
+   'password' => 'cIqEtOL~SK7!',
    'database' => 'hckwqroy_gestion',
    'DBDriver' => 'MySQLi',
    'DBPrefix' => '',
@@ -47,7 +47,7 @@ class Database extends \CodeIgniter\Database\Config {
    'compress' => FALSE,
    'strictOn' => FALSE,
    'failover' => [],
-   'port'     => 3307,
+   'port'     => 3306,
   ];
 
   /**
@@ -56,7 +56,28 @@ class Database extends \CodeIgniter\Database\Config {
    *
    * @var array
    */
- 
+  public $tests = [
+   'DSN'      => '',
+   'hostname' => '127.0.0.1',
+   'username' => '',
+   'password' => '',
+   'database' => ':memory:',
+   'DBDriver' => 'SQLite3',
+   'DBPrefix' => 'db_',
+   // Needed to ensure we're working correctly with prefixes live. DO NOT REMOVE FOR CI DEVS
+   'pConnect' => FALSE,
+   'DBDebug'  => (ENVIRONMENT !== 'production'),
+   'cacheOn'  => FALSE,
+   'cacheDir' => '',
+   'charset'  => 'utf8',
+   'DBCollat' => 'utf8_general_ci',
+   'swapPre'  => '',
+   'encrypt'  => FALSE,
+   'compress' => FALSE,
+   'strictOn' => FALSE,
+   'failover' => [],
+   'port'     => 3306,
+  ];
 
   //--------------------------------------------------------------------
 
