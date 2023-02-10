@@ -14,6 +14,7 @@ use App\Models\Formularios\Md_medidores;
 use App\Models\Configuracion\Md_comunas;
 use App\Models\Formularios\Md_repactaciones;
 use App\Models\Configuracion\Md_observaciones_dte;
+//use App\Libraries\Ejemplolibreria;
 
 class Ctrl_boleta_electronica extends BaseController {
 
@@ -44,6 +45,8 @@ class Ctrl_boleta_electronica extends BaseController {
     $this->caja              = new Md_caja();
     $this->sesión            = session();
     $this->db                = \Config\Database::connect();
+
+
   }
 
   public function validar_sesion() {
@@ -83,6 +86,381 @@ class Ctrl_boleta_electronica extends BaseController {
     $my_date  = $month . '-' . $year;
 
     return $my_date;
+  }
+
+
+
+public function ObtieneToken(){
+   ini_set("soap.wsdl_cache_enabled", "0"); 
+   $token="";
+    $this->validar_sesion();
+    $rut_apr = $this->sesión->rut_apr_ses . "-" . $this->sesión->dv_apr_ses;
+    $id_apr = $this->sesión->id_apr_ses;
+
+    $datosApr = $this->apr->select("*")
+                                ->where("id", $id_apr)
+                                ->first();
+
+    $pass_api=$datosApr["clave_dete"];
+    $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl");
+    $parametros = array("RUTACCESOAPI" => $rut_apr,"PASSWORDACCESOAPI" =>  $pass_api); 
+       
+    try{
+      $resultado = $client->call("ObtenerToken", $parametros);
+      $token=$resultado['item']['Token'];
+      return $token;
+
+    }catch (SoapFault $e){
+          echo "Ups!! hubo un problema y no pudimos recuperar los datos.<br/>$e<hr/>";
+    } 
+}
+
+public function valida_token($TokenObtenido){
+   ini_set("soap.wsdl_cache_enabled", "0"); 
+   $Tvalido='NO';
+   $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl"); 
+   $parametros = array("TOKEN" => $TokenObtenido);  
+
+   $resultado = $client->call("ValidarTokenExt", $parametros); 
+   $valido=$resultado['item']['DescripcionResultado'];
+
+   if($valido=='TVAL' || $valido=='TDUP '){
+       $Tvalido=$valido;
+   }
+
+   return $Tvalido;
+
+}
+
+public function procesa_dte($TokenObtenido,$folio){
+  ini_set("soap.wsdl_cache_enabled", "0"); 
+  define("BOLETA_EXENTA", 41);
+  define("FACTURA_EXENTA", 34);
+  define("ASIGNA_FOLIO_BOLECT", 7);
+  define("PENDIENTE", 1);
+  define("ACTIVO", 1);
+
+  
+
+       $datosMetros = $this->metros
+       ->select("id_socio")
+       ->select("monto_facturable")
+       ->select("total_mes")
+       ->select("total_servicios")
+       ->select("multa")
+       ->select("cuota_repactacion")
+       ->select("consumo_anterior")
+       ->select("consumo_actual")
+       ->select("metros")
+       ->select("monto_subsidio")
+       ->select("subtotal")
+       ->select("alcantarillado")
+       ->select("cuota_socio")
+       ->select("otros")
+       ->select("iva")
+       ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
+       ->select("date_format(fecha_vencimiento, '%Y-%m-%d') as fecha_vencimiento")
+       ->select("ifnull(elt(field(tipo_facturacion, 1, 2), 'NORMAL', 'TÉRMINO MEDIO'), 'NO REGISTRADO') as tipo_facturacion")
+       ->where("id", $folio)
+       ->first();
+
+      $consumo_anterior  = $datosMetros["consumo_anterior"];
+      $consumo_actual    = $datosMetros["consumo_actual"];
+      $metros_           = $datosMetros["metros"];
+      $total_mes         = $datosMetros["total_mes"];
+      $monto_facturable  = $datosMetros["monto_facturable"];
+      $cuota_repactacion = $datosMetros["cuota_repactacion"];
+      $total_servicios   = $datosMetros["total_servicios"];
+      $multa             = $datosMetros["multa"];
+      $monto_subsidio    = $datosMetros["monto_subsidio"];
+      $subtotal          = $datosMetros["subtotal"];
+      $alcantarillado    = $datosMetros["alcantarillado"];
+      $cuota_socio       = $datosMetros["cuota_socio"];
+      $otros             = $datosMetros["otros"];
+      $iva               = $datosMetros["iva"];
+      $mes_consumo       = $datosMetros["mes_consumo"];
+      $periodo_desde     = $this->periodo_desde($mes_consumo);
+      $periodo_hasta     = $this->periodo_hasta($mes_consumo);
+      $fecha_vencimiento = $datosMetros["fecha_vencimiento"];
+      $id_socio          = $datosMetros["id_socio"];
+
+     
+
+    if (intval($total_mes) > 0) {
+            $datosSocios = $this->socios
+             ->select("concat(socios.rut, '-', socios.dv) as rut_socio")
+             ->select("concat(socios.nombres, ' ', socios.ape_pat, ' ', socios.ape_mat) as nombre_socio")
+             ->select("concat(socios.calle, ', ', socios.numero, ', ', socios.resto_direccion) as direccion")
+             ->select("socios.rol")
+             ->select("socios.id_comuna")
+             ->select("a.id_tipo_documento as tipo_documento")
+             ->select("m.numero as num_medidor")
+             ->select("cf.cargo_fijo")
+             ->select("s.nombre as sector")
+             ->join("arranques a", "a.id_socio = socios.id")
+             ->join("sectores s", "a.id_sector = s.id")
+             ->join("medidores m", "a.id_medidor = m.id")
+             ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro = m.id_diametro")
+             ->where("socios.id", $id_socio)
+             ->first();
+
+            if ($datosSocios["rut_socio"] != "") {
+              $rut_socio = $datosSocios["rut_socio"];
+            } else {
+              $rut_socio = "66666666-6";
+            }
+
+            if ($datosSocios["nombre_socio"] != "") {
+              $nombre_socio = $datosSocios["nombre_socio"];
+            } else {
+              $nombre_socio = "Sin RUT";
+            }
+
+            if ($datosSocios["direccion"] != ", , ") {
+              $direccion = $datosSocios["direccion"];
+            } else {
+              $direccion = "Sin Dirección";
+            }
+
+            if ($datosSocios["id_comuna"] != "") {
+              $datosComuna = $this->comunas->select("nombre")
+                                           ->where("id", $datosSocios["id_comuna"])
+                                           ->first();
+              $comuna      = $datosComuna["nombre"];
+            } else {
+              $comuna = "Sin Comuna";
+            }
+
+            helper('tipo_dte');
+            $tipo_dte = tipo_dte($datosSocios["tipo_documento"]);
+
+            $num_medidor = $datosSocios["num_medidor"];
+            $cargo_fijo  = $datosSocios["cargo_fijo"];
+            $sector      = $datosSocios["sector"];
+
+            $datosParaGrafico = $this->metros->select("date_format(fecha_ingreso, '%m-%Y') as fecha")
+                                             ->select("consumo_actual")
+                                             ->where("id_socio", $id_socio)
+                                             ->whereNotIn("estado", [0])
+                                             ->findAll();
+            $datos_graf       = [];
+
+            foreach ($datosParaGrafico as $key) {
+              $datos_graf[$key["fecha"]] = $key["consumo_actual"];
+            }
+
+              $datosDeuda            = $this->metros->select("total_mes")
+                                      ->where("id_socio", $id_socio)
+                                      ->where("estado", PENDIENTE)
+                                      ->where("id<", $folio)
+                                      ->findAll();
+
+              
+
+              $datosObservacionesDte = $this->observaciones_dte
+              ->select("titulo")
+              ->select("observacion")
+              ->where("id_apr", $this->sesión->id_apr_ses)
+              ->where("estado", ACTIVO)
+              ->findAll();
+
+
+              $datosUltPagoId = $this->caja
+              ->selectMax("id")
+              ->where("id_socio", $id_socio)
+              ->where("estado", ACTIVO)
+              ->first();
+
+              $datosUltPago = $this->caja
+              ->select("total_pagar")
+              ->select("date_format(fecha, '%d-%m-%Y') as fecha")
+              ->where("id", $datosUltPagoId["id"])
+              ->first();
+
+              $consumo_anterior_nf = 0;
+
+              if ($datosDeuda != NULL) {
+                  foreach ($datosDeuda as $key) {
+                    $consumo_anterior_nf = $consumo_anterior_nf + intval($key["total_mes"]);
+                  }
+              }
+
+              $observaciones = "TIPO FACTURACIÓN, " . $datosMetros["tipo_facturacion"] . "\n";
+
+              if ($datosUltPago != NULL) {
+                $observaciones .= "ÚLTIMO PAGO REALIZADO: " . $datosUltPago["fecha"] . ", POR $" . number_format($datosUltPago["total_pagar"], 0, ",", ".") . "\n";
+              }
+
+              if ($datosObservacionesDte != NULL) {
+                foreach ($datosObservacionesDte as $key) {
+                  $observaciones .= $key["titulo"] . ", " . $key["observacion"] . "\n";
+                }
+              }
+
+              $monto_metros = intval($subtotal) - intval($cargo_fijo);
+              $exento       = $tipo_dte === BOLETA_EXENTA || $tipo_dte === FACTURA_EXENTA;
+              $rut_apr = $this->sesión->rut_apr_ses . "-" . $this->sesión->dv_apr_ses;
+              $id_apr = $this->sesión->id_apr_ses;
+
+              $datosApr = $this->apr->select("*")
+                                          ->where("id", $id_apr)
+                                          ->first();
+
+              $datosComuna = $this->comunas->select("comunas.nombre")
+                                          ->select("r.nombre as region")
+                                          ->join("provincias p", "p.id = comunas.id_provincia")
+                                          ->join("regiones r", "r.id = p.id_region")
+                                          ->where("comunas.id", $datosApr["id_comuna"])
+                                          ->first();
+
+                                         // print_r($datosComuna);
+
+              $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl"); 
+
+              $fecha=date('Y-m-d');
+              $xml_dte = '<DTE version="1.0">
+                <Documento ID="F437T33">
+                <Encabezado>
+                <IdDoc>
+                <TipoDTE>'.$tipo_dte.'</TipoDTE>
+                <Folio>1</Folio>
+                <FchEmis>'.$fecha.'</FchEmis>
+                </IdDoc>
+                <Emisor>
+                <RUTEmisor>'.$rut_apr.'</RUTEmisor>
+                <RznSoc>'.$datosApr['nombre'].'</RznSoc>
+                <GiroEmis>'.$datosApr['activity'].'</GiroEmis>
+                <Acteco>513100</Acteco>
+                <DirOrigen>'.$datosApr['calle'].'  '.$datosApr['numero'].'</DirOrigen>
+                <CmnaOrigen>'.$datosComuna['nombre'].'</CmnaOrigen>
+                <CiudadOrigen>'.$datosComuna['nombre'].'</CiudadOrigen>
+                </Emisor>
+                <Receptor>
+                <RUTRecep>76024726-K</RUTRecep>
+                <RznSocRecep>PALOBLANCO SA</RznSocRecep>
+                <GiroRecep>PRODUCTORA DE SERVICIOS CULTURALES</GiroRecep>
+                <DirRecep>AV LA PAZ 451 502A</DirRecep>
+                <CmnaRecep>QUILPUE</CmnaRecep>
+                <CiudadRecep>QUILPUE</CiudadRecep>
+                </Receptor>
+                <Totales>
+                <MntNeto>63531</MntNeto>
+                <MntExe>0</MntExe>
+                <TasaIVA>19</TasaIVA>
+                <IVA>12071</IVA>
+                <MntTotal>75602</MntTotal>
+                </Totales>
+                </Encabezado>
+                <Detalle>
+                <NroLinDet>1</NroLinDet>
+                <NmbItem>POLERA PERSONALIZADA</NmbItem>
+                <QtyItem>27.0</QtyItem>
+                <UnmdItem>UN</UnmdItem>
+                <PrcItem>2353.0</PrcItem>
+                <MontoItem>63531</MontoItem>
+                </Detalle>
+                <Detalle>
+                <NroLinDet>2</NroLinDet>
+                <NmbItem>POLERA PERSONALIZADA 2</NmbItem>
+                <QtyItem>27.0</QtyItem>
+                <UnmdItem>UN</UnmdItem>
+                <PrcItem>2353.0</PrcItem>
+                <MontoItem>63531</MontoItem>
+                </Detalle>
+                <Detalle>
+                <NroLinDet>3</NroLinDet>
+                <NmbItem>POLERA PERSONALIZADA 3</NmbItem>
+                <QtyItem>27.0</QtyItem>
+                <UnmdItem>UN</UnmdItem>
+                <PrcItem>2353.0</PrcItem>
+                <MontoItem>63531</MontoItem>
+                </Detalle>
+                </Documento>
+                </DTE>';
+                
+
+                
+                $xml_adicional = '';
+                   
+                $parametros = array("STRINGXML" => $xml_dte,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
+                
+                
+            
+              $resultado = $client->call("ProcesaDte", $parametros); 
+
+              //print_r($resultado);
+
+              $resultado_estado=$resultado['item']['ResultadoFE'];
+              $url_pdf=$resultado['item']['UrlPdf'];
+              $folioSii=$resultado['item']['FolioAsignado'];
+
+              
+
+              if($resultado_estado=='DTE procesado correctamente.'){
+                $datosMetrosSave = [
+                     "folio_bolect"      => $folioSii,
+                     "id_tipo_documento" => $datosSocios["tipo_documento"],
+                     "id"                => $folio,
+                     "url_boleta"        =>$url_pdf
+                    ];
+
+                    //
+
+                  if ($this->metros->save($datosMetrosSave)) {
+                    $fecha      = date("Y-m-d H:i:s");
+                    $id_usuario = $this->sesión->id_usuario_ses;
+                    $estado     = ASIGNA_FOLIO_BOLECT;
+
+                    $datosTraza = [
+                     "id_metros"  => $folio,
+                     "estado"     => $estado,
+                     "id_usuario" => $id_usuario,
+                     "fecha"      => $fecha
+                    ];
+
+                    if (!$this->metros_traza->save($datosTraza)) {
+                      $this->error .= "Id Metros: $folio, <br>";
+                      $this->error .= "Error: Falló al ingresar traza. <br><br>";
+                    }else{
+                       echo 1;
+                    }
+                  } else {
+                    $this->error .= "Id Metros: $folio, <br>";
+                    $this->error .= "Error: Falló al actualizar el folio SII. <br><br>";
+                  }
+                    
+
+
+              }else{
+                  echo 'Error al procesar DTE';
+                  exit();
+              }
+
+
+      }  
+
+}
+
+public function emitir_dte_new(){
+  $folios = $this->request->getPost("arr_boletas");
+
+  foreach ($folios as $folio) {
+
+      $token=$this->ObtieneToken();      
+      if($token!=""){
+         $valido=$this->valida_token($token);
+         if($valido!='NO'){
+            $generado=$this->procesa_dte($token,$folio);
+         }else{
+          echo 'Token Invalido';
+          exit();
+         }
+      }else{
+        echo "Error al generar token";
+        exit();
+      }
+  }
+   
   }
 
   public function emitir_dte() {
@@ -433,6 +811,7 @@ class Ctrl_boleta_electronica extends BaseController {
 
         // crear DTE real
         $generar = $LibreDTE->post('/dte/documentos/generar', $emitir['body']);
+
         if ($generar['status']['code'] != 200) {
           die('Error al generar DTE real: ' . $generar['body'] . "\n");
         } else {

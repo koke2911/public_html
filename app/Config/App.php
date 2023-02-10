@@ -20,7 +20,7 @@ class App extends BaseConfig {
   | environments.
   |
   */
-  public $baseURL = 'https://gestionapr.cl/';
+  public $baseURL = 'http://localhost/public_html/public';
 
   /*
   |--------------------------------------------------------------------------

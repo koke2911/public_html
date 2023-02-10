@@ -108,6 +108,7 @@
                         <tr>
                           <th>Id.</th>
                           <th>Folio SII</th>
+                          <th>Boleta</th>
                           <th>Ruta</th>
                           <th>id_socio</th>
                           <th>rut_socio</th>
@@ -128,6 +129,7 @@
                           <th>Multa $</th>
                           <th>T. Servicios $</th>
                           <th>T. Mes $</th>
+
                         </tr>
                       </thead>
                     </table>

@@ -36,7 +36,8 @@ class Md_metros extends Model {
    'alcantarillado',
    'cuota_socio',
    'otros',
-   'iva'
+   'iva',
+   'url_boleta'
   ];
 
   public function datatable_boleta_electronica($db, $id_apr, $datosBusqueda) {
@@ -46,6 +47,7 @@ class Md_metros extends Model {
     $consulta = "SELECT 
 							m.id as id_metros,
 							m.folio_bolect,
+              ifnull(m.url_boleta,'--') as url_boleta,
 							m.id_socio,
 							soc.rut as rut_socio,
 							soc.rol as rol_socio,
@@ -67,6 +69,7 @@ class Md_metros extends Model {
 							ifnull(m.total_servicios, 0) as total_servicios,
 							ifnull(m.total_mes, 0) as total_mes,
 							case when soc.ruta = '' then 0 else ifnull(soc.ruta, 0) end as ruta
+
 						from 
 							metros m
 							inner join socios soc on m.id_socio = soc.id
