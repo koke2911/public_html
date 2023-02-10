@@ -1,6 +1,6 @@
 <main>
   <div class="container-fluid">
-    <h3 class="mt-4" align="center"><i class="fas fa-cash-register mr-1"></i> Caja</h3>
+    <h3 class="mt-4" align="center"><i class="fas fa-cash-register mr-1"></i> Cajas</h3>
     <div class="alert alerta-fijo hidden" role="alert" id="alerta"></div>
 
     <div class="container-fluid">
