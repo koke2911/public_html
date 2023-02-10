@@ -19,7 +19,8 @@
     "mpdf/mpdf": "^8.1",
     "sasco/libredte": "21.10.*",
     "firebase/php-jwt": "^5.2",
-    "sasco/libredte-sdk-php": "^1.1"
+    "sasco/libredte-sdk-php": "^1.1",
+    "econea/nusoap": "^0.9.13"
   },
   "require-dev": {
     "codeigniter4/codeigniter4-standard": "^1.0",

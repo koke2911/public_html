@@ -5,7 +5,7 @@
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => '908c893eafeb88a3e41b38009cb0206901477bc8',
+        'reference' => '557ac056aa9844a4fca591359919d8042f2d632b',
         'name' => 'codeigniter4/framework',
         'dev' => true,
     ),
@@ -25,7 +25,7 @@
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => '908c893eafeb88a3e41b38009cb0206901477bc8',
+            'reference' => '557ac056aa9844a4fca591359919d8042f2d632b',
             'dev_requirement' => false,
         ),
         'doctrine/instantiator' => array(
@@ -36,6 +36,15 @@
             'aliases' => array(),
             'reference' => '0a0fa9780f5d4e507415a065172d26a98d02047b',
             'dev_requirement' => true,
+        ),
+        'econea/nusoap' => array(
+            'pretty_version' => 'v0.9.13',
+            'version' => '0.9.13.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../econea/nusoap',
+            'aliases' => array(),
+            'reference' => 'c177861ed6232668845a86b4aec40d5b61cab7f5',
+            'dev_requirement' => false,
         ),
         'ezyang/htmlpurifier' => array(
             'pretty_version' => 'v4.16.0',
