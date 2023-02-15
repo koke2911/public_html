@@ -104,6 +104,11 @@ public function ObtieneToken(){
     $pass_api=$datosApr["clave_dete"];
     $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl");
     $parametros = array("RUTACCESOAPI" => $rut_apr,"PASSWORDACCESOAPI" =>  $pass_api); 
+
+
+    //COMENTAAAAAAAAR
+    $parametros = array("RUTACCESOAPI" =>'44444444-4',"PASSWORDACCESOAPI" =>  'AmFMmcj8i0'); 
+
        
     try{
       $resultado = $client->call("ObtenerToken", $parametros);
@@ -132,7 +137,9 @@ public function valida_token($TokenObtenido){
 
 }
 
+
 public function procesa_dte($TokenObtenido,$folio){
+
   ini_set("soap.wsdl_cache_enabled", "0"); 
   define("BOLETA_EXENTA", 41);
   define("FACTURA_EXENTA", 34);
@@ -158,6 +165,7 @@ public function procesa_dte($TokenObtenido,$folio){
        ->select("cuota_socio")
        ->select("otros")
        ->select("iva")
+       ->select("cargo_fijo")
        ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
        ->select("date_format(fecha_vencimiento, '%Y-%m-%d') as fecha_vencimiento")
        ->select("ifnull(elt(field(tipo_facturacion, 1, 2), 'NORMAL', 'TÉRMINO MEDIO'), 'NO REGISTRADO') as tipo_facturacion")
@@ -196,6 +204,7 @@ public function procesa_dte($TokenObtenido,$folio){
              ->select("a.id_tipo_documento as tipo_documento")
              ->select("m.numero as num_medidor")
              ->select("cf.cargo_fijo")
+             ->select("socios.id")
              ->select("s.nombre as sector")
              ->join("arranques a", "a.id_socio = socios.id")
              ->join("sectores s", "a.id_sector = s.id")
@@ -285,10 +294,10 @@ public function procesa_dte($TokenObtenido,$folio){
                   }
               }
 
-              $observaciones = "TIPO FACTURACIÓN, " . $datosMetros["tipo_facturacion"] . "\n";
+              $observaciones = "TIPO FACTURACION, " . $datosMetros["tipo_facturacion"] . "\n";
 
               if ($datosUltPago != NULL) {
-                $observaciones .= "ÚLTIMO PAGO REALIZADO: " . $datosUltPago["fecha"] . ", POR $" . number_format($datosUltPago["total_pagar"], 0, ",", ".") . "\n";
+                $observaciones .= "ULTIMO PAGO REALIZADO: " . $datosUltPago["fecha"] . ", POR $" . number_format($datosUltPago["total_pagar"], 0, ",", ".") . "\n";
               }
 
               if ($datosObservacionesDte != NULL) {
@@ -317,72 +326,251 @@ public function procesa_dte($TokenObtenido,$folio){
 
               $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl"); 
 
-              $fecha=date('Y-m-d');
-              $xml_dte = '<DTE version="1.0">
-                <Documento ID="F437T33">
-                <Encabezado>
-                <IdDoc>
-                <TipoDTE>'.$tipo_dte.'</TipoDTE>
-                <Folio>1</Folio>
-                <FchEmis>'.$fecha.'</FchEmis>
-                </IdDoc>
-                <Emisor>
-                <RUTEmisor>'.$rut_apr.'</RUTEmisor>
-                <RznSoc>'.$datosApr['nombre'].'</RznSoc>
-                <GiroEmis>'.$datosApr['activity'].'</GiroEmis>
-                <Acteco>513100</Acteco>
-                <DirOrigen>'.$datosApr['calle'].'  '.$datosApr['numero'].'</DirOrigen>
-                <CmnaOrigen>'.$datosComuna['nombre'].'</CmnaOrigen>
-                <CiudadOrigen>'.$datosComuna['nombre'].'</CiudadOrigen>
-                </Emisor>
-                <Receptor>
-                <RUTRecep>76024726-K</RUTRecep>
-                <RznSocRecep>PALOBLANCO SA</RznSocRecep>
-                <GiroRecep>PRODUCTORA DE SERVICIOS CULTURALES</GiroRecep>
-                <DirRecep>AV LA PAZ 451 502A</DirRecep>
-                <CmnaRecep>QUILPUE</CmnaRecep>
-                <CiudadRecep>QUILPUE</CiudadRecep>
-                </Receptor>
-                <Totales>
-                <MntNeto>63531</MntNeto>
-                <MntExe>0</MntExe>
-                <TasaIVA>19</TasaIVA>
-                <IVA>12071</IVA>
-                <MntTotal>75602</MntTotal>
-                </Totales>
-                </Encabezado>
-                <Detalle>
-                <NroLinDet>1</NroLinDet>
-                <NmbItem>POLERA PERSONALIZADA</NmbItem>
-                <QtyItem>27.0</QtyItem>
-                <UnmdItem>UN</UnmdItem>
-                <PrcItem>2353.0</PrcItem>
-                <MontoItem>63531</MontoItem>
-                </Detalle>
-                <Detalle>
-                <NroLinDet>2</NroLinDet>
-                <NmbItem>POLERA PERSONALIZADA 2</NmbItem>
-                <QtyItem>27.0</QtyItem>
-                <UnmdItem>UN</UnmdItem>
-                <PrcItem>2353.0</PrcItem>
-                <MontoItem>63531</MontoItem>
-                </Detalle>
-                <Detalle>
-                <NroLinDet>3</NroLinDet>
-                <NmbItem>POLERA PERSONALIZADA 3</NmbItem>
-                <QtyItem>27.0</QtyItem>
-                <UnmdItem>UN</UnmdItem>
-                <PrcItem>2353.0</PrcItem>
-                <MontoItem>63531</MontoItem>
-                </Detalle>
-                </Documento>
-                </DTE>';
-                
+              $fecha=date('Y-m-d');             
+              $fecha_venc= date("Y-m-d",strtotime($fecha."+ 1 month"));
 
-                
-                $xml_adicional = '';
+              $total1=intval($cargo_fijo)+intval($monto_metros)-intval($monto_subsidio);
+              $total2=intval($cargo_fijo)+intval($monto_metros);
+              $facturable=$total1+$alcantarillado;
+
+              $numero_linea=1;
+
+              if(intval($alcantarillado>0)){
+                    $numero_linea=$numero_linea+1;
+                    $detalle2='<Detalle><NroLinDet>'.$numero_linea.'</NroLinDet>
+                    <IndExe>1</IndExe>
+                                <NmbItem>ALCANTARILLADO: Cargo fijo $'.$alcantarillado.'</NmbItem>
+                                <QtyItem>1</QtyItem>
+                                <PrcItem>'.$alcantarillado.'</PrcItem>
+                                <MontoItem>'.$alcantarillado.'</MontoItem>
+                                </Detalle>';
+              }
+
+              if(intval($multa)>0){
+                    $numero_linea=$numero_linea+1;
+                    $detalle3='<Detalle>
+                                <NroLinDet>'.$numero_linea.'</NroLinDet>
+                                <IndExe>1</IndExe>
+                                <NmbItem>MULTA: Cargo fijo $'.$multa.'</NmbItem>
+                                <QtyItem>1</QtyItem>
+                                <PrcItem>'.$multa.'</PrcItem>
+                                <MontoItem>'.$multa.'</MontoItem>
+                                </Detalle>';
+              }
+
+              if(intval($cuota_repactacion)>0){
+                    $numero_linea=$numero_linea+1;
+                          $detalle4='<Detalle>
+                          <NroLinDet>'.$numero_linea.'</NroLinDet>
+                          <IndExe>1</IndExe>
+                          <NmbItem>CUOTA REPACTACION: Cargo fijo $'.$cuota_repactacion.'</NmbItem>
+                          <QtyItem>1</QtyItem>
+                          <PrcItem>'.$cuota_repactacion.'</PrcItem>
+                          <MontoItem>'.$cuota_repactacion.'</MontoItem>
+                          </Detalle>';
+              }
+
+
+              if(intval($total_servicios)>0){
+                    $numero_linea=$numero_linea+1;
+                    $detalle5='<Detalle>
+                                <NroLinDet>'.$numero_linea.'</NroLinDet>
+                                <IndExe>1</IndExe>
+                                <NmbItem>OTROS SERVICIOS: Cargo fijo $'.$total_servicios.'</NmbItem>
+                                <QtyItem>1</QtyItem>
+                                <PrcItem>'.$total_servicios.'</PrcItem>
+                                <MontoItem>'.$total_servicios.'</MontoItem>
+                                </Detalle>';
+              }
+
+              
+              if(intval($cuota_socio)>0){
+                    $numero_linea=$numero_linea+1;
+                    $detalle6='<Detalle>
+                                <NroLinDet>'.$numero_linea.'</NroLinDet>
+                                <IndExe>1</IndExe>
+                                <NmbItem>CUOTA SOCIO: Cargo fijo $'.$cuota_socio.'</NmbItem>
+                                <QtyItem>1</QtyItem>
+                                <PrcItem>'.$cuota_socio.'</PrcItem>
+                                <MontoItem>'.$cuota_socio.'</MontoItem>
+                                </Detalle>';
+              }
+
+              if(intval($otros)>0){
+                    $numero_linea=$numero_linea+1;
+                    $detalle7='<Detalle>
+                                <NroLinDet>'.$numero_linea.'</NroLinDet>
+                                <IndExe>1</IndExe>
+                                <NmbItem>OTROS: Cargo fijo $'.$otros.'</NmbItem>
+                                <QtyItem>1</QtyItem>
+                                <PrcItem>'.$otros.'</PrcItem>
+                                <MontoItem>'.$otros.'</MontoItem>
+                                </Detalle>';
+              }
+
+
+              $cadena = '<DTE version="1.0">
+                        <Documento ID="F437T33">
+                        <Encabezado>
+                        <IdDoc>
+                        <TipoDTE>'.$tipo_dte.'</TipoDTE>
+                        <Folio>1</Folio>
+                        <FchEmis>'.$fecha.'</FchEmis>
+                        <IndServicio>1</IndServicio>
+                        <FchVenc>'.$fecha_venc.'</FchVenc>
+                        </IdDoc>
+                        <Emisor>
+                        <RUTEmisor>44444444-4</RUTEmisor>
+                        <RznSocEmisor>'.$datosApr['nombre'].'</RznSocEmisor>
+                        <GiroEmisor>'.$datosApr['activity'].'</GiroEmisor>
+                        <DirOrigen>'.$datosApr['calle'].' '.$datosApr['numero'].' '.$datosApr['resto_direccion'].'</DirOrigen>
+                        <CmnaOrigen>'.$datosComuna['nombre'].'</CmnaOrigen>
+                        <CiudadOrigen>'.$datosComuna['nombre'].'</CiudadOrigen>
+                        </Emisor>
+                        <Receptor>
+                        <RUTRecep>'.$rut_socio.'</RUTRecep>
+                        <RznSocRecep>'.$nombre_socio.'</RznSocRecep>
+                        <DirRecep>'.$direccion.'</DirRecep>
+                        <CmnaRecep>'.$comuna.'</CmnaRecep>
+                        <CiudadRecep>'.$comuna.'</CiudadRecep>
+                        </Receptor>
+                        <Totales>
+                        <MntExe>'.$facturable.'</MntExe>
+                        <MntTotal>'.$facturable.'</MntTotal>
+                        </Totales>
+                        </Encabezado>
+                        <Detalle>
+                        <NroLinDet>1</NroLinDet>
+                        <IndExe>1</IndExe>
+                        <NmbItem>CONSUMO AGUA POTABLE: Cargo fijo $'.$cargo_fijo.', '.$metros_.' Mt3 $'.$monto_metros.'</NmbItem>
+                        <QtyItem>1</QtyItem>
+                        <PrcItem>'.$total2.'</PrcItem>
+                        <DescuentoMonto>'.$monto_subsidio.'</DescuentoMonto>
+                        <MontoItem>'.$total1.'</MontoItem>
+                        </Detalle>'.$detalle2.'
+                        </Documento>
+                        </DTE>';
+
+//echo $cadena;
+
+//echo $monto_subsidio;
+//exit();
+                         $cadena = str_replace(
+                            array('á', 'à', 'ä', 'â', 'ª', 'Á', 'À', 'Â', 'Ä'),
+                            array('a', 'a', 'a', 'a', 'a', 'A', 'A', 'A', 'A'),
+                            $cadena
+                        );
+
+                        $cadena = str_replace(
+                            array('é', 'è', 'ë', 'ê', 'É', 'È', 'Ê', 'Ë'),
+                            array('e', 'e', 'e', 'e', 'E', 'E', 'E', 'E'),
+                            $cadena );
+
+                        $cadena = str_replace(
+                            array('í', 'ì', 'ï', 'î', 'Í', 'Ì', 'Ï', 'Î'),
+                            array('i', 'i', 'i', 'i', 'I', 'I', 'I', 'I'),
+                            $cadena );
+
+                        $cadena = str_replace(
+                            array('ó', 'ò', 'ö', 'ô', 'Ó', 'Ò', 'Ö', 'Ô'),
+                            array('o', 'o', 'o', 'o', 'O', 'O', 'O', 'O'),
+                            $cadena );
+
+                        $cadena = str_replace(
+                            array('ú', 'ù', 'ü', 'û', 'Ú', 'Ù', 'Û', 'Ü'),
+                            array('u', 'u', 'u', 'u', 'U', 'U', 'U', 'U'),
+                            $cadena );
+
+                        $cadena = str_replace(
+                            array('ñ', 'Ñ'),
+                            array('n', 'N'),
+                            $cadena
+                        );  
+
+                        $xml_dte_limpio=$cadena;
+
+//echo $xml_dte;
+//exit();
+                $fecha_comp=explode('-', $mes_consumo);
+                $monthNumber = $fecha_comp[0];
+                if($monthNumber=='01'){$mes='Enero';}
+                if($monthNumber=='02'){$mes='Febrero';}
+                if($monthNumber=='03'){$mes='Marzo';}
+                if($monthNumber=='04'){$mes='Abril';}
+                if($monthNumber=='05'){$mes='Mayo';}
+                if($monthNumber=='06'){$mes='Junio';}
+                if($monthNumber=='07'){$mes='Julio';}
+                if($monthNumber=='08'){$mes='Agosto';}
+                if($monthNumber=='09'){$mes='Septiembre';}
+                if($monthNumber=='10'){$mes='Octubre';}
+                if($monthNumber=='11'){$mes='Noviembre';}
+                if($monthNumber=='12'){$mes='Diciembre';}
+
+                $subsidiario='NO';
+                if(intval($monto_subsidio) > 0){$subsidiario='SI';}
+
+
+               // $consumo_anterior_nf=1200;
+
+                $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf);
+                $adicionales=$total_mes-$facturable;
+
+                if($multa>0){
+                  $multas='Multas : $'.$multa;
+                }
+
+                if(intval($cuota_repactacion)>0){
+                  $cuotas='Cuota Repactacion : $'.$cuota_repactacion;
+                }
+
+                if(intval($total_servicios)>0 || intval($otros)>0){
+                  $otr=$total_servicios+$otros;
+                  $total_servicio='Otros servicios : $'.$otr;
+                }
+
+                if(intval($cuota_socio)>0){
+                  $cuotas_socios='Cuota Socio : $'.$cuota_socio;
+                }
+
+//echo $otr;
+                $xml_adicional = '<Adicional>
+                                <Uno>0</Uno>
+                                <Dos>'.$mes.' Del '.$fecha_comp[1].'</Dos>
+                                <Tres>'.$num_medidor.'</Tres>
+                                <Cuatro>'.$datosSocios["id"].'</Cuatro>
+                                <Cinco>'.$cuotas.'</Cinco>
+                                <Seis>'.$cuotas_socios.'</Seis>
+                                <Siete>'.$adicionales.'</Siete>
+                                <Ocho>'.$consumo_anterior_nf.'</Ocho>
+                                <Nueve></Nueve>
+                                <Diez>'.$vlr_pagar.'</Diez>
+                                <Once></Once>
+                                <Doce>'.$observaciones.'</Doce>
+                                <Trece>'.$fecha_vencimiento.'</Trece>
+                                <Catorce>'.$multas.'</Catorce>
+                                <Quince>0</Quince>
+                                <Dieciseis>'.$total_servicio.'</Dieciseis>
+                                <Diecisiete></Diecisiete>
+                                <Dieciocho>'.$direccion.'</Dieciocho>
+                                <Diecinueve>ESTANDAR</Diecinueve>
+                                <Veinte>'.$consumo_actual.' M3 </Veinte>
+                                <Veintiuno>'.$consumo_anterior.' M3 </Veintiuno>
+                                <Veintidos>'.$metros_.' M3</Veintidos>
+                                <Veintitres>'.$metros_.' M3</Veintitres>
+                                <Veinticuatro>'.$subsidiario.'</Veinticuatro>
+                                <Veinticinco>SOCIO</Veinticinco>
+                                <Veintiseis>'.$datosApr['fono'].'/'.$datosApr['email'].'</Veintiseis>
+                                <Veintisiete></Veintisiete>
+                                </Adicional>';
                    
-                $parametros = array("STRINGXML" => $xml_dte,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
+
+
+                   //$xml_adicional='';
+
+                   //echo $xml_adicional;
+                  // exit();
+                   
+                $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
                 
                 
             
@@ -421,8 +609,6 @@ public function procesa_dte($TokenObtenido,$folio){
                     if (!$this->metros_traza->save($datosTraza)) {
                       $this->error .= "Id Metros: $folio, <br>";
                       $this->error .= "Error: Falló al ingresar traza. <br><br>";
-                    }else{
-                       echo 1;
                     }
                   } else {
                     $this->error .= "Id Metros: $folio, <br>";
@@ -432,16 +618,20 @@ public function procesa_dte($TokenObtenido,$folio){
 
 
               }else{
-                  echo 'Error al procesar DTE';
-                  exit();
+                  $this->error .= "ERROR AL PROCESAR DTE $folio <br><br>";
               }
 
 
       }  
 
 }
-
+ 
 public function emitir_dte_new(){
+
+  ini_set('max_execution_time', 480);
+  ini_set('max_input_time', 480);
+  ini_set('memory_limit', 5120 . 'M');
+
   $folios = $this->request->getPost("arr_boletas");
 
   foreach ($folios as $folio) {
@@ -452,16 +642,21 @@ public function emitir_dte_new(){
          if($valido!='NO'){
             $generado=$this->procesa_dte($token,$folio);
          }else{
-          echo 'Token Invalido';
-          exit();
+          $this->error .= "Token invalido $token <br><br>";
          }
       }else{
-        echo "Error al generar token";
-        exit();
+        $this->error .= "No se pudo generar token de acceso <br><br>";
+       
       }
   }
+
+  if ($this->error == "") {
+      echo 1;
+    } else {
+      echo $this->error;
+    }
    
-  }
+}
 
   public function emitir_dte() {
     $this->validar_sesion();
@@ -615,10 +810,10 @@ public function emitir_dte_new(){
           }
         }
 
-        $observaciones = "TIPO FACTURACIÓN, " . $datosMetros["tipo_facturacion"] . "\n";
+        $observaciones = "TIPO FACTURACION, " . $datosMetros["tipo_facturacion"] . "\n";
 
         if ($datosUltPago != NULL) {
-          $observaciones .= "ÚLTIMO PAGO REALIZADO: " . $datosUltPago["fecha"] . ", POR $" . number_format($datosUltPago["total_pagar"], 0, ",", ".") . "\n";
+          $observaciones .= "ULTIMO PAGO REALIZADO: " . $datosUltPago["fecha"] . ", POR $" . number_format($datosUltPago["total_pagar"], 0, ",", ".") . "\n";
         }
 
         if ($datosObservacionesDte != NULL) {
@@ -871,6 +1066,44 @@ public function emitir_dte_new(){
     }
     echo $response;
   }
+
+  public function imprimir_dte_new($arr_boletas){
+    
+    ini_set('max_execution_time', 480);
+    ini_set('max_input_time', 480);
+    ini_set('memory_limit', 5120 . 'M');
+    $this->validar_sesion();
+    $folios = explode(",", $arr_boletas);
+    $mpdf = new \Mpdf\Mpdf();
+
+    foreach ($folios as $folio) {
+
+        $datosMetros    = $this->metros->select("folio_bolect")
+                                       ->select("url_boleta")
+                                       ->where("id", $folio)
+                                       ->first();
+        $folio_sii      = $datosMetros["folio_bolect"];
+        $url_boleta = $datosMetros["url_boleta"];
+
+        $homepage = file_get_contents($url_boleta);
+        file_put_contents($folio_sii . ".pdf", $homepage);
+
+        $pagecount = $mpdf->SetSourceFile($folio_sii . ".pdf");
+        $tplId     = $mpdf->ImportPage($pagecount);
+        $mpdf->AddPage();
+        $mpdf->UseTemplate($tplId);
+
+        unlink($folio_sii . ".pdf");
+
+        
+
+    }
+    header("Content-type:application/pdf");
+    echo $mpdf->Output();
+    exit();
+  }
+
+
 
   public function imprimir_dte($arr_boletas) {
     $this->validar_sesion();

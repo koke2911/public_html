@@ -129,7 +129,7 @@ function imprimir_dte () {
   });
 
   if (arr_boletas.length > 0) {
-    var url = base_url + "/Pagos/Ctrl_boleta_electronica/imprimir_dte/" + arr_boletas;
+    var url = base_url + "/Pagos/Ctrl_boleta_electronica/imprimir_dte_new/" + arr_boletas;
     window.open(url, "DTE", "width=1200,height=800,location=0,scrollbars=yes");
   } else {
     alerta.error("alerta", "Seleccione al menos una boleta, con folio SII")
@@ -278,7 +278,7 @@ $(document).ready(function () {
     ],
     order: [[2, "asc"]],
     "columnDefs": [
-      //{"targets": [0,1,2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 15, 16, 18, 19, 20], "visible": false, "searchable": false}
+      {"targets": [4,5,8,9,10,11,12,13,14,16,17,19,20,21], "visible": false, "searchable": false}
     ],
     dom: 'Bfrtip',
     buttons: [
