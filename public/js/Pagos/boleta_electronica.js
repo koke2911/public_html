@@ -75,7 +75,7 @@ function emitir_dte () {
 
     setTimeout(function () {
       $.ajax({
-        url: base_url + "/Pagos/Ctrl_boleta_electronica/emitir_dte_new",
+        url: base_url + "/Pagos/Ctrl_boleta_electronica/emitir_dte",
         type: "POST",
         async: false,
         data: {arr_boletas: arr_boletas, comments: $("#comments").val(), type: $("#type").val()},
@@ -218,18 +218,6 @@ $(document).ready(function () {
     columns: [
       {"data": "id_metros"},
       {"data": "folio_bolect"},
-      {
-        "data": "url_boleta",
-        "render": function ( data, type, row ) {
-          if (data!='--'){
-            return "<a href='"+data+"'  target='_blank'>Ver B.</a>";
-          }else{
-            return 'No Disp.';
-          }
-
-        }
-      },
-      
       {"data": "ruta"},
       {"data": "id_socio"},
       {"data": "rut_socio"},
@@ -278,7 +266,7 @@ $(document).ready(function () {
     ],
     order: [[2, "asc"]],
     "columnDefs": [
-      //{"targets": [0,1,2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 15, 16, 18, 19, 20], "visible": false, "searchable": false}
+      {"targets": [0, 3, 4, 7, 8, 9, 10, 11, 12, 13, 15, 16, 18, 19, 20], "visible": false, "searchable": false}
     ],
     dom: 'Bfrtip',
     buttons: [
