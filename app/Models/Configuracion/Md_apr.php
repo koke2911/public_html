@@ -31,7 +31,9 @@ class Md_apr extends Model {
    'activity',
    'economic_activity_id',
    'website',
-   'email_dte'
+   'email_dte',
+   'ultimo_folio',
+   'clave_dete'
   ];
 
   public function datatable_apr($db) {
@@ -54,7 +56,9 @@ class Md_apr extends Model {
 						    apr.resto_direccion,
 						    u.usuario,
 						    date_format(apr.fecha, '%d-%m-%Y %H:%i:%s') as fecha,
-						    apr.fono
+						    apr.fono,
+                clave_dete,
+                ultimo_folio
 						from 
 							apr
 							inner join usuarios u on u.id = apr.id_usuario
@@ -84,7 +88,9 @@ class Md_apr extends Model {
        "fono"            => $key["fono"],
        "email"           => $key['email'],
        "email_dte"       => $key['email_dte'],
-       'website'         => $key['website']
+       'website'         => $key['website'],
+       'clave_dete'      => $key['clave_dete'],
+       'ultimo_folio'    => $key['ultimo_folio']
       ];
 
       $data[] = $row;

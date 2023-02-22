@@ -68,6 +68,8 @@ class Ctrl_apr extends BaseController {
     $calle                = $this->request->getPost('calle');
     $numero               = $this->request->getPost('numero');
     $website              = $this->request->getPost('website');
+    $ultimo_folio         = $this->request->getPost('ultimo_folio');
+    $clave_dete           = $this->request->getPost('clave_dete');
 
     $rut_completo = explode("-", $rut_apr);
     $rut          = $rut_completo[0];
@@ -91,8 +93,12 @@ class Ctrl_apr extends BaseController {
      'resolution_number'    => $resolution_number,
      'calle'                => $calle,
      'numero'               => $numero,
-     'website'              => $website
+     'website'              => $website,     
+     'clave_dete'           => $clave_dete,
+     'ultimo_folio'         => $ultimo_folio
     ];
+
+    // print_r($datosAPR);
 
     if ($id_apr != "") {
       $estado_traza   = MODIFICAR_APR;
@@ -102,13 +108,18 @@ class Ctrl_apr extends BaseController {
     }
 
     if ($this->apr->save($datosAPR)) {
-      $credentials = $this->apr->touchef_credentials($this->db, $id_apr);
-      $touchef     = new Touchef($credentials['rut'], $credentials['touchef_token'], $credentials['touchef_password']);
-      if ($estado_traza == MODIFICAR_APR) {
-        $touchef->update_client($id_comuna, $economic_activity_id, $nombre_apr, $rut . $dv, $activity, $calle . " " . $numero, $resolution_date, $resolution_number, $email, $website);
-      } else {
-        $touchef->create_client($id_comuna, $economic_activity_id, $nombre_apr, $rut . $dv, $activity, $calle . " " . $numero, $resolution_date, $resolution_number, $email, $website);
-      }
+
+      
+      // $credentials = $this->apr->touchef_credentials($this->db, $id_apr);
+
+      // $touchef     = new Touchef($credentials['rut'], $credentials['touchef_token'], $credentials['touchef_password']);
+
+      
+      // if ($estado_traza == MODIFICAR_APR) {
+      //   $touchef->update_client($id_comuna, $economic_activity_id, $nombre_apr, $rut . $dv, $activity, $calle . " " . $numero, $resolution_date, $resolution_number, $email, $website);
+      // } else {
+      //   $touchef->create_client($id_comuna, $economic_activity_id, $nombre_apr, $rut . $dv, $activity, $calle . " " . $numero, $resolution_date, $resolution_number, $email, $website);
+      // }
       echo OK;
 
       if ($id_apr == "") {

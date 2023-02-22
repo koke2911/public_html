@@ -19,6 +19,8 @@ function des_habilitar (a, b) {
   $("#txt_resto_direccion").prop("disabled", a);
   $("#txt_tope_subsidio").prop("disabled", a);
   $("#txt_fono").prop("disabled", a);
+  $("#txt_ultimo").prop("disabled", a);
+  $("#txt_octava").prop("disabled", a);
 }
 
 function mostrar_datos_apr (data) {
@@ -36,6 +38,11 @@ function mostrar_datos_apr (data) {
   $("#cmb_email").val(data['email']);
   $("#cmb_email_dte").val(data['email_dte']);
   $("#txt_website").val(data['website']);
+
+  $("#txt_ultimo").val(data['ultimo_folio']);
+  $("#txt_octava").val(data['clave_dete']);
+
+
 
   $.ajax({
     type: "GET",
@@ -167,7 +174,10 @@ function guardar_apr () {
       economic_activity_id: $("#cmb_economic_activity_id").val(),
       resolution_date: $("#cmb_resolution_date").val(),
       resolution_number: $("#cmb_resolution_number").val(),
-      website: $("#txt_website").val()
+      website: $("#txt_website").val(),
+      ultimo_folio:$("#txt_ultimo").val(),
+      clave_dete:$("#txt_octava").val()      
+
     },
     success: function (respuesta) {
       const OK = 1;
@@ -351,7 +361,7 @@ $(document).ready(function () {
       txt_nombre_apr: {
         required: true,
         letras: true,
-        maxlength: 45
+        maxlength: 100
       },
       txt_hash_sii: {
         maxlength: 200
@@ -380,7 +390,15 @@ $(document).ready(function () {
       txt_fono: {
         digits: true,
         maxlength: 11
+      },
+      txt_ultimo: {
+        digits: true,
+        maxlength: 11
+      },
+      txt_octava: {
+          maxlength: 100
       }
+
     },
     messages: {
       txt_rut_apr: {
@@ -420,6 +438,13 @@ $(document).ready(function () {
       txt_fono: {
         digits: "Solo números",
         maxlength: "Máximo 11 números"
+      },
+      txt_ultimo: {
+        digits: "Solo números",
+        maxlength: "Máximo 11 números"
+      },
+      txt_octava: {
+          maxlength: "Máximo 100 números"
       }
     }
   });

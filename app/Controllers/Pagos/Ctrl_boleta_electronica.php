@@ -102,18 +102,30 @@ public function ObtieneToken(){
                                 ->first();
 
     $pass_api=$datosApr["clave_dete"];
+
+    // $pass_api='AmFMmcj8i0';
+    // $rut_apr='44444444-4';
+
     $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl");
     $parametros = array("RUTACCESOAPI" => $rut_apr,"PASSWORDACCESOAPI" =>  $pass_api); 
-
+    
 
     //COMENTAAAAAAAAR
-    $parametros = array("RUTACCESOAPI" =>'44444444-4',"PASSWORDACCESOAPI" =>  'AmFMmcj8i0'); 
+    // $parametros = array("RUTACCESOAPI" =>'44444444-4',"PASSWORDACCESOAPI" =>  'AmFMmcj8i0'); 
 
        
     try{
+      $token="";
       $resultado = $client->call("ObtenerToken", $parametros);
       $token=$resultado['item']['Token'];
-      return $token;
+
+      if($token=="NULL"){
+        return  "ERROR AL OBTENER TOKEN <br><br>";
+        exit();
+      }else{
+         return $token;
+      }
+     
 
     }catch (SoapFault $e){
           echo "Ups!! hubo un problema y no pudimos recuperar los datos.<br/>$e<hr/>";
@@ -138,7 +150,7 @@ public function valida_token($TokenObtenido){
 }
 
 
-public function procesa_dte($TokenObtenido,$folio){
+public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
   ini_set("soap.wsdl_cache_enabled", "0"); 
   define("BOLETA_EXENTA", 41);
@@ -333,94 +345,21 @@ public function procesa_dte($TokenObtenido,$folio){
               $total2=intval($cargo_fijo)+intval($monto_metros);
               $facturable=$total1+$alcantarillado;
 
-              $numero_linea=1;
 
-              if(intval($alcantarillado>0)){
-                    $numero_linea=$numero_linea+1;
-                    $detalle2='<Detalle><NroLinDet>'.$numero_linea.'</NroLinDet>
-                    <IndExe>1</IndExe>
-                                <NmbItem>ALCANTARILLADO: Cargo fijo $'.$alcantarillado.'</NmbItem>
-                                <QtyItem>1</QtyItem>
-                                <PrcItem>'.$alcantarillado.'</PrcItem>
-                                <MontoItem>'.$alcantarillado.'</MontoItem>
-                                </Detalle>';
-              }
-
-              if(intval($multa)>0){
-                    $numero_linea=$numero_linea+1;
-                    $detalle3='<Detalle>
-                                <NroLinDet>'.$numero_linea.'</NroLinDet>
-                                <IndExe>1</IndExe>
-                                <NmbItem>MULTA: Cargo fijo $'.$multa.'</NmbItem>
-                                <QtyItem>1</QtyItem>
-                                <PrcItem>'.$multa.'</PrcItem>
-                                <MontoItem>'.$multa.'</MontoItem>
-                                </Detalle>';
-              }
-
-              if(intval($cuota_repactacion)>0){
-                    $numero_linea=$numero_linea+1;
-                          $detalle4='<Detalle>
-                          <NroLinDet>'.$numero_linea.'</NroLinDet>
-                          <IndExe>1</IndExe>
-                          <NmbItem>CUOTA REPACTACION: Cargo fijo $'.$cuota_repactacion.'</NmbItem>
-                          <QtyItem>1</QtyItem>
-                          <PrcItem>'.$cuota_repactacion.'</PrcItem>
-                          <MontoItem>'.$cuota_repactacion.'</MontoItem>
-                          </Detalle>';
-              }
-
-
-              if(intval($total_servicios)>0){
-                    $numero_linea=$numero_linea+1;
-                    $detalle5='<Detalle>
-                                <NroLinDet>'.$numero_linea.'</NroLinDet>
-                                <IndExe>1</IndExe>
-                                <NmbItem>OTROS SERVICIOS: Cargo fijo $'.$total_servicios.'</NmbItem>
-                                <QtyItem>1</QtyItem>
-                                <PrcItem>'.$total_servicios.'</PrcItem>
-                                <MontoItem>'.$total_servicios.'</MontoItem>
-                                </Detalle>';
-              }
-
-              
-              if(intval($cuota_socio)>0){
-                    $numero_linea=$numero_linea+1;
-                    $detalle6='<Detalle>
-                                <NroLinDet>'.$numero_linea.'</NroLinDet>
-                                <IndExe>1</IndExe>
-                                <NmbItem>CUOTA SOCIO: Cargo fijo $'.$cuota_socio.'</NmbItem>
-                                <QtyItem>1</QtyItem>
-                                <PrcItem>'.$cuota_socio.'</PrcItem>
-                                <MontoItem>'.$cuota_socio.'</MontoItem>
-                                </Detalle>';
-              }
-
-              if(intval($otros)>0){
-                    $numero_linea=$numero_linea+1;
-                    $detalle7='<Detalle>
-                                <NroLinDet>'.$numero_linea.'</NroLinDet>
-                                <IndExe>1</IndExe>
-                                <NmbItem>OTROS: Cargo fijo $'.$otros.'</NmbItem>
-                                <QtyItem>1</QtyItem>
-                                <PrcItem>'.$otros.'</PrcItem>
-                                <MontoItem>'.$otros.'</MontoItem>
-                                </Detalle>';
-              }
-
+              // $rut_apr='44444444-4';
 
               $cadena = '<DTE version="1.0">
                         <Documento ID="F437T33">
                         <Encabezado>
                         <IdDoc>
                         <TipoDTE>'.$tipo_dte.'</TipoDTE>
-                        <Folio>1</Folio>
+                        <Folio>'.$f_sii.'</Folio>
                         <FchEmis>'.$fecha.'</FchEmis>
                         <IndServicio>1</IndServicio>
                         <FchVenc>'.$fecha_venc.'</FchVenc>
                         </IdDoc>
                         <Emisor>
-                        <RUTEmisor>44444444-4</RUTEmisor>
+                        <RUTEmisor>'.$rut_apr.'</RUTEmisor>
                         <RznSocEmisor>'.$datosApr['nombre'].'</RznSocEmisor>
                         <GiroEmisor>'.$datosApr['activity'].'</GiroEmisor>
                         <DirOrigen>'.$datosApr['calle'].' '.$datosApr['numero'].' '.$datosApr['resto_direccion'].'</DirOrigen>
@@ -451,10 +390,10 @@ public function procesa_dte($TokenObtenido,$folio){
                         </Documento>
                         </DTE>';
 
-//echo $cadena;
+// echo $cadena;
 
-//echo $monto_subsidio;
-//exit();
+// // echo $monto_subsidio;
+// exit();
                          $cadena = str_replace(
                             array('á', 'à', 'ä', 'â', 'ª', 'Á', 'À', 'Â', 'Ä'),
                             array('a', 'a', 'a', 'a', 'a', 'A', 'A', 'A', 'A'),
@@ -570,26 +509,30 @@ public function procesa_dte($TokenObtenido,$folio){
                    //echo $xml_adicional;
                   // exit();
                    
-                $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
+                $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "False","TIPOIMPRESO" => "1","AMBIENTE" => "1","TOKEN" => $TokenObtenido);
                 
                 
             
               $resultado = $client->call("ProcesaDte", $parametros); 
 
-              //print_r($resultado);
-
               $resultado_estado=$resultado['item']['ResultadoFE'];
               $url_pdf=$resultado['item']['UrlPdf'];
               $folioSii=$resultado['item']['FolioAsignado'];
 
-              
+             // if($f_sii!=$folioSii){
+             //    $this->error .= "FOLIOS DESFASADOS,F.local:".$f_sii." F.App:".$folioSiiss." <br>";
+             //    exit();
+             // }
+
+              // echo $folioSii;
+              // exit();
 
               if($resultado_estado=='DTE procesado correctamente.'){
                 $datosMetrosSave = [
-                     "folio_bolect"      => $folioSii,
+                     "folio_bolect"      => $f_sii,
                      "id_tipo_documento" => $datosSocios["tipo_documento"],
                      "id"                => $folio,
-                     "url_boleta"        =>$url_pdf
+                     "url_boleta"        => $url_pdf
                     ];
 
                     //
@@ -632,15 +575,25 @@ public function emitir_dte_new(){
   ini_set('max_input_time', 480);
   ini_set('memory_limit', 5120 . 'M');
 
+  $this->validar_sesion();
+  $id_apr = $this->sesión->id_apr_ses;
+
+  $datosAprs = $this->apr->select("*")
+                      ->where("id", $id_apr)
+                      ->first();
+
+  $f_sii=$datosAprs["ultimo_folio"];
+
   $folios = $this->request->getPost("arr_boletas");
 
   foreach ($folios as $folio) {
-
+      $f_sii++;
+      // echo $ultimo_foliosii;
       $token=$this->ObtieneToken();      
       if($token!=""){
          $valido=$this->valida_token($token);
          if($valido!='NO'){
-            $generado=$this->procesa_dte($token,$folio);
+            $generado=$this->procesa_dte($token,$folio,$f_sii);
          }else{
           $this->error .= "Token invalido $token <br><br>";
          }
@@ -649,6 +602,22 @@ public function emitir_dte_new(){
        
       }
   }
+
+    $datosMetros = $this->metros->select("max(folio_bolect) as maximo")
+                                ->where("id_apr", $id_apr)
+                                ->where("url_boleta is not null")
+                                ->first();                                
+
+    $ultimo=$datosMetros['maximo'];
+
+    $datosAPR     = [
+     'ultimo_folio'=>$ultimo,
+     'id'=>$id_apr
+    ];
+
+    if(!$this->apr->save($datosAPR)){
+       $this->error .= "ERROR AL ACTUALIZAR ULTIMO FOLIO CONTACTE AL ADM <br><br>";
+    }
 
   if ($this->error == "") {
       echo 1;
@@ -1072,6 +1041,7 @@ public function emitir_dte_new(){
     ini_set('max_execution_time', 480);
     ini_set('max_input_time', 480);
     ini_set('memory_limit', 5120 . 'M');
+
     $this->validar_sesion();
     $folios = explode(",", $arr_boletas);
     $mpdf = new \Mpdf\Mpdf();
