@@ -172,4 +172,12 @@ class Ctrl_apr extends BaseController {
     $this->validar_sesion();
     echo view("Configuracion/apr_importar_certificado");
   }
+
+  public function v_importar_datos($tipo) {
+    // echo $tipo;
+    $datos = ["tipo" => $tipo];
+    $this->validar_sesion();
+    echo view("Configuracion/carga_masiva_socios", $datos);
+    
+  }
 }

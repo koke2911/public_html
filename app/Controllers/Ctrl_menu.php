@@ -354,6 +354,11 @@ class Ctrl_menu extends BaseController {
     echo view('Finanzas/registro_ventas');
   }
 
+  public function carga_masiva() {
+    $this->validar_sesion();
+    echo view('Configuracion/carga_masiva');
+  }
+
   public function multas() {
     $this->validar_sesion();
     echo view('Finanzas/multas');
