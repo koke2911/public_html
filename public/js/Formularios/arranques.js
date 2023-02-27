@@ -608,6 +608,32 @@ $(document).ready(function() {
         "columnDefs": [
             { "targets": [1, 2, 5, 7, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 25, 26, 27, 28, 29], "visible": false, "searchable": false }
         ],
+        dom: 'Bfrtip',
+        buttons: [ 
+            {
+                extend:    'excelHtml5',
+                text:      '<i class="fas fa-file-excel"></i> Excel',
+                titleAttr: 'Exportar a Excel',
+                className: 'btn btn-success',
+                title: "Informe de Arranques"
+            },
+            {
+                extend:    'pdfHtml5',
+                text:      '<i class="fas fa-file-pdf"></i> PDF',
+                titleAttr: 'Exportar a PDF',
+                className: 'btn btn-danger',
+                title: "Informe de Arranques",
+                orientation: 'landscape',
+                pageSize: 'LETTER'
+            },
+            {
+                extend:    'print',
+                text:      '<i class="fa fa-print"></i> Imprimir',
+                titleAttr: 'Imprimir',
+                className: 'btn btn-info',
+                title: "Informe de Arranques"
+            },
+        ],
         language: {
             "decimal": "",
             "emptyTable": "No hay información",

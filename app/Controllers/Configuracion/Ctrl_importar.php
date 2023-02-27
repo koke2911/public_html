@@ -13,6 +13,7 @@ use App\Models\Formularios\Md_medidores;
 use App\Models\Formularios\Md_medidor_traza;
 use App\Models\Formularios\Md_arranque_traza;
 use App\Models\Formularios\Md_arranques;
+use App\Models\Formularios\Md_sectores;
 
 
 class Ctrl_importar extends BaseController {
@@ -27,6 +28,7 @@ class Ctrl_importar extends BaseController {
   protected $medidor_traza;
   protected $arranques;
   protected $arranque_traza;
+  protected $sectores;
 
 
   public function __construct() {
@@ -40,6 +42,7 @@ class Ctrl_importar extends BaseController {
     $this->medidor_traza = new Md_medidor_traza();
     $this->arranques      = new Md_arranques();
     $this->arranque_traza = new Md_arranque_traza();
+    $this->sectores     = new Md_sectores();
 
 
 
@@ -131,7 +134,8 @@ class Ctrl_importar extends BaseController {
                      "id_usuario"       => $id_usuario,
                      "fecha"            => $fecha,
                      "id_apr"           => $id_apr,
-                     "estado"           =>1
+                     "estado"           =>1,
+                     "email"            =>$email
                     ];
 
                   if ($this->socios->save($datosSocio)) {
@@ -245,9 +249,22 @@ class Ctrl_importar extends BaseController {
 
 
   public function importar_arranque(){
+
+
     // echo 'ARRANQUE';
     $this->validar_sesion();
     $id_apr=$this->sesión->id_apr_ses;
+
+    $obtener_sector = $this->sectores->select("count(*) as existe_sector")
+                                      ->where("id_apr", $id_apr)
+                                     ->first();
+
+    $existe_sector  = $obtener_sector["existe_sector"];
+
+    if($existe_sector==0){
+      echo "Debe al menos configurar un sector";
+      exit();
+    }
 
     if ($this->request->getMethod() == "post") {
         $file = $this->request->getFile("socios");
@@ -296,7 +313,6 @@ class Ctrl_importar extends BaseController {
 
               $datosArranques  = $this->arranques->select("count(*) as existe")
                                                 ->where("id_socio", $id_socio)
-                                                ->where("id_medidor", $id_medidor)
                                                 ->where("id_apr", $id_apr)
                                                 ->first();
 
@@ -323,12 +339,27 @@ class Ctrl_importar extends BaseController {
                    "descuento"            => $descuento,
                   ];             
 
-                  print_r($datosArranque);
-                  exit();
-                // if ($this->arranques->save($datosArranque)) {
+                  // print_r($datosArranque);
+                  // exit();
+                if ($this->arranques->save($datosArranque)) {
                    
+                  $obtener_id  = $this->arranques->select("max(id) as id_arranque")
+                                      ->first();
+                  $id_arranque = $obtener_id["id_arranque"];
+
+                  $datosTraza = [
+                  "id_arranque" => $id_arranque,
+                  "estado"      => 1,
+                  "observacion" => 'CARGA MASIVA',
+                  "id_usuario"  => $id_usuario,
+                  "fecha"       => $fecha
+                  ];
+
+                  if (!$this->arranque_traza->save($datosTraza)) {
+                    echo "Falló al guardar la traza";
+                  }
                               
-                // }
+                }
               }
             }
 

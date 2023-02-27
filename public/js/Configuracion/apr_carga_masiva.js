@@ -40,7 +40,7 @@ $(document).ready(function () {
       timeout: 600000,
       success: function ($data) {
         if($data!=0){
-          alerta.error("alerta", $data);
+          alert($data);
         }else{
           alerta.ok("alerta", "Archivo cargado con éxito");
         }

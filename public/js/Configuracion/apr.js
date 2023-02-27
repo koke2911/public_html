@@ -42,6 +42,7 @@ function mostrar_datos_apr (data) {
   $("#txt_ultimo").val(data['ultimo_folio']);
   $("#txt_octava").val(data['clave_dete']);
 
+  console.log(data);
 
 
   $.ajax({
