@@ -511,7 +511,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                    
                 $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "False","TIPOIMPRESO" => "1","AMBIENTE" => "1","TOKEN" => $TokenObtenido);
                 
-                
+            if($tipo_dte==41){   
             
               $resultado = $client->call("ProcesaDte", $parametros); 
 
@@ -563,9 +563,12 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
               }else{
                   $this->error .= "ERROR AL PROCESAR DTE $folio <br><br>";
               }
+          }else{
+                $this->error .= "BOLETA NO EXENTA $folio <br><br>";
+          }
 
 
-      }  
+    }  
 
 }
  

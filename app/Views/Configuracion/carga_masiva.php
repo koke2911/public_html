@@ -12,7 +12,8 @@
              <button type="button" name="btn_subir_socios" id="btn_subir_socios" class="btn btn-info"><i class="fas fa-file-certificate"></i> Subir Socios</button>
              <button type="button" name="btn_subir_medidores" id="btn_subir_medidores" class="btn btn-info"><i class="fas fa-file-certificate"></i> Subir Medidores</button>
              <button type="button" name="btn_subir_arranque" id="btn_subir_arranque" class="btn btn-info"><i class="fas fa-file-certificate"></i> Subir Arranques</button>
-             <button type="button" name="btn_subir_deuda" id="btn_subir_deuda" class="btn btn-info"><i class="fas fa-file-certificate"></i> Subir Deudas</button>
+             <button type="button" name="btn_subir_deuda" id="btn_subir_deuda" class="btn btn-info"><i class="fas fa-file-certificate"></i> Subir Deudas</button><br>
+             <A HREF="https://docs.google.com/document/d/1PqgI3-iRMeoxT-F0A010hHf-gg4R4IlzXJghtOj69bM/edit?usp=sharing" target="_blank"> Ver Documentacion </A>
             </center>
           </div>
         </div>

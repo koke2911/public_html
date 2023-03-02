@@ -109,17 +109,17 @@ $(document).ready(function() {
         rules:  {
             txt_clave_actual: {
                 required: true,
-                maxlength: 10,
+                maxlength: 20,
                 charspecial: true
             },
             txt_clave_nueva: {
                 required: true,
-                maxlength: 10,
+                maxlength: 20,
                 charspecial: true
             },
             txt_repetir: {
                 required: true,
-                maxlength: 10,
+                maxlength: 20,
                 charspecial: true,
                 equalTo: "#txt_clave_nueva"
             }

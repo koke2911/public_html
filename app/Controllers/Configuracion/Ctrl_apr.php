@@ -30,9 +30,16 @@ class Ctrl_apr extends BaseController {
 
   public function get_data_apr($id) {
     $this->validar_sesion();
-    $credentials = $this->apr->touchef_credentials($this->db, $id);
-    $touchef     = new Touchef($credentials['rut'], $credentials['touchef_token'], $credentials['touchef_password']);
-    echo json_encode($touchef->get_data($credentials['rut']));
+
+    $obtener_id = $this->apr->select("*")
+                              ->where("id",$id)
+                              ->first();
+       
+    // $credentials = $this->apr->touchef_credentials($this->db, $id);
+    // $touchef     = new Touchef($credentials['rut'], $credentials['touchef_token'], $credentials['touchef_password']);
+    echo json_encode($obtener_id);
+
+
   }
 
   public function datatable_apr() {
@@ -70,6 +77,7 @@ class Ctrl_apr extends BaseController {
     $website              = $this->request->getPost('website');
     $ultimo_folio         = $this->request->getPost('ultimo_folio');
     $clave_dete           = $this->request->getPost('clave_dete');
+    $email_dte            = $this->request->getPost('email_dte');
 
     $rut_completo = explode("-", $rut_apr);
     $rut          = $rut_completo[0];
@@ -93,7 +101,8 @@ class Ctrl_apr extends BaseController {
      'resolution_number'    => $resolution_number,
      'calle'                => $calle,
      'numero'               => $numero,
-     'website'              => $website,     
+     'website'              => $website, 
+     'email_dte'            =>$email_dte,    
      'clave_dete'           => $clave_dete,
      'ultimo_folio'         => $ultimo_folio
     ];

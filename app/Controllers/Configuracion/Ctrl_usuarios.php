@@ -87,9 +87,20 @@ class Ctrl_usuarios extends BaseController {
 
   public function llenar_cmb_apr() {
     $this->validar_sesion();
-    $datos_apr = $this->apr->select("id")
+    $id_apr=$this->sesión->id_apr_ses;
+    $es_admin=$this->sesión->es_admin;
+
+    if($es_admin!=0){
+      $datos_apr = $this->apr->select("id")
                            ->select("nombre as apr")
                            ->findAll();
+    }else{
+      $datos_apr = $this->apr->select("id")
+                           ->select("nombre as apr")->where("id",$id_apr)
+                           ->findAll();
+    }
+
+    
 
     $data = [];
 

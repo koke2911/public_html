@@ -41,6 +41,10 @@ function mostrar_datos_apr (data) {
 
   $("#txt_ultimo").val(data['ultimo_folio']);
   $("#txt_octava").val(data['clave_dete']);
+  $("#txt_nombre_apr").val(data['nombre_apr']);
+  $("#cmb_comuna").val(data['id_comuna']);
+  $("#cmb_calle").val(data['calle']);
+  $("#cmb_numero").val(data['numero']);
 
   console.log(data);
 
@@ -51,11 +55,11 @@ function mostrar_datos_apr (data) {
     url: base_url + '/Configuracion/Ctrl_apr/get_data_apr/' + data["id_apr"],
   })
    .done(function (response) {
-     $("#txt_nombre_apr").val(response.name);
-     $("#cmb_calle").val(response.address);
-     if (response.county_id !== null) {
-       $("#cmb_comuna").val(response.county_id);
-     }
+     
+     // $("#cmb_calle").val(response.address);
+     // if (response.county_id !== null) {
+     //   // $("#cmb_comuna").val(response.county_id);
+     // }
      $("#cmb_activity").val(response.activity);
      $("#cmb_economic_activity_id").val(response.economic_activity_id);
      $("#cmb_resolution_date").val(response.resolution_date);
