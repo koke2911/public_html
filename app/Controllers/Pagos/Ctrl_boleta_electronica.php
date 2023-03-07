@@ -511,7 +511,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                    
                 $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "False","TIPOIMPRESO" => "1","AMBIENTE" => "1","TOKEN" => $TokenObtenido);
                 
-                
+            if($tipo_dte==41){    
             
               $resultado = $client->call("ProcesaDte", $parametros); 
 
@@ -563,7 +563,9 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
               }else{
                   $this->error .= "ERROR AL PROCESAR DTE $folio <br><br>";
               }
-
+            }else{
+                $this->error .= "BOLETA NO EXENTA $folio <br><br>";
+            }
 
       }  
 
@@ -627,7 +629,7 @@ public function emitir_dte_new(){
    
 }
 
-  public function emitir_dte() {
+  public function emitir_dtes() {
     $this->validar_sesion();
     define("BOLETA_EXENTA", 41);
     define("FACTURA_EXENTA", 34);
@@ -1075,7 +1077,7 @@ public function emitir_dte_new(){
 
 
 
-  public function imprimir_dte($arr_boletas) {
+  public function imprimir_dtes($arr_boletas) {
     $this->validar_sesion();
     $mpdf = new \Mpdf\Mpdf();
 

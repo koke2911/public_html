@@ -324,7 +324,7 @@ $(document).ready(function () {
   $("#txt_subsidio").prop("readonly", true);
   $("#txt_tope_subsidio").prop("readonly", true);
   $("#txt_monto_subsidio").prop("readonly", true);
-  $("#txt_c_anterior").prop("readonly", true);
+  $("#txt_c_anterior").prop("readonly", false);
   $("#txt_metros").prop("readonly", true);
   $("#txt_subtotal").prop("readonly", true);
   $("#txt_total_servicios").prop("readonly", true);
