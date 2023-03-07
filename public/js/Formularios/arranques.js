@@ -624,7 +624,7 @@ $(document).ready(function() {
                 className: 'btn btn-danger',
                 title: "Informe de Arranques",
                 orientation: 'landscape',
-                pageSize: 'LETTER'
+                pageSize: 'TABLOID'
             },
             {
                 extend:    'print',

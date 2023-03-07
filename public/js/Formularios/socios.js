@@ -573,7 +573,7 @@ $(document).ready(function () {
                 className: 'btn btn-danger',
                 title: "Informe de Socios",
                 orientation: 'landscape',
-                pageSize: 'LETTER'
+                pageSize: 'TABLOID'
             },
             {
                 extend:    'print',

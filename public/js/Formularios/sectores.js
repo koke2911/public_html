@@ -225,7 +225,7 @@ $(document).ready(function() {
                 className: 'btn btn-danger',
                 title: "Informe de sectores",
                 orientation: 'landscape',
-                pageSize: 'LETTER'
+                pageSize: 'TABLOID'
             },
             {
                 extend:    'print',
