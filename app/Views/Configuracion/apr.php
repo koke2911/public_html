@@ -179,6 +179,12 @@
                           <input type='text' class="form-control" id='txt_octava' name="txt_octava"/>
                         </div>
                       </div>
+                      <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_octava">Clave WebAppOctava</label>
+                          <input type='text' class="form-control" id='txt_octava_web' name="txt_octava_web"/>
+                        </div>
+                      </div>
                     </div>
                   </form>
                 </div>

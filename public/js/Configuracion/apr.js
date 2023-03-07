@@ -21,6 +21,7 @@ function des_habilitar (a, b) {
   $("#txt_fono").prop("disabled", a);
   $("#txt_ultimo").prop("disabled", a);
   $("#txt_octava").prop("disabled", a);
+  $("#txt_octava_web").prop("disabled", a);
 }
 
 function mostrar_datos_apr (data) {
@@ -41,6 +42,7 @@ function mostrar_datos_apr (data) {
 
   $("#txt_ultimo").val(data['ultimo_folio']);
   $("#txt_octava").val(data['clave_dete']);
+  $("#txt_octava_web").val(data['clave_appoct']);
   $("#txt_nombre_apr").val(data['nombre_apr']);
   $("#cmb_comuna").val(data['id_comuna']);
   $("#cmb_calle").val(data['calle']);
@@ -181,7 +183,8 @@ function guardar_apr () {
       resolution_number: $("#cmb_resolution_number").val(),
       website: $("#txt_website").val(),
       ultimo_folio:$("#txt_ultimo").val(),
-      clave_dete:$("#txt_octava").val()      
+      clave_dete:$("#txt_octava").val(),
+      clave_appoct:$("#txt_octava_web").val()      
 
     },
     success: function (respuesta) {
@@ -414,7 +417,7 @@ $(document).ready(function () {
       txt_nombre_apr: {
         required: "El nombre de la APR es obligatorio",
         letras: "Solo puede ingresar letras",
-        maxlength: "Máximo 45 caracteres"
+        maxlength: "Máximo 100 caracteres"
       },
       txt_hash_sii: {
         maxlength: "Máximo 200 caracteres"

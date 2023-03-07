@@ -33,7 +33,8 @@ class Md_apr extends Model {
    'website',
    'email_dte',
    'ultimo_folio',
-   'clave_dete'
+   'clave_dete',
+   'clave_appoct'
   ];
 
   public function datatable_apr($db) {
@@ -58,7 +59,8 @@ class Md_apr extends Model {
 						    date_format(apr.fecha, '%d-%m-%Y %H:%i:%s') as fecha,
 						    apr.fono,
                 clave_dete,
-                ultimo_folio
+                ultimo_folio,
+                clave_appoct
 						from 
 							apr
 							inner join usuarios u on u.id = apr.id_usuario
@@ -90,7 +92,8 @@ class Md_apr extends Model {
        "email_dte"       => $key['email_dte'],
        'website'         => $key['website'],
        'clave_dete'      => $key['clave_dete'],
-       'ultimo_folio'    => $key['ultimo_folio']
+       'ultimo_folio'    => $key['ultimo_folio'],
+       'clave_appoct'    => $key['clave_appoct']
       ];
 
       $data[] = $row;

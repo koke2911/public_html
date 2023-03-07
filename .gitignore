@@ -3,3 +3,4 @@ app/Config/Database.php
 writable/*
 vendor/*
 .htaccess
+public/boletas/*

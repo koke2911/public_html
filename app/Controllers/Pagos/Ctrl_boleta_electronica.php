@@ -1048,6 +1048,7 @@ public function emitir_dte_new(){
     $this->validar_sesion();
     $folios = explode(",", $arr_boletas);
     $mpdf = new \Mpdf\Mpdf();
+    $mpdf2 = new \Mpdf\Mpdf();
 
     foreach ($folios as $folio) {
 
@@ -1066,9 +1067,18 @@ public function emitir_dte_new(){
         $mpdf->AddPage();
         $mpdf->UseTemplate($tplId);
 
-        unlink($folio_sii . ".pdf");
+        //Guarda boleta localmente
+        $this->validar_sesion();
+        $id_apr = $this->sesión->id_apr_ses;
+        file_put_contents('boletas/'.$id_apr.'_'.$folio_sii.'.pdf', $homepage);
 
-        
+        // $pagecount2 = $mpdf2->SetSourceFile($folio_sii . ".pdf");
+        // $tplId2     = $mpdf2->ImportPage($pagecount2);
+        // $mpdf2->AddPage();
+        // $mpdf2->UseTemplate($tplId2);        
+        // $mpdf2->Output('boletas/'.$id_apr.'_'.$folio_sii.'.pdf','D');
+
+        unlink($folio_sii . ".pdf");
 
     }
     header("Content-type:application/pdf");
