@@ -476,7 +476,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 <Uno>0</Uno>
                                 <Dos>'.$mes.' Del '.$fecha_comp[1].'</Dos>
                                 <Tres>'.$num_medidor.'</Tres>
-                                <Cuatro>'.$datosSocios["id"].'</Cuatro>
+                                <Cuatro>'.$datosSocios["rol"].'</Cuatro>
                                 <Cinco>'.$cuotas.'</Cinco>
                                 <Seis>'.$cuotas_socios.'</Seis>
                                 <Siete>'.$adicionales.'</Siete>
