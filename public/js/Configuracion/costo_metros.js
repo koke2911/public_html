@@ -57,6 +57,27 @@ function llenar_cmb_diametro() {
     });
 }
 
+function llenar_cmb_tarifa() {
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: base_url + "/Formularios/Ctrl_arranques/llenar_cmb_tarifa_metros",
+    }).done( function(data) {
+        $("#cmb_tarifa").html('');
+
+        var opciones = "<option value=\"\">Seleccione una Tarifa</option>";
+        
+        for (var i = 0; i < data.length; i++) {
+            opciones += "<option value=\"" + data[i].id + "\">" + data[i].tarifa + "</option>";
+        }
+
+        $("#cmb_tarifa").append(opciones);
+    }).fail(function(error){
+        respuesta = JSON.parse(error["responseText"]);
+        alerta.error("alerta", respuesta.message);
+    });
+}
+
 function eliminar_costo_metros(observacion, id_costo_metros) {
     $.ajax({
         url: base_url + "/Configuracion/Ctrl_costo_metros/eliminar_costo_metros",
@@ -93,6 +114,7 @@ function guardar_costo_metros() {
     var desde = $("#txt_desde").val();
     var hasta = $("#txt_hasta").val();
     var costo = peso.quitar_formato($("#txt_costo").val());
+    var id_tarifa = $("#cmb_tarifa").val();
 
     $.ajax({
         url: base_url + "/Configuracion/Ctrl_costo_metros/guardar_costo_metros",
@@ -108,7 +130,8 @@ function guardar_costo_metros() {
             cargo_fijo: cargo_fijo,
             desde: desde,
             hasta: hasta,
-            costo: costo
+            costo: costo,
+            id_tarifa:id_tarifa
         },
         success: function(respuesta) {
             const OK = 1;
@@ -116,7 +139,7 @@ function guardar_costo_metros() {
                 if (respuesta.nuevo_cf) {
                     $("#txt_id_cargo_fijo").val(respuesta.id_cargo_fijo);
                 }
-                $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Configuracion/Ctrl_costo_metros/datatable_costo_metros/" + id_apr + "/" + id_diametro);
+                $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Configuracion/Ctrl_costo_metros/datatable_costo_metros/" + id_apr + "/" + id_diametro+"/"+id_tarifa);
                 limpiar();
                 des_habilitar(true, false);
                 datatable_enabled = true;
@@ -171,9 +194,10 @@ var peso = {
 function actualizar_grid() {
     var id_apr = $("#cmb_apr").val();
     var id_diametro = $("#cmb_diametro").val();
+    var id_tarifa = $("#cmb_tarifa").val();
     
-    if (id_apr != "" && id_diametro != "") {
-        $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Configuracion/Ctrl_costo_metros/datatable_costo_metros/" + id_apr + "/" + id_diametro);
+    if (id_apr != "" && id_diametro != "" && id_tarifa != "") {
+        $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Configuracion/Ctrl_costo_metros/datatable_costo_metros/" + id_apr + "/" + id_diametro+"/"+id_tarifa);
         $.ajax({
             url: base_url + "/Configuracion/Ctrl_costo_metros/llenar_costo_fijo",
             type: "POST",
@@ -181,7 +205,8 @@ function actualizar_grid() {
             async: false,
             data: {
                 id_diametro: id_diametro,
-                id_apr: id_apr
+                id_apr: id_apr,
+                id_tarifa:id_tarifa
             },
             success: function(datos) {
                 if (Object.keys(datos).length > 0) {
@@ -210,15 +235,16 @@ $(document).ready(function() {
 	des_habilitar(true, false);
 	llenar_cmb_apr();
     llenar_cmb_diametro();
+    llenar_cmb_tarifa();
 
 	$("#btn_nuevo").on("click", function() {
-        if ($("#cmb_apr").val() != "" && $("#cmb_diametro").val() != "") {
+        if ($("#cmb_apr").val() != "" && $("#cmb_diametro").val() != "" && $("#cmb_tarifa").val() != "") {
             des_habilitar(false, true);
             limpiar();
             $("#btn_modificar").prop("disabled", true);
             $("#btn_eliminar").prop("disabled", true);
         } else {
-            alerta.aviso("alerta", "Seleccionar una APR y un diámetro");
+            alerta.aviso("alerta", "Seleccionar una APR, Tarifa y un diámetro");
         }
     });
 
@@ -268,6 +294,10 @@ $(document).ready(function() {
         actualizar_grid();
     });
 
+    $("#cmb_tarifa").on("change", function() {
+        actualizar_grid();
+    });
+
     $("#txt_cargo_fijo").on("blur", function() {
         var numero = peso.quitar_formato(this.value);
         this.value = peso.formateaNumero(numero);
@@ -301,6 +331,9 @@ $(document).ready(function() {
             cmb_apr: {
                 required: true
             },
+            cmb_tarifa: {
+                required: true
+            },
             txt_desde: {
                 required: true,
                 digits: true,
@@ -330,6 +363,9 @@ $(document).ready(function() {
             },
             cmb_apr: {
                 required: "Seleccione APR"
+            },
+            cmb_tarifa: {
+                required: "Seleccione Tarifa"
             },
             txt_desde: {
                 required: "Inicio de metros es obligatorio",

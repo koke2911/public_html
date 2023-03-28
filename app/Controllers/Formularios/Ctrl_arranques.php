@@ -8,12 +8,14 @@ use App\Models\Formularios\Md_arranques;
 use App\Models\Formularios\Md_medidores;
 use App\Models\Formularios\Md_tipo_documento;
 use App\Models\Formularios\Md_arranque_traza;
+use App\Models\Configuracion\Md_tarifas;
 
 class Ctrl_arranques extends BaseController {
 
   protected $arranques;
   protected $arranque_traza;
   protected $sectores;
+  protected $tarifa;
   protected $tipo_documento;
   protected $medidores;
   protected $sesión;
@@ -21,6 +23,7 @@ class Ctrl_arranques extends BaseController {
 
   public function __construct() {
     $this->arranques      = new Md_arranques();
+    $this->tarifa         = new Md_tarifas();
     $this->arranque_traza = new Md_arranque_traza();
     $this->sectores       = new Md_sectores();
     $this->tipo_documento = new Md_tipo_documento();
@@ -55,6 +58,52 @@ class Ctrl_arranques extends BaseController {
       $row = [
        "id"     => $key["id"],
        "sector" => $key["sector"]
+      ];
+
+      $data[] = $row;
+    }
+
+    // $salida = array("data" => $data);
+    echo json_encode($data);
+  }
+
+  public function llenar_cmb_tarifa() {
+    $this->validar_sesion();
+
+    $datos_tarifa = $this->tarifa->select("tarifas.id_tarifa")
+                                     ->select("tarifas.tipo")
+                                     ->join("apr_cargo_fijo ", "apr_cargo_fijo.tarifa = tarifas.id_tarifa")
+                                     ->where("apr_cargo_fijo.id_apr", $this->sesión->id_apr_ses)
+                                     ->findAll();
+
+    $data = [];
+
+    foreach ($datos_tarifa as $key) {
+      $row = [
+       "id"     => $key["id_tarifa"],
+       "tarifa" => $key["tipo"]
+      ];
+
+      $data[] = $row;
+    }
+
+    // $salida = array("data" => $data);
+    echo json_encode($data);
+  }
+
+  public function llenar_cmb_tarifa_metros() {
+    $this->validar_sesion();
+
+    $datos_tarifa = $this->tarifa->select("id_tarifa")
+                                     ->select("tipo")
+                                     ->findAll();
+
+    $data = [];
+
+    foreach ($datos_tarifa as $key) {
+      $row = [
+       "id"     => $key["id_tarifa"],
+       "tarifa" => $key["tipo"]
       ];
 
       $data[] = $row;
@@ -124,6 +173,7 @@ class Ctrl_arranques extends BaseController {
     $monto_alcantarillado = $this->request->getPost("monto_alcantarillado");
     $monto_cuota_socio    = $this->request->getPost("monto_cuota_socio");
     $monto_otros          = $this->request->getPost("monto_otros");
+    $id_tarifa            = $this->request->getPost("id_tarifa");
 
     if ($id_comuna == "") {
       $id_comuna = NULL;
@@ -156,7 +206,8 @@ class Ctrl_arranques extends BaseController {
      "giro"                 => $giro,
      "monto_alcantarillado" => $monto_alcantarillado,
      "monto_cuota_socio"    => $monto_cuota_socio,
-     "monto_otros"          => $monto_otros
+     "monto_otros"          => $monto_otros,
+     "tarifa"               => $id_tarifa
     ];
 
     if ($id_arranque != "") {

@@ -260,9 +260,14 @@
                         <div class="row">
                           <div class="container-fluid">
                             <div class="form-group">
-                              <label class="small mb-1" for="txt_cargo_fijo">Cargo Fijo $</label>
-                              <input type='text' class="form-control" id='txt_cargo_fijo' name="txt_cargo_fijo"/>
+                              <label class="small mb-1" for="txt_tarifa">Tarifa</label>
+                              <input type='text' class="form-control" id='txt_tarifa' name="txt_tarifa"/>
                             </div>
+                            <div class="form-group">
+                              <label class="small mb-1" for="txt_cargo_fijo">Cargo Fijo $</label>
+                              <input type='text' class="form-control" id='txt_cargo_fijo' name="txt_cargo_fijo" />
+                            </div>
+                            
                             <div class="table-responsive">
                               <table id="grid_costo_metros" class="table table-bordered" width="100%">
                                 <thead class="thead-dark">

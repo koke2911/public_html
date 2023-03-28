@@ -32,7 +32,8 @@ class Md_arranques extends Model {
    'otros',
    'monto_alcantarillado',
    'monto_cuota_socio',
-   'monto_otros'
+   'monto_otros',
+   'tarifa'
   ];
 
   public function datatable_arranques($db, $id_apr) {
@@ -65,7 +66,8 @@ class Md_arranques extends Model {
 						    a.giro,
 							a.monto_alcantarillado,
 							a.monto_cuota_socio,
-							a.monto_otros
+							a.monto_otros,
+              a.tarifa
 						from 
 							arranques a
 						    left join socios s on a.id_socio = s.id

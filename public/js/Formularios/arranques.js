@@ -15,6 +15,7 @@ function des_habilitar(a, b) {
     $("#btn_buscar_socio").prop("disabled", a);
     $("#cmb_medidor").prop("disabled", a);
     $("#cmb_sector").prop("disabled", a);
+    $("#cmb_tarifa").prop("disabled", a);
     $("#rd_si_a").prop("disabled", a);
     $("#rd_no_a").prop("disabled", a);
     $("#rd_si_cs").prop("disabled", a);
@@ -44,6 +45,7 @@ function mostrar_datos_arranque(data) {
     $("#txt_nombre_socio").val(data["nombre_socio"]);
     $("#cmb_medidor").val(data["id_medidor"]);
     $("#cmb_sector").val(data["id_sector"]);
+    $("#cmb_tarifa").val(data["tarifa"]);
     $("#txt_alcantarillado").val(data["alcantarillado"]);
     $("#txt_cuoto_socio").val(data["id_sector"]);
     $("#txt_otros").val(data["id_sector"]);
@@ -110,6 +112,7 @@ function guardar_arranque() {
     var id_arranque = $("#txt_id_arranque").val();
     var id_socio = $("#txt_id_socio").val();
     var id_sector = $("#cmb_sector").val();
+    var id_tarifa = $("#cmb_tarifa").val();
     if ($("#rd_si_a").prop("checked")) { var alcantarillado = 1; } else { var alcantarillado = 0; }
     if ($("#rd_si_cs").prop("checked")) { var cuota_socio = 1; } else { var cuota_socio = 0; }
     if ($("#rd_si_otros").prop("checked")) { var otros = 1; } else { var otros = 0; }
@@ -148,7 +151,8 @@ function guardar_arranque() {
             giro: giro,
             monto_alcantarillado: monto_alcantarillado,
             monto_cuota_socio: monto_cuota_socio,
-            monto_otros: monto_otros
+            monto_otros: monto_otros,
+            id_tarifa:id_tarifa
         },
         success: function(respuesta) {
             const OK = 1;
@@ -299,6 +303,27 @@ function llenar_cmb_sector() {
     });
 }
 
+function llenar_cmb_tarifa() {
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: base_url + "/Formularios/Ctrl_arranques/llenar_cmb_tarifa",
+    }).done( function(data) {
+        $("#cmb_tarifa").html('');
+
+        var opciones = "<option value=\"\">Seleccione una Tarifa</option>";
+        
+        for (var i = 0; i < data.length; i++) {
+            opciones += "<option value=\"" + data[i].id + "\">" + data[i].tarifa + "</option>";
+        }
+
+        $("#cmb_tarifa").append(opciones);
+    }).fail(function(error){
+        respuesta = JSON.parse(error["responseText"]);
+        alerta.error("alerta", respuesta.message);
+    });
+}
+
 function llenar_cmb_tipo_documento() {
     $.ajax({
         type: "GET",
@@ -392,6 +417,7 @@ $(document).ready(function() {
     llenar_cmb_provincia();
     llenar_cmb_comuna();
     llenar_cmb_sector();
+    llenar_cmb_tarifa();
     llenar_cmb_tipo_documento();
     llenar_cmb_medidores("TODOS");
 
@@ -539,6 +565,9 @@ $(document).ready(function() {
             cmb_sector: {
                 required: true
             },
+            cmb_tarifa: {
+                required: true
+            },
             cmb_tipo_documento: {
                 required: true
             }
@@ -552,6 +581,9 @@ $(document).ready(function() {
             },
             cmb_sector: {
                 required: "Seleccione un sector"
+            },
+            cmb_tarifa: {
+                required: "Seleccione una tarifa"
             },
             cmb_tipo_documento: {
                 required: "Seleccione un tipo de documento"

@@ -41,6 +41,12 @@
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
                         <div class="form-group">
+                          <label class="small mb-1" for="cmb_tarifa">Tarifa</label>
+                          <select id="cmb_tarifa" name="cmb_tarifa" class="form-control"></select>
+                        </div>
+                      </div>
+                      <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
+                        <div class="form-group">
                           <label class="small mb-1" for="cmb_diametro">Diámetro del Medidor</label>
                           <select id="cmb_diametro" name="cmb_diametro" class="form-control"></select>
                         </div>

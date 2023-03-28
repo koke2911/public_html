@@ -21,7 +21,7 @@ class Md_costo_metros extends Model {
    'fecha'
   ];
 
-  public function datatable_costo_metros($db, $id_apr, $id_diametro) {
+  public function datatable_costo_metros($db, $id_apr, $id_diametro,$id_tarifa) {
     $consulta = "SELECT 
 							cm.id as id_costo_metros,
 						    cf.cargo_fijo,
@@ -36,14 +36,14 @@ class Md_costo_metros extends Model {
 							date_format(cm.fecha, '%d-%m-%Y %H:%i') as fecha
 						from 
 							costo_metros cm
-						    inner join apr_cargo_fijo cf on cm.id_cargo_fijo = cf.id
+						  inner join apr_cargo_fijo cf on cm.id_cargo_fijo = cf.id
 							inner join apr on cf.id_apr = apr.id
-						    inner join diametro d on cf.id_diametro = d.id
+						  inner join diametro d on cf.id_diametro = d.id
 							inner join usuarios u on cm.id_usuario = u.id
 						where
 							cf.id_apr = $id_apr and
 						    cf.id_diametro = $id_diametro and
-							cm.estado = 1";
+							cm.estado = 1 and cf.tarifa=$id_tarifa";
 
     $query        = $db->query($consulta);
     $costo_metros = $query->getResultArray();
@@ -74,7 +74,7 @@ class Md_costo_metros extends Model {
     }
   }
 
-  public function validar_metraje_existente($db, $desde, $hasta, $cantidad, $id_apr, $id_diametro, $id_costo_metros) {
+  public function validar_metraje_existente($db, $desde, $hasta, $cantidad, $id_apr, $id_diametro, $id_costo_metros,$id_tarifa) {
     define("ACTIVO", 1);
     $estado = ACTIVO;
 
@@ -91,7 +91,7 @@ class Md_costo_metros extends Model {
 							cm.hasta between ? and ? or
 							?  between cm.desde and cm.hasta or
 							?  between cm.desde and cm.hasta or
-                            cf.cantidad > ?)";
+                            cf.cantidad > ?) and cf.tarifa= ?";
 
     if ($id_costo_metros != "") {
       $consulta .= " and cm.id <> ?";
@@ -107,7 +107,8 @@ class Md_costo_metros extends Model {
      $hasta,
      $desde,
      $hasta,
-     $cantidad
+     $cantidad,
+     $id_tarifa
     ];
 
     if ($id_costo_metros != "") {
@@ -125,7 +126,7 @@ class Md_costo_metros extends Model {
     }
   }
 
-  public function datatable_costo_metros_consumo($db, $id_apr, $id_diametro, $consumo_actual) {
+  public function datatable_costo_metros_consumo($db, $id_apr, $id_diametro, $consumo_actual,$id_tarifa) {
     $consulta = "(SELECT 
 							cm.id as id_costo_metros,
 							cm.desde,
@@ -138,7 +139,7 @@ class Md_costo_metros extends Model {
 						where
 							cf.id_apr = $id_apr and
 							cf.id_diametro = $id_diametro and
-							cm.estado = 1)
+							cm.estado = 1 and cf.tarifa=$id_tarifa)
 						union
 						(select
 						    0 as id_costo_metros,
@@ -149,7 +150,7 @@ class Md_costo_metros extends Model {
 							apr_cargo_fijo
 						where
 							id_apr = $id_apr and
-						    id_diametro = $id_diametro)
+						    id_diametro = $id_diametro and tarifa=$id_tarifa)
 						order by desde";
 
     $query        = $db->query($consulta);

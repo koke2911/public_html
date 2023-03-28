@@ -15,7 +15,8 @@ class Md_apr_cargo_fijo extends Model {
    'cantidad',
    'cargo_fijo',
    'id_apr',
-   'id_diametro'
+   'id_diametro',
+   'tarifa'
   ];
 }
 

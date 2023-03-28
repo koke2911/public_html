@@ -83,6 +83,12 @@
                           <select id="cmb_sector" name="cmb_sector" class="form-control"></select>
                         </div>
                       </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="cmb_tarifa">Tarifa</label>
+                          <select id="cmb_tarifa" name="cmb_tarifa" class="form-control"></select>
+                        </div>
+                      </div>
                     </div>
                     <div class="row">
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">

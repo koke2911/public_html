@@ -74,6 +74,8 @@ class Ctrl_metros extends BaseController {
      ->select("ifnull(metros.iva, 0) as iva")
      ->select("u.usuario")
      ->select("date_format(metros.fecha, '%d-%m-%Y') as fecha")
+     ->select("a.tarifa as id_tarifa")
+     ->select("(select t.tipo from tarifas t where t.id_tarifa=a.tarifa) as tarifa")
      ->join("socios soc", "metros.id_socio = soc.id")
      ->join("arranques a", "a.id_socio = soc.id")
      ->join("sectores sec", "a.id_sector = sec.id")
@@ -274,6 +276,8 @@ class Ctrl_metros extends BaseController {
      ->select("ifnull(arranques.monto_cuota_socio, 0) as cuota_socio")
      ->select("ifnull(arranques.monto_otros, 0) as otros")
      ->select("arranques.id_tipo_documento")
+     ->select("arranques.tarifa as id_tarifa")
+     ->select("(select t.tipo from tarifas t where t.id_tarifa=arranques.tarifa ) as tarifa")
      ->join("medidores m", "arranques.id_medidor = m.id")
      ->join("diametro d", "m.id_diametro = d.id")
      ->join("socios s", "arranques.id_socio = s.id")
@@ -290,9 +294,9 @@ class Ctrl_metros extends BaseController {
     return json_encode($salida);
   }
 
-  public function datatable_costo_metros($consumo_actual, $id_diametro) {
+  public function datatable_costo_metros($consumo_actual, $id_diametro,$id_tarifa) {
     $this->validar_sesion();
-    echo $this->costo_metros->datatable_costo_metros_consumo($this->db, $this->sesión->id_apr_ses, $id_diametro, $consumo_actual);
+    echo $this->costo_metros->datatable_costo_metros_consumo($this->db, $this->sesión->id_apr_ses, $id_diametro, $consumo_actual,$id_tarifa);
   }
 
   public function calcular_total_servicios() {

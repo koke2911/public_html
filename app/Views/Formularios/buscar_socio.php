@@ -25,6 +25,8 @@
               <th width="0%">cuota_socio</th>
               <th width="0%">otros</th>
               <th width="0%">id_tipo_documento</th>
+              <th width="0%">id_tarifa</th>
+              <th width="0%">tarifa</th>
             <?php } ?>
           </tr>
         </thead>

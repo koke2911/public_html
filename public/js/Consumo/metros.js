@@ -59,11 +59,13 @@ function mostrar_datos_metros (data) {
   $("#txt_cuota_repactacion").val(peso.formateaNumero(data["cuota_repactacion"]));
   $("#txt_monto_facturable").val(peso.formateaNumero(data["monto_facturable"]));
   $("#txt_cargo_fijo").val(peso.formateaNumero(data["cargo_fijo"]));
+  $("#txt_tarifa").val(data["tarifa"]);
   $("#txt_total_mes").val(peso.formateaNumero(data["total_mes"]));
   $("#txt_cuota_socio").val(peso.formateaNumero(data["cuota_socio"]));
   $("#txt_otros").val(peso.formateaNumero(data["otros"]));
 
-  $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_metros/datatable_costo_metros/" + data["metros"] + "/" + data["id_diametro"]);
+  //var tarifa_id=
+  $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_metros/datatable_costo_metros/" + data["metros"] + "/" + data["id_diametro"]+"/"+data["id_tarifa"]);
 
 }
 
