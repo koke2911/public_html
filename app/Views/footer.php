@@ -44,9 +44,11 @@
   <div class="container-fluid">
     <div class="d-flex align-items-center justify-content-between small">
       <div class="text-muted">Copyright &copy; Info Integral y Corretaje. LTDA 2021</div>
-      <div>
-        <a href="https://www.facebook.com/Medidores.Inteligentes.De.Agua.Potable" target="_blank">Facebook</a> &middot; <a href="https://medidorinteligente.cl/" target="_blank">Sitio Web</a>
-      </div>
+        <div>
+          <a href="https://softwareapr.cl/info" target="_blank">Información</a> &middot;&middot;
+          <a href="https://medidorinteligente.cl" target="_blank">Medidor inteligente</a> &middot;&middot; <a href="https://puntoblue.cl/" target="_blank">Punto blue</a>
+
+        </div>
     </div>
   </div>
 </footer></div></div></div>

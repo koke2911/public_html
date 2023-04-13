@@ -357,6 +357,291 @@ class Ctrl_lecturas_sector extends BaseController {
       return json_encode($respuesta);
     }
   }
+
+  public function importar_planilla(){
+      $this->validar_sesion();
+      $id_apr=$this->sesión->id_apr_ses;
+      define("ACTIVO", 1);
+
+      if ($this->request->getMethod() == "post") {
+        $mes = $this->request->getPost("dt_mes_consumo");
+        $Vencimiento = $this->request->getPost("dt_fecha_vencimiento");
+        $file = $this->request->getFile("lecturas");
+
+        $name_file = $file->getName();
+
+     
+        $extension = pathinfo($name_file);
+        echo $extension['extension'];
+
+
+       if($name_file!="" && $mes!="" && $Vencimiento!=""){
+        if (!$file->isValid()) {
+          throw new RuntimeException($file->getErrorString() . "(" . $file->getError() . ")");
+        } else {
+
+          if($extension['extension']=='xlsx'){
+            $reader  = \PhpOffice\PhpSpreadsheet\IOFactory::createReader("Xlsx");
+          }elseif($extension['extension']=='xls'){
+            $reader  = \PhpOffice\PhpSpreadsheet\IOFactory::createReader("Xls");
+          }else{
+            echo 'Archivo no valido';
+            exit();
+          }
+            $spreadsheet = $reader->load($file);
+            $sheet       = $spreadsheet->getSheet(0);
+                                                        
+        $filas_total=0;   
+        $filas_ok=0; 
+        foreach ($sheet->getRowIterator(2) as $row) {
+                $filas_total++;
+                $medidor= trim($sheet->getCellByColumnAndRow(1, $row->getRowIndex()));
+                $lectura=trim($sheet->getCellByColumnAndRow(8, $row->getRowIndex()));
+
+                define("ACTIVO", 1);
+
+          $datosSocios = $this->arranques
+             ->select("s.id as id_socio")
+             ->select("concat(s.rut, '-', s.dv) as rut")
+             ->select("s.rol")
+             ->select("concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre_socio")
+             ->select("date_format(s.fecha_entrada, '%d-%m-%Y') as fecha_entrada")
+             ->select("arranques.id as id_arranque")
+             ->select("m.id_diametro")
+             ->select("d.glosa as diametro")
+             ->select("sec.nombre as sector")
+             ->select("case when sub.estado = 1 then p.glosa else '0%' end as subsidio")
+             ->select("(select tope_subsidio from apr where id = s.id_apr) as tope_subsidio")
+             ->select("ifnull((select consumo_actual from metros m where m.id = (select max(m2.id) from metros m2 where m2.id_socio = arranques.id_socio and estado <> 0)), 0) as consumo_anterior")
+             ->select("cf.cargo_fijo")
+             ->select("s.abono")
+             ->select("ifnull(arranques.monto_alcantarillado, 0) as alcantarillado")
+             ->select("ifnull(arranques.monto_cuota_socio, 0) as cuota_socio")
+             ->select("ifnull(arranques.monto_otros, 0) as otros")
+             ->select("arranques.id_tipo_documento")
+             ->select("m.numero as numero_med")
+             ->select("cf.id as id_cargo_fijo")
+             ->join("medidores m", "arranques.id_medidor = m.id")
+             ->join("diametro d", "m.id_diametro = d.id")
+             ->join("socios s", "arranques.id_socio = s.id")
+             ->join("sectores sec", "arranques.id_sector = sec.id")
+             ->join("subsidios sub", "sub.id_socio = s.id", "left")
+             ->join("porcentajes p", "sub.id_porcentaje = p.id", "left")
+             ->join("apr_cargo_fijo cf", "cf.id_apr = s.id_apr and cf.id_diametro = m.id_diametro")
+             ->where("s.id_apr", $id_apr)
+             ->where("m.id_apr", $id_apr)
+             ->where("m.numero", $medidor)
+             ->first();
+
+                  $id_socio = $datosSocios['id_socio'];
+                  $rut = $datosSocios['rut'];
+                  $rol = $datosSocios['rol'];
+                  $nombre_socio = $datosSocios['nombre_socio'];
+                  $fecha_entrada = $datosSocios['fecha_entrada'];
+                  $id_arranque = $datosSocios['id_arranque'];
+                  $id_diametro = $datosSocios['id_diametro'];
+                  $diametro = $datosSocios['diametro'];
+                  $sector = $datosSocios['sector'];
+                  $subsidio = $datosSocios['subsidio'];
+                  $tope_subsidio = $datosSocios['tope_subsidio'];
+                  $consumo_anterior = $datosSocios['consumo_anterior'];
+                  $cargo_fijo = $datosSocios['cargo_fijo'];
+                  $abono = $datosSocios['abono'];
+                  $alcantarillado = $datosSocios['alcantarillado'];
+                  $cuota_socio = $datosSocios['cuota_socio'];
+                  $otros = $datosSocios['otros'];
+                  $id_tipo_documento = $datosSocios['id_tipo_documento'];
+                  $numero_med = $datosSocios['numero_med'];
+                  $id_cargo_fijo = $datosSocios['id_cargo_fijo'];
+
+
+                  $existe_consumo_mes = $this->metros->select("count(*) as filas")
+                                       ->where("id_socio", $id_socio)
+                                       ->where("date_format(fecha_ingreso, '%m-%Y')", $mes)
+                                       ->where("estado", 1)
+                                       ->first();
+                  $filasexiste = $existe_consumo_mes["filas"];
+
+                if($lectura>$consumo_anterior && $id_socio!="" && $filasexiste==0){
+
+                    $metros_consumidos=$lectura-$consumo_anterior;
+
+                    $datosCostoMetros = json_decode($this->costo_metros->datatable_costo_metros_consumo($this->db, $this->sesión->id_apr_ses, $id_diametro, 0));
+
+                        for ($i = 0; $i <= $metros_consumidos; $i ++) {
+                        foreach ($datosCostoMetros as $key => $value) {
+                          foreach ($value as $k => $v) {
+                            if ($i >= intval($v->desde) and $i <= intval($v->hasta)) {
+                              if (intval($v->id_costo_metros) == 0) {
+                                $subtotal = intval($v->costo);
+                              } else {
+                                $subtotal = $subtotal + intval($v->costo);
+                              }
+
+                              if ($i <= intval($tope_subsidio)) {
+                                $total_subsidio = $subtotal-$cargo_fijo;
+                              }
+                            }
+                          }
+                        }
+                      }
+
+                      $subsidio = explode("%",$subsidio);
+                      $subsidio = intval($subsidio[0]);
+                      $monto_subsidio=0;
+
+                      if($subsidio>0){
+                         $monto_subsidio = $total_subsidio * $subsidio / 100;
+                         $alcantarillado= $alcantarillado * $subsidio / 100;
+                      }
+
+                      $fecha_vencimiento = date_format(date_create($this->request->getPost("dt_fecha_vencimiento")), 'm-Y');
+
+                      $datosConvenioDetalle = $this->convenio_detalle
+                     ->select("ifnull(sum(convenio_detalle.valor_cuota), 0) as total_servicios")
+                     ->join("convenios", "convenio_detalle.id_convenio=convenios.id")
+                     ->where("date_format(convenio_detalle.fecha_pago, '%m-%Y')", $fecha_vencimiento)
+                     ->where("convenios.id_socio", $id_socio)
+                     ->where("convenios.estado", ACTIVO)
+                     ->first();
+
+                    if ($datosConvenioDetalle != NULL) {
+                      $total_servicios = intval($datosConvenioDetalle["total_servicios"]);
+                    } else {
+                      $total_servicios = 0;
+                    }
+
+                    $datosRepactacionesDetalle = $this->repactaciones_detalle
+                     ->select("ifnull(sum(repactaciones_detalle.valor_cuota), 0) as total_servicios")
+                     ->join("repactaciones", "repactaciones_detalle.id_repactacion=repactaciones.id")
+                     ->where("date_format(repactaciones_detalle.fecha_pago, '%m-%Y')", $fecha_vencimiento)
+                     ->where("repactaciones.id_socio", $id_socio)
+                     ->where("repactaciones.estado", ACTIVO)
+                     ->first();
+
+                    if ($datosRepactacionesDetalle != NULL) {
+                      $cuota_repactacion = intval($datosRepactacionesDetalle["total_servicios"]);
+                    } else {
+                      $cuota_repactacion = 0;
+                    }
+
+                    $datosServicios = [
+                     "total_servicios"   => $total_servicios,
+                     "cuota_repactacion" => $cuota_repactacion
+                    ];
+
+                    $monto_facturable=$subtotal-$monto_subsidio;
+                    $total_mes=$monto_facturable+$total_servicios+$cuota_repactacion+$alcantarillado+$cuota_socio+$otros;
+
+                    $fecha      = date("Y-m-d H:i:s");
+                    $id_usuario = $this->sesión->id_usuario_ses;
+
+                    $datosMetros = [
+                   "id_socio"          => $id_socio,
+                   "monto_subsidio"    => $monto_subsidio,
+                   "fecha_ingreso"     => date_format(date_create('01-'.$mes), 'Y-m-d'),
+                   "fecha_vencimiento" => date_format(date_create($Vencimiento), 'Y-m-d'),
+                   "consumo_anterior"  => $consumo_anterior,
+                   "consumo_actual"    => $lectura,
+                   "metros"            => $metros_consumidos,
+                   "subtotal"          => $subtotal,
+                   "multa"             => 0,
+                   "total_servicios"   => $total_servicios,
+                   "cuota_repactacion" => $cuota_repactacion,
+                   "total_mes"         => $total_mes,
+                   "cargo_fijo"        => $cargo_fijo,
+                   "monto_facturable"  => $monto_facturable,
+                   "id_usuario"        => $id_usuario,
+                   "fecha"             => $fecha,
+                   "id_apr"            => $id_apr,
+                   "alcantarillado"    => $alcantarillado,
+                   "cuota_socio"       => $cuota_socio,
+                   "otros"             => $otros
+                  ];
+
+                  if($this->metros->save($datosMetros)){
+                      $filas_ok++;
+
+                      $obtener_id = $this->metros->select("max(id) as id_metros")
+                                                 ->first();
+                      $id_metros  = $obtener_id["id_metros"];                    
+
+                      $datosTraza = [
+                       "id_metros"   => $id_metros,
+                       "estado"      => 1,
+                       "observacion" => 'CARGA MASIVA',
+                       "id_usuario"  => $id_usuario,
+                       "fecha"       => $fecha
+                      ];
+
+                      $this->metros_traza->save($datosTraza);
+                  }
+                }
+              }
+
+        } 
+
+
+       }else{
+        echo "Debe llenar todos los datos";
+       }
+    }
+
+    echo 'TSe ingresaron '.$filas_ok.' de un total de '.$filas_total;
+  }
+
+  function tomaLectura(){
+
+        $objPHPExcel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $objPHPExcel->setActiveSheetIndex(0);
+
+        $objPHPExcel->getActiveSheet()->setCellValue('A1', 'N° Medidor');
+        $objPHPExcel->getActiveSheet()->setCellValue('B1', 'Id socio');
+        $objPHPExcel->getActiveSheet()->setCellValue('C1', 'Rol');
+        $objPHPExcel->getActiveSheet()->setCellValue('D1', 'Socio');
+        $objPHPExcel->getActiveSheet()->setCellValue('E1', 'Sector');
+        $objPHPExcel->getActiveSheet()->setCellValue('F1', 'Arranque');
+        $objPHPExcel->getActiveSheet()->setCellValue('G1', 'Lectura Anterior');
+        $objPHPExcel->getActiveSheet()->setCellValue('H1', 'Lectura Actual');
+
+       $sheet = $objPHPExcel->getActiveSheet();
+
+       foreach ($sheet->getColumnIterator() as $column) {
+         $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+      }
+
+      $this->validar_sesion();
+      $id_apr=$this->sesión->id_apr_ses;
+
+      // $header = [array("Customer Number", "Customer Name", "Address", "City", "State", "Zip")];
+       $datosSocios = $this->arranques
+             ->select("m.numero as numero_med")
+             ->select("s.id as id_socio")
+             ->select("s.rol")
+             ->select("concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre_socio")
+              ->select("sec.nombre as sector")
+             ->select("arranques.id as id_arranque") 
+             ->select("ifnull((select consumo_actual from metros m where m.id = (select max(m2.id) from metros m2 where m2.id_socio = arranques.id_socio and estado <> 0)), 0) as consumo_anterior")
+             ->join("medidores m", "arranques.id_medidor = m.id")
+             ->join("diametro d", "m.id_diametro = d.id")
+             ->join("socios s", "arranques.id_socio = s.id")
+             ->join("sectores sec", "arranques.id_sector = sec.id")
+             ->join("subsidios sub", "sub.id_socio = s.id", "left")
+             ->join("porcentajes p", "sub.id_porcentaje = p.id", "left")
+             ->join("apr_cargo_fijo cf", "cf.id_apr = s.id_apr and cf.id_diametro = m.id_diametro")
+             ->where("s.id_apr", $id_apr)
+             ->where("m.id_apr", $id_apr)             
+             ->findAll();
+
+      $sheet->fromArray($datosSocios, NULL, 'A2'); 
+
+      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); 
+      header('Content-Disposition: attachment;filename="Toma_lectura.xlsx"'); 
+
+      $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
+      $writer->save('php://output');
+
+  }
 }
 
 ?>

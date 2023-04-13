@@ -132,6 +132,98 @@ public function ObtieneToken(){
     } 
 }
 
+public function envia_mail($arr_boletas){
+
+   $this->validar_sesion(); 
+   $folios = $this->request->getPost("arr_boletas");
+   $folios = explode(",", $arr_boletas);
+   $id_apr = $this->sesión->id_apr_ses;
+
+  foreach ($folios as $folio) {
+        $datosMetros    = $this->metros->select("folio_bolect")
+                                       ->select("id_socio")
+                                       ->select("url_boleta")
+                                       ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
+                                       ->where("id", $folio)
+                                       ->first();
+        $folio_sii      = $datosMetros["folio_bolect"];
+        $url_boleta = $datosMetros["url_boleta"];
+        $id_socio = $datosMetros["id_socio"];
+        $mes = $datosMetros["mes_consumo"];
+
+        $datosSocios = $this->socios
+         ->select("concat(socios.rut, '-', socios.dv) as rut_socio")
+         ->select("concat(socios.nombres, ' ', socios.ape_pat, ' ', socios.ape_mat) as nombre_socio")
+         ->select("concat(socios.calle, ', ', socios.numero, ', ', socios.resto_direccion) as direccion")
+         ->select("socios.rol")
+         ->select("socios.id_comuna")
+         ->select("ifnull(socios.email,'--') as email")
+         ->where("socios.id", $id_socio)
+         ->first();
+
+        $nombre_socio=$datosSocios['nombre_socio'];
+        $rut_socio=$datosSocios['rut_socio'];
+        $email_socio=$datosSocios['email'];
+
+
+        if($email_socio!="--"){
+
+              $this->email = \Config\Services::email();
+              $url_qr=base_url()."/QR_punto_blue.png";
+             
+              $subject = 'Tu boleta de Agua ya está disponible';
+              $message = '<p>¡Hola '.$nombre_socio.'!<br>
+                        Tu Boleta de Agua Potable, correspondiente al Mes: '.$mes.', Ya está disponible.<BR>Puedes realizar el pago, de forma "online", a través de: www.puntoblue.cl<BR> o escanenado con tu teléfono móvil el "codigo QR" adjunto en este Correo.<BR><BR>
+                          ¡Saludos Cordiales!</p>';
+
+              $this->email->attach('QR_punto_blue.png','inline');
+
+              // Datos el email destino. Donde irá a parar el formulario
+              $this->email->setTo($email_socio);
+
+              // Email desde el que se envía (el que hemos configurarado en el apartado anterior)
+              $this->email->setFrom("boletas@softwareapr.cl", "Software APR");
+
+
+              $this->email->setSubject($subject);
+              $this->email->setMessage($message);
+
+              $boleta=$id_apr.'_'.$folio_sii.'.pdf';
+
+              if(!file_exists('boletas/'.$boleta)){
+                $homepage = file_get_contents($url_boleta);
+                file_put_contents('boletas/'.$id_apr.'_'.$folio_sii.'.pdf', $homepage);
+            
+              }
+
+
+              $this->email->attach('boletas/'.$boleta);
+
+              if ($this->email->send()){
+
+                $datosMetrosSave = [                
+                     "id"                => $folio,
+                     "estado_mail"        => "OK"
+                ];
+
+                $this->metros->save($datosMetrosSave);
+              }
+
+              $this->email->clear(TRUE);
+              // $data = $this->email->printDebugger(['headers']);
+              // print_r($data);
+              echo $email_socio;
+        }
+
+           
+  }
+  // $this->email->printDebugger();
+
+  // print_r($this->email->printDebugger());
+  // print_r($data);
+
+}
+
 public function valida_token($TokenObtenido){
    ini_set("soap.wsdl_cache_enabled", "0"); 
    $Tvalido='NO';
@@ -1040,7 +1132,6 @@ public function emitir_dte_new(){
   }
 
   public function imprimir_dte_new($arr_boletas){
-    
     ini_set('max_execution_time', 480);
     ini_set('max_input_time', 480);
     ini_set('memory_limit', 5120 . 'M');

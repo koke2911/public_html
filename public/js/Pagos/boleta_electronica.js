@@ -119,6 +119,58 @@ function emitir_dte () {
   }
 }
 
+function enviarMail(){
+ 
+  var data = $("#grid_boletas").DataTable().rows('.selected').data();
+  var arr_boletas = [];
+
+  $(data).each(function (i, fila) {
+    if (fila.folio_bolect > 0) {
+      arr_boletas.push(fila.id_metros);
+    }
+  });
+
+  if (arr_boletas.length > 0) {
+    
+      $.ajax({
+      url: base_url + "/Pagos/Ctrl_boleta_electronica/envia_mail/"+arr_boletas,
+      type: "POST",
+      success: function (respuesta) {
+        buscar_boletas();
+        $(".div_sample").JQLoader({
+          theme: "standard",
+          mask: true,
+          background: "#fff",
+          color: "#fff",
+          action: "close"
+        });
+      },
+        error: function (error) {
+          $(".div_sample").JQLoader({
+            theme: "standard",
+            mask: true,
+            background: "#fff",
+            color: "#fff",
+            action: "close"
+          });
+          alerta.error("alerta", "Ha ocurrido un error");
+        }
+    });
+
+  } else {
+    alerta.error("alerta", "Seleccione al menos una boleta, con folio SII")
+    $(".div_sample").JQLoader({
+      theme: "standard",
+      mask: true,
+      background: "#fff",
+      color: "#fff",
+      action: "close"
+    });
+  }
+
+
+}
+
 function imprimir_dte () {
   var data = $("#grid_boletas").DataTable().rows('.selected').data();
   var arr_boletas = [];
@@ -194,6 +246,18 @@ $(document).ready(function () {
     $('#dlg_emitir_boletas').modal('show');
   });
 
+  $("#btn_enviar_mail").on("click", function () {
+
+    $(".div_sample").JQLoader({
+      theme: "standard",
+      mask: true,
+      background: "#fff",
+      color: "#fff"
+    });
+
+    enviarMail();    
+  });
+
   $("#btn_imprimir").on("click", function () {
     imprimir_dte();
   });
@@ -216,6 +280,16 @@ $(document).ready(function () {
     },
     orderClasses: true,
     columns: [
+      {
+        "data": "estado_mail",
+        "render": function ( data, type, row ) {
+          if (data!='OK'){
+            return "<img src='email.png' width='25px' height='25px' title='Boleta No enviada'/><a></a>";
+          }else{
+             return "<img src='email_ok.png' width='20' height='20px' title='Boleta enviada' /><a style='font-size: xx-small;color:white'>Ok</a>";
+          }
+        }
+      },
       {"data": "id_metros"},
       {"data": "folio_bolect"},
       {

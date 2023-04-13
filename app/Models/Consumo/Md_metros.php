@@ -37,7 +37,8 @@ class Md_metros extends Model {
    'cuota_socio',
    'otros',
    'iva',
-   'url_boleta'
+   'url_boleta',
+   'estado_mail'
   ];
 
   public function datatable_boleta_electronica($db, $id_apr, $datosBusqueda) {
@@ -45,6 +46,7 @@ class Md_metros extends Model {
     $estado = ELIMINADO;
 
     $consulta = "SELECT 
+              ifnull(estado_mail,'N') as estado_mail,
 							m.id as id_metros,
 							m.folio_bolect,
               ifnull(m.url_boleta,'--') as url_boleta,

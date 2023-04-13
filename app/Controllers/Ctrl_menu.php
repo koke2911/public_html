@@ -364,6 +364,11 @@ class Ctrl_menu extends BaseController {
     echo view('Finanzas/multas');
   }
 
+  public function lectura_planilla() {
+    $this->validar_sesion();
+    echo view('Consumo/lectura_planilla');
+  }
+
   public function validar_sesion() {
     if (!$this->sesión->has("id_usuario_ses")) {
       echo "La sesión expiró, actualice el sitio web con F5";

@@ -352,7 +352,9 @@ class Ctrl_metros extends BaseController {
 
   public function v_importar_planilla() {
     $this->validar_sesion();
-    echo view("Consumo/importar_planilla");
+    // echo view("Consumo/importar_planilla");
+
+    echo view("Consumo/importar_lectura");
   }
 }
 

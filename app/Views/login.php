@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
     <meta name="description" content=""/>
     <meta name="author" content=""/>
-    <title>Gestion APR</title>
-    <link rel="icon" href="<?php echo base_url(); ?>/icon_html.png" type="image/png"/>
+    <title>Software APR</title>
+    <link rel="icon" href="<?php echo base_url(); ?>/icon2_html.png" type="image/png"/>
     <link href="<?php echo base_url(); ?>/css/styles.css" rel="stylesheet"/>
     <link href="<?php echo base_url(); ?>/css/estilo_extra.css" rel="stylesheet"/>
     <link href="<?php echo base_url(); ?>/css/login.css" rel="stylesheet"/>
@@ -60,7 +60,9 @@
             <div class="d-flex align-items-center justify-content-between small">
               <div class="text-muted">Copyright &copy; Info Integral y Corretaje. LTDA 2021</div>
               <div>
-                <a href="https://medidorinteligente.cl" target="_blank">Medidor inteligente</a> &middot; <a href="https://puntoblue.cl/" target="_blank">Punto blue</a>
+                <a href="https://softwareapr.cl/info" target="_blank">Información</a> &middot;&middot;
+                <a href="https://medidorinteligente.cl" target="_blank">Medidor inteligente</a> &middot;&middot; <a href="https://puntoblue.cl/" target="_blank">Punto blue</a>
+                
               </div>
             </div>
           </div>
