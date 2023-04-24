@@ -284,9 +284,9 @@ $(document).ready(function () {
         "data": "estado_mail",
         "render": function ( data, type, row ) {
           if (data!='OK'){
-            return "<img src='email.png' width='25px' height='25px' title='Boleta No enviada'/><a></a>";
+            return "<img src='"+base_url+"/email.png' width='25px' height='25px' title='Boleta No enviada'/><a></a>";
           }else{
-             return "<img src='email_ok.png' width='20' height='20px' title='Boleta enviada' /><a style='font-size: xx-small;color:white'>Ok</a>";
+             return "<img src='"+base_url+"/email_ok.png' width='20' height='20px' title='Boleta enviada' /><a style='font-size: xx-small;color:white'>Ok</a>";
           }
         }
       },
@@ -352,7 +352,7 @@ $(document).ready(function () {
     ],
     order: [[2, "asc"]],
     "columnDefs": [
-      {"targets": [4,5,8,9,10,11,12,13,14,16,17,19,20,21], "visible": false, "searchable": false}
+      {"targets": [4,5,9,10,11,12,13,14,16,17,19,20,21,22], "visible": false, "searchable": false}
     ],
     dom: 'Bfrtip',
     buttons: [
