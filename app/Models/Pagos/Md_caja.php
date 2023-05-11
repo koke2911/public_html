@@ -73,10 +73,10 @@ class Md_caja extends Model {
     return json_encode($salida);
   }
 
-  public function datatable_informe_pagos_diarios($db, $id_apr) {
+  public function datatable_informe_pagos_diarios($db, $id_apr,$fecha) {
     define("ACTIVO", 1);
     $estado = ACTIVO;
-    $fecha  = date("d-m-Y");
+    // $fecha  = date("d-m-Y");
 
     $consulta = "SELECT 
 							c.id as folio_caja,
@@ -86,17 +86,21 @@ class Md_caja extends Model {
 						    c.entregado,
 						    c.vuelto,
 						    m.metros as consumo,
-						    u.usuario as usu_reg
+						    u.usuario as usu_reg,
+                fp.glosa as forma_pago
 						from 
 							caja c
 						    inner join caja_detalle cd on cd.id_caja = c.id
 						    inner join socios s on c.id_socio = s.id
 						    inner join metros m on cd.id_metros = m.id
 						    inner join usuarios u on c.id_usuario = u.id
+                inner join forma_pago fp on c.id_forma_pago = fp.id
 						where 
 							date_format(c.fecha, '%d-%m-%Y') = ? and
 						    c.id_apr = ? and
 						    c.estado = ?";
+
+                // echo $fecha;
 
     $query = $db->query($consulta, [
      $fecha,
@@ -114,7 +118,8 @@ class Md_caja extends Model {
        "entregado"    => $key["entregado"],
        "vuelto"       => $key["vuelto"],
        "consumo"      => $key["consumo"],
-       "usu_reg"      => $key["usu_reg"]
+       "usu_reg"      => $key["usu_reg"],
+       "forma_pago"      => $key["forma_pago"]
       ];
 
       $data[] = $row;

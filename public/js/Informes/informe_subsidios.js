@@ -1,6 +1,23 @@
 var base_url = $("#txt_base_url").val();
 
 $(document).ready(function() {
+
+    $("#dt_mes_año").datetimepicker({
+        format: "MM-YYYY",
+        useCurrent: false,
+        locale: moment.locale("es")
+    });
+
+    $("#btn_emitir").on("click", function () {
+        var mes_año = $("#dt_mes_año").val();
+        if(mes_año!=""){
+            window.open(base_url + "/Informes/Ctrl_informe_subsidios/consolidado_municipal/"+mes_año);
+        }else{
+            alert("Debe Seleccionar el mes de consumo");
+        }
+    });
+
+
     var grid_subsidios = $("#grid_subsidios").DataTable({
 		responsive: true,
         scrollCollapse: true,

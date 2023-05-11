@@ -24,7 +24,8 @@ class Md_subsidios extends Model {
    'id_usuario',
    'fecha',
    'estado',
-   'id_apr'
+   'id_apr',
+   'n_viviendas'
   ];
 
   public function datatable_subsidios($db, $id_apr) {
@@ -44,7 +45,8 @@ class Md_subsidios extends Model {
 						    s.numero_unico as n_unico,
 						    s.digito_unico as d_unico,
 						    u.usuario,
-						    date_format(s.fecha, '%d-%m-%Y %H:%i') as fecha
+						    date_format(s.fecha, '%d-%m-%Y %H:%i') as fecha,
+                s.n_viviendas
 						FROM 
 							subsidios s
 						    inner join socios so on s.id_socio = so.id
@@ -76,6 +78,7 @@ class Md_subsidios extends Model {
        "d_unico"         => $key["d_unico"],
        "usuario"         => $key["usuario"],
        "fecha"           => $key["fecha"],
+       "n_viviendas"     => $key["n_viviendas"]
       ];
 
       $data[] = $row;

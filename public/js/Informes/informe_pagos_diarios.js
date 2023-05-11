@@ -1,11 +1,31 @@
 var base_url = $("#txt_base_url").val();
 
+
+
 $(document).ready(function() {
+
+
+    $("#dt_fecha_dia").datetimepicker({
+        format: "DD-MM-YYYY",
+        useCurrent: false,
+        locale: moment.locale("es")
+      }).on("dp.change", function() {
+        $("#dt_fecha_dia").blur();
+    });;
+
+    $("#dt_fecha_dia").val(moment().format("DD-MM-YYYY"));
+
+    $("#dt_fecha_dia").on("blur", function() {
+        $("#grid_pagos_diarios").dataTable().fnReloadAjax(base_url +"/Informes/Ctrl_informe_pagos_diarios/datatable_informe_pagos_diarios/"+$("#dt_fecha_dia").val());
+
+    });
+
+    
     var grid_pagos_diarios = $("#grid_pagos_diarios").DataTable({
 		responsive: true,
         scrollCollapse: true,
         destroy: true,
-        ajax: base_url + "/Informes/Ctrl_informe_pagos_diarios/datatable_informe_pagos_diarios",
+        ajax: base_url + "/Informes/Ctrl_informe_pagos_diarios/datatable_informe_pagos_diarios/"+$("#dt_fecha_dia").val(),
         orderClasses: true,
         dom: 'Bfrtilp', 
         columns: [
@@ -16,7 +36,8 @@ $(document).ready(function() {
             { "data": "entregado" },
             { "data": "vuelto" },
             { "data": "consumo" },
-            { "data": "usu_reg" }
+            { "data": "usu_reg" },
+            { "data": "forma_pago" }
         ],
         buttons: [ 
             {
@@ -24,7 +45,7 @@ $(document).ready(function() {
                 text:      '<i class="fas fa-file-excel"></i> Excel',
                 titleAttr: 'Exportar a Excel',
                 className: 'btn btn-success',
-                title: "Informe de Pagos Diarios"
+                title: "Informe de Pagos Diarios "+$("#dt_fecha_dia").val()
             },
             {
                 extend:    'pdfHtml5',

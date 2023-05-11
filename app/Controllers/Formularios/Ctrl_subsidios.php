@@ -80,6 +80,7 @@ class Ctrl_subsidios extends BaseController {
     $puntaje         = $this->request->getPost("puntaje");
     $n_unico         = $this->request->getPost("n_unico");
     $d_unico         = $this->request->getPost("d_unico");
+    $n_viviendas     = $this->request->getPost("n_viviendas");
 
     if ($n_decreto == "") {
       $n_decreto = NULL;
@@ -109,6 +110,10 @@ class Ctrl_subsidios extends BaseController {
       $d_unico = NULL;
     }
 
+    if ($n_viviendas == "") {
+      $n_viviendas = NULL;
+    }
+
     $datosSubsidio = [
      "id_socio"        => $id_socio,
      "numero_decreto"  => $n_decreto,
@@ -121,7 +126,8 @@ class Ctrl_subsidios extends BaseController {
      "digito_unico"    => $d_unico,
      "id_usuario"      => $id_usuario,
      "fecha"           => $fecha,
-     "id_apr"          => $id_apr
+     "id_apr"          => $id_apr,
+     "n_viviendas"     => $n_viviendas
     ];
 
     if ($id_subsidio != "") {

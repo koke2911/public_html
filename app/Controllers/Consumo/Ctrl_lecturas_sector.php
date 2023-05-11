@@ -134,7 +134,7 @@ class Ctrl_lecturas_sector extends BaseController {
                     from 
                         metros mt2 
                     where 
-                        mt2.id_socio = socios.id)
+                        mt2.id_socio = socios.id and mt2.id=(select max(m2.id) from metros m2 where m2.id_socio = socios.id and m2.estado <> 0))
                 else mt.consumo_anterior end as lectura_anterior")
      ->select("ifnull(mt.consumo_actual, '') as lectura_actual")
      ->join("arranques a", "a.id_socio = socios.id")

@@ -1,8 +1,24 @@
 <main>
   <div class="container-fluid">
-    <h3 class="mt-4" align="center"><i class="fas fa-hand-holding-usd"></i> Informe de Subsidios</h3>
+    <h3 class="mt-4" align="center"><i class="fas fa-hand-holding-usd"></i>Consolidado Municipal</h3>
     <div class="alert alerta-fijo hidden" role="alert" id="alerta"></div>
     <div class="container-fluid">
+      <div class="card shadow mb-12">
+        <div class="card-body">
+          <div class="container-fluid">
+            <center>
+
+              
+              <label class="small mb-1" for="dt_mes_año">Mes Consumo</label>
+              <input type='text' class="form-control" id='dt_mes_año' name="dt_mes_año" style="width: 20%"/> 
+              <button type="button" name="btn_emitir" id="btn_emitir" class="btn btn-success" ><i class="fas fa-receipt"></i> Generar Consolidado</button>
+
+            </center>
+          </div>
+        </div>
+      </div>
+        <h3 class="mt-4" align="center"><i class="fas fa-hand-holding-usd"></i> Listado de Subsidios</h3>
+
       <div class="row">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="card mb-4">

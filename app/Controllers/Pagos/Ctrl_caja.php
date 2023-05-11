@@ -332,14 +332,14 @@ class Ctrl_caja extends BaseController {
     $id_caja       = $datos["id_caja"];
     $this->mpdf->SetTitle('Boucher Comprobante de Pago');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center"><img src="' . $this->sesión->id_apr_ses . '.png" width="50" /></div><br>');
-    $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center"><b>COMPROBANTE DE PAGO</b></div><br>');
+    $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center"><b>COMPROBANTE DE PAGO</b></div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center">' . $this->sesión->apr_ses . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center">Fecha: ' . date("d-m-Y") . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center">Hora: ' . date("H:i:s") . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center">Usuario: ' . $this->sesión->nombres_ses . ' ' . $this->sesión->ape_pat_ses . ' ' . $this->sesión->ape_mat_ses . '</div><br>');
 
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center"><b>DETALLE DEL PAGO</b></div><br>');
-    $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Folio de Boleta: ' . $id_caja . '</div>');
+    $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Folio Transaccion: ' . $id_caja . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Total a Pagar: ' . $total_pagar . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Descuento: ' . $descuento . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Entregado: ' . $entregado . '</div>');

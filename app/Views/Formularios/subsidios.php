@@ -105,7 +105,7 @@
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
-                          <label class="small mb-1" for="txt_puntaje">Puntaje de la Encuesta</label>
+                          <label class="small mb-1" for="txt_puntaje">Tramo Encuenta (RSH)</label>
                           <input type='text' class="form-control" id='txt_puntaje' name="txt_puntaje"/>
                         </div>
                       </div>
@@ -121,6 +121,12 @@
                         <div class="form-group">
                           <label class="small mb-1" for="txt_d_unico">Dígito Único</label>
                           <input type='text' class="form-control" id='txt_d_unico' name="txt_d_unico"/>
+                        </div>
+                      </div>
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_viv">N° Viviendas Abastecidas</label>
+                          <input type='text' class="form-control" id='txt_viv' name="txt_viv"/>
                         </div>
                       </div>
                     </div>

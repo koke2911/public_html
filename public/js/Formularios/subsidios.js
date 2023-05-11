@@ -22,6 +22,7 @@ function des_habilitar(a, b) {
     $("#txt_puntaje").prop("disabled", a);
     $("#txt_n_unico").prop("disabled", a);
     $("#txt_d_unico").prop("disabled", a);
+    $("#txt_viv").prop("disabled", a);
 }
 
 function mostrar_datos_subsidio(data) {
@@ -38,6 +39,7 @@ function mostrar_datos_subsidio(data) {
     $("#txt_puntaje").val(data["puntaje"]);
     $("#txt_n_unico").val(data["n_unico"]);
     $("#txt_d_unico").val(data["d_unico"]);
+    $("#txt_viv").val(data["n_viviendas"]);
 }
 
 function guardar_subsidio() {
@@ -54,6 +56,7 @@ function guardar_subsidio() {
     var puntaje = $("#txt_puntaje").val();
     var n_unico = $("#txt_n_unico").val();
     var d_unico = $("#txt_d_unico").val();
+    var n_viviendas = $("#txt_viv").val();
 
     $.ajax({
         url: base_url + "/Formularios/Ctrl_subsidios/guardar_subsidio",
@@ -69,7 +72,8 @@ function guardar_subsidio() {
             fecha_encuesta: fecha_encuesta,
             puntaje: puntaje,
             n_unico: n_unico,
-            d_unico: d_unico
+            d_unico: d_unico,
+            n_viviendas:   n_viviendas
         },
         success: function(respuesta) {
             const OK = 1;
@@ -275,6 +279,10 @@ $(document).ready(function() {
             txt_d_unico: {
                 digits: true,
                 maxlength: 11
+            },
+            txt_vivo: {
+                digits: true,
+                maxlength: 1
             }
         },
         messages: {
@@ -299,6 +307,10 @@ $(document).ready(function() {
             txt_d_unico: {
                 digits: "Solo números",
                 maxlength: "Máximo 11 números"
+            },
+            txt_viv: {
+                digits: "Solo números",
+                maxlength: "Máximo 1 número"
             }
         }
     });

@@ -63,7 +63,7 @@ function ingresar_lectura(data, tipo_facturacion) {
             if (respuesta.estado == "OK") {
                 const table = $("#grid_lecturas_sector").DataTable()
                 alerta.ok("alerta", respuesta.mensaje);
-                table.ajax.reload(null, false);
+                // table.ajax.reload(null, false);
             } else {
                 alerta.error("alerta", respuesta.mensaje);
             }
@@ -219,6 +219,21 @@ $(document).ready(function() {
         }
     });
 
+
+
+      $('#grid_lecturas_sector tbody').on('keydown', 'input.txt_ingreso_lectura', function(e) {
+        var keyCode = e.keyCode || e.which;
+
+        if (keyCode === 13) { // Si se presiona Enter
+          var cell = $(this).closest('td');
+          var nextCell = cell.closest('tr').next().find('td:eq(' + cell.index() + ')');
+          nextCell.click(); // Hacer clic en la siguiente celda
+          nextCell.find('input.txt_ingreso_lectura').focus(); // Poner el foco en el siguiente input text
+        }
+      });
+       
+
+
     $("#grid_lecturas_sector tbody").on("change", "input.txt_ingreso_lectura", function () {
 	    var tr = $(this).closest('tr');
         if ($(tr).hasClass('child') ) {
@@ -228,6 +243,8 @@ $(document).ready(function() {
         const NORMAL = 1;
         var data = grid_lecturas_sector.row(tr).data();
         ingresar_lectura(data, NORMAL);
+        grid_lecturas_sector.row(tr).focus();
+
     });
 
     $("#grid_lecturas_sector tbody").on("click", "button.btn_promedio", function () {

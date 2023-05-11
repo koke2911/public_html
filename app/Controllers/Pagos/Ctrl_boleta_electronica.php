@@ -265,7 +265,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
        ->select("metros")
        ->select("monto_subsidio")
        ->select("subtotal")
-       ->select("alcantarillado")
+       ->select("ifnull(alcantarillado,0) as alcantarillado")
        ->select("cuota_socio")
        ->select("otros")
        ->select("iva")
@@ -310,6 +310,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
              ->select("cf.cargo_fijo")
              ->select("socios.id")
              ->select("s.nombre as sector")
+             ->select("ifnull(afecto_corte(socios.id,socios.id_apr),0) as meses_deuda")
              ->join("arranques a", "a.id_socio = socios.id")
              ->join("sectores s", "a.id_sector = s.id")
              ->join("medidores m", "a.id_medidor = m.id")
@@ -317,7 +318,8 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
              ->where("socios.id", $id_socio)
              ->first();
 
-            if ($datosSocios["rut_socio"] != "") {
+
+             if ($datosSocios["rut_socio"] != "") {
               $rut_socio = $datosSocios["rut_socio"];
             } else {
               $rut_socio = "66666666-6";
@@ -410,6 +412,12 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                 }
               }
 
+              // $datosSocios["meses_deuda"]=2;
+
+              if($datosSocios["meses_deuda"]>=2){
+                  $observaciones .='CORTE DE SUMINISTRO  EN TRAMITE POR : '.$datosSocios["meses_deuda"].' MESES VENCIDOS';
+              }
+
               $monto_metros = intval($subtotal) - intval($cargo_fijo);
               $exento       = $tipo_dte === BOLETA_EXENTA || $tipo_dte === FACTURA_EXENTA;
               $rut_apr = $this->sesión->rut_apr_ses . "-" . $this->sesión->dv_apr_ses;
@@ -478,7 +486,16 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                         <PrcItem>'.$total2.'</PrcItem>
                         <DescuentoMonto>'.$monto_subsidio.'</DescuentoMonto>
                         <MontoItem>'.$total1.'</MontoItem>
-                        </Detalle>'.$detalle2.'
+                        </Detalle>
+                        <Detalle>
+                        <NroLinDet>2</NroLinDet>
+                        <IndExe>2</IndExe>
+                        <NmbItem>CARGO POR ALCANTARILLADO:</NmbItem>
+                        <QtyItem>1</QtyItem>
+                        <PrcItem>'.$alcantarillado.'</PrcItem>
+                        <DescuentoMonto>0</DescuentoMonto>
+                        <MontoItem>'.$alcantarillado.'</MontoItem>
+                        </Detalle>
                         </Documento>
                         </DTE>';
 
@@ -563,7 +580,10 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                   $cuotas_socios='Cuota Socio : $'.$cuota_socio;
                 }
 
-//echo $otr;
+                $trece=$fecha_vencimiento;
+
+
+                
                 $xml_adicional = '<Adicional>
                                 <Uno>0</Uno>
                                 <Dos>'.$mes.' Del '.$fecha_comp[1].'</Dos>
@@ -577,7 +597,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 <Diez>'.$vlr_pagar.'</Diez>
                                 <Once></Once>
                                 <Doce>'.$observaciones.'</Doce>
-                                <Trece>'.$fecha_vencimiento.'</Trece>
+                                <Trece>'.$trece.'</Trece>
                                 <Catorce>'.$multas.'</Catorce>
                                 <Quince>0</Quince>
                                 <Dieciseis>'.$total_servicio.'</Dieciseis>
@@ -598,7 +618,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
                    //$xml_adicional='';
 
-                   //echo $xml_adicional;
+                  //  echo $xml_adicional;
                   // exit();
                    
                 $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "False","TIPOIMPRESO" => "1","AMBIENTE" => "1","TOKEN" => $TokenObtenido);
@@ -753,7 +773,6 @@ public function emitir_dte_new(){
        ->select("cuota_socio")
        ->select("otros")
        ->select("iva")
-       ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
        ->select("date_format(fecha_vencimiento, '%Y-%m-%d') as fecha_vencimiento")
        ->select("ifnull(elt(field(tipo_facturacion, 1, 2), 'NORMAL', 'TÉRMINO MEDIO'), 'NO REGISTRADO') as tipo_facturacion")
        ->where("id", $folio)
@@ -790,6 +809,7 @@ public function emitir_dte_new(){
          ->select("m.numero as num_medidor")
          ->select("cf.cargo_fijo")
          ->select("s.nombre as sector")
+         ->select("afecto_corte(id_socio,".$this->sesión->id_apr_ses.") as meses_deuda")
          ->join("arranques a", "a.id_socio = socios.id")
          ->join("sectores s", "a.id_sector = s.id")
          ->join("medidores m", "a.id_medidor = m.id")
@@ -797,6 +817,7 @@ public function emitir_dte_new(){
          ->where("socios.id", $id_socio)
          ->first();
 
+         
         if ($datosSocios["rut_socio"] != "") {
           $rut_socio = $datosSocios["rut_socio"];
         } else {
@@ -1279,19 +1300,29 @@ public function emitir_dte_new(){
 
       $total_pagar = $total_mes + $saldo_anterior;
 
-      $datosSocio = $this->socios->select("case when rut is null then 'Sin RUT registrado' else concat(rut, '-', dv) end as rut_socio")
-                                 ->select("concat(nombres, ' ', ape_pat, ' ', ape_mat) as nombre_socio")
-                                 ->select("concat(calle, ', ', numero, ', ', resto_direccion) as direccion_socio")
-                                 ->select("rol as codigo_socio")
-                                 ->select('ruta')
-                                 ->where("id", $id_socio)
+      $datosSocio = $this->socios->select("case when socios.rut is null then 'Sin RUT registrado' else concat(socios.rut, '-', socios.dv) end as rut_socio")
+                                 ->select("concat(socios.nombres, ' ', socios.ape_pat, ' ', socios.ape_mat) as nombre_socio")
+                                 ->select("concat(socios.calle, ', ', socios.numero, ', ', socios.resto_direccion) as direccion_socio")
+                                 ->select("socios.rol as codigo_socio")
+                                 ->select('socios.ruta')
+                                 ->select("cf.cargo_fijo")
+                                 ->join("arranques a", "a.id_socio = socios.id")
+                                 ->join("sectores s", "a.id_sector = s.id")
+                                 ->join("medidores m", "a.id_medidor = m.id")
+                                 ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro = m.id_diametro")
+                                 ->where("socios.id", $id_socio)
                                  ->first();
 
       $rut_socio       = $datosSocio["rut_socio"];
       $nombre_socio    = $datosSocio["nombre_socio"];
       $direccion_socio = $datosSocio["direccion_socio"];
       $codigo_socio    = $datosSocio["codigo_socio"];
+      $cargo_fijo      = $datosSocio["cargo_fijo"];
 
+      $monto_metros = intval($subtotal) - intval($cargo_fijo);
+
+//       echo 'CONSUMO AGUA POTABLE: Cargo fijo $'.$cargo_fijo.', '.$consumo_metros.' Mt3 $'.$monto_metros;
+// exit();
       $datosArranque = $this->arranques->select("id_medidor")
                                        ->where("id_socio", $id_socio)
                                        ->first();
@@ -1353,7 +1384,9 @@ public function emitir_dte_new(){
 			        		' . $consumo_actual . ' M<sup>3</sup><br>
 			        	</div>
 			        	<div style="width: 40%; float: left;">
-			        		' . $consumo_metros . ' M<sup>3</sup><br>
+			        		<b>' . $consumo_metros . ' M<sup>3</sup></b>
+
+                  CONSUMO AGUA POTABLE: Cargo fijo $'.$cargo_fijo.', '.$consumo_metros.' Mt3 $'.$monto_metros.'<br>
 			        	</div>
 			        </div>
 			        <div style="height: 6.5%;"></div>
@@ -1388,7 +1421,7 @@ public function emitir_dte_new(){
     if ($verificar_dispositivo == "mobil" or $verificar_dispositivo == "tablet") {
       return $mpdf->Output("Aviso de Cobranza.pdf", "D");
     } else {
-      return redirect()->to($mpdf->Output("Aviso de Cobranza.pdf", "I"));
+      $mpdf->Output("Aviso de Cobranza.pdf", "D");
     }
   }
 

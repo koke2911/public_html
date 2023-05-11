@@ -24,9 +24,9 @@ class Ctrl_informe_pagos_diarios extends BaseController {
     }
   }
 
-  public function datatable_informe_pagos_diarios() {
+  public function datatable_informe_pagos_diarios($fecha) {
     $this->validar_sesion();
-    echo $this->caja->datatable_informe_pagos_diarios($this->db, $this->sesión->id_apr_ses);
+    echo $this->caja->datatable_informe_pagos_diarios($this->db, $this->sesión->id_apr_ses,$fecha);
   }
 }
 

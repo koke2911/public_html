@@ -51,8 +51,11 @@ function sumar_deudas() {
     $("#txt_total_pagar").val(peso.formateaNumero(total));
 
     var abono = peso.quitar_formato($("#txt_abono").val());
+
     if (parseInt(abono) >= total) {
         $("#txt_entregado").val(peso.formateaNumero(total));
+    }else{
+        $("#txt_descuento").val(abono);
     }
 }
 
