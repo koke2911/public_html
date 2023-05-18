@@ -124,6 +124,7 @@ class Ctrl_caja extends BaseController {
     $n_transaccion  = $this->request->getPost("n_transaccion");
     $abono          = $this->request->getPost("abono");
     $arr_ids_metros = $this->request->getPost("arr_ids_metros");
+    $total_deuda = $this->request->getPost("total_deuda");
 
     if ($n_transaccion == "") {
       $n_transaccion = NULL;
@@ -231,10 +232,10 @@ class Ctrl_caja extends BaseController {
     if (intval($abono) > 0) {
       define("PAGO_ABONO", 7);
 
-      if (intval($abono) <= intval($total_pagar)) {
+      if (intval($abono) <= intval($total_deuda)) {
         $abono = 0;
       } else {
-        $abono = intval($abono) - intval($total_pagar);
+        $abono = intval($abono) - intval($total_deuda);
       }
 
       $datosSocios = [

@@ -1,4 +1,5 @@
 var base_url = $("#txt_base_url").val();
+var total_deuda=0;
 
 function buscar_deuda() {
 	var id_socio = $("#txt_id_socio").val();
@@ -39,10 +40,12 @@ var peso = {
 
 function sumar_deudas() {
     var total = 0;
+    total_deuda=0;
     var datos = $("#grid_deuda").DataTable().rows(".selected").data();
 
     for (var i = 0; i < datos.length; i++) {
         total += parseInt(datos[i].deuda);
+        total_deuda += parseInt(datos[i].deuda);
     }
 
     $("#txt_entregado").val(0);
@@ -56,6 +59,7 @@ function sumar_deudas() {
         $("#txt_entregado").val(peso.formateaNumero(total));
     }else{
         $("#txt_descuento").val(abono);
+        calcular_descuento();
     }
 }
 
@@ -163,7 +167,8 @@ function guardar_pago() {
                         forma_pago: forma_pago,
                         n_transaccion: n_transaccion,
                         abono: abono,
-                        arr_ids_metros: arr_ids_metros
+                        arr_ids_metros: arr_ids_metros,
+                        total_deuda:total_deuda
                     },
                     success: function(respuesta) {
                         const OK = 1;

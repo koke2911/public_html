@@ -3,8 +3,8 @@
     <h3 class="mt-4" align="center"><i class="fas fa-cash-register mr-1"></i> Informe Pagos Diarios</h3>
     <div class="alert alerta-fijo hidden" role="alert" id="alerta"></div>
     
-  <label class="small mb-1" for="dt_mes_año">Mes Consumo</label>
-  <input type='text' class="form-control" id='dt_mes_año' name="dt_mes_año"/>
+  <!-- <label class="small mb-1" for="dt_mes_año">Mes Consumo</label>
+  <input type='text' class="form-control" id='dt_mes_año' name="dt_mes_año"/> -->
   
     <div class="container-fluid">
       <div class="row">
