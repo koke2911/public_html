@@ -33,7 +33,7 @@ $(document).ready(function () {
     ];
 
     ruta = "/Consumo/Ctrl_metros";
-  } else if (origen == "Ctrl_historial_pagos" || origen == "Ctrl_informe_socios" || origen == "Ctrl_boleta_electronica" || origen == "Ctrl_informe_historico_socio") {
+  } else if (origen == "Ctrl_historial_pagos" || origen == "Ctrl_informe_socios" || origen == "Ctrl_boleta_electronica" || origen == "Ctrl_informe_historico_socio" || origen == "Ctrl_desinfeccion" ||  origen == "Ctrl_desinfeccion2") {
     ruta = "/Pagos/Ctrl_historial_pagos";
   } else if (origen == "Ctrl_repactacion") {
     ruta = "/Formularios/Ctrl_Convenios";
@@ -160,6 +160,24 @@ $(document).ready(function () {
     } else if (origen == "Ctrl_repactacion") {
       $('#dlg_buscar_socio').modal('hide');
       buscar_deuda();
+    }else if(origen=="Ctrl_desinfeccion"){
+        $("#txt_id_socio1").val(data['id_socio']);
+        $("#txt_id_socio1").focus();
+
+        $("#txt_rut_socio1").val(data['rut']);
+        $("#txt_rol1").val(data['rol']);
+        $("#txt_nombre_socio1").val(data['nombre']);
+        $('#dlg_buscar_socio').modal('hide');
+
+    }else if(origen=="Ctrl_desinfeccion2"){
+        $("#txt_id_socio2").val(data['id_socio']);
+        $("#txt_id_socio2").focus();
+        $("#txt_rut_socio2").val(data['rut']);
+        $("#txt_rol2").val(data['rol']);
+        $("#txt_nombre_socio2").val(data['nombre']);
+        $('#dlg_buscar_socio').modal('hide');
+
+
     } else {
       $('#dlg_buscar_socio').modal('hide');
     }

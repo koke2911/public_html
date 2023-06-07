@@ -375,4 +375,9 @@ class Ctrl_menu extends BaseController {
       exit();
     }
   }
+
+  public function desinfeccion() {
+    $this->validar_sesion();
+    echo view('Formularios/desinfeccion');
+  }
 }

@@ -331,6 +331,10 @@ class Ctrl_caja extends BaseController {
     $nombre_socio  = $datos["nombre_socio"];
     $descuento     = $datos["descuento"];
     $id_caja       = $datos["id_caja"];
+    $total_deuda       = $datos["total_deuda"];
+
+
+
     $this->mpdf->SetTitle('Boucher Comprobante de Pago');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center"><img src="' . $this->sesión->id_apr_ses . '.png" width="50" /></div><br>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center"><b>COMPROBANTE DE PAGO</b></div>');
@@ -341,7 +345,7 @@ class Ctrl_caja extends BaseController {
 
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center"><b>DETALLE DEL PAGO</b></div><br>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Folio Transaccion: ' . $id_caja . '</div>');
-    $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Total a Pagar: ' . $total_pagar . '</div>');
+    $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Total a Pagar: ' . $total_deuda . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Descuento: ' . $descuento . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Entregado: ' . $entregado . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Vuelto: ' . $vuelto . '</div>');

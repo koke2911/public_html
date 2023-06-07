@@ -192,7 +192,7 @@ function mostrar_datos_compras() {
         url: base_url + "/Finanzas/Ctrl_egresos/datos_compra",
         data: { id_egreso: id_egreso }
     }).done( function(data) {
-        $("#cmb_tipo_documento").val(data[0].tipo_documento);
+        $("#cmb_tipo_documento").val(data[0].id_tipo_documento);
         $("#txt_n_documento").val(data[0].n_documento);
         $("#dt_fecha_documento").val(data[0].fecha_documento);
         $("#txt_neto").val(peso.formateaNumero(data[0].neto));

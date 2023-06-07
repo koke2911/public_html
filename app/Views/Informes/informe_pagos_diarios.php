@@ -14,11 +14,14 @@
               <i class="fas fa-cash-register mr-1"></i> Listado Pagos Diarios
             </div>
             <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
-                            <div class="form-group">
+                            <div class="form-group d-flex">
                               <label class="small mb-1" for="dt_fecha_dia">Dia a Consultar</label>
                               <input type='text' class="form-control" id='dt_fecha_dia' name="dt_fecha_dia"/>
+                              <button type="button" name="btn_exportar" id="btn_exportar" class="btn btn-info" style="width: 20%;height: 10%"><i class="fas fa-file-excel"></i></button>
                             </div>
+
                           </div>
+
             <div class="card shadow mb-12" id="listadoPagosDiarios">
               <div class="card-body">
                 <div class="container-fluid">

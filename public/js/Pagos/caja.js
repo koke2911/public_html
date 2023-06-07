@@ -203,7 +203,8 @@ function guardar_pago() {
                                 n_transaccion: n_transaccion,
                                 nombre_socio: nombre_socio,
                                 descuento: descuento,
-                                id_caja: respuesta.id_caja
+                                id_caja: respuesta.id_caja,
+                                total_deuda:total_deuda
                             }
 
                             var datos_json = JSON.stringify(datos);

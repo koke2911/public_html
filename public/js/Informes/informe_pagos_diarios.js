@@ -4,6 +4,15 @@ var base_url = $("#txt_base_url").val();
 
 $(document).ready(function() {
 
+    $("#btn_exportar").on("click", function () {
+        var dt_fecha_dia = $("#dt_fecha_dia").val();
+        if(dt_fecha_dia!=""){
+            window.open(base_url + "/Informes/Ctrl_informe_pagos_diarios/reporte_pagos_resumen/"+dt_fecha_dia);
+        }else{
+            alert("Debe Seleccionar el mes de consumo");
+        }
+    });
+
 
     $("#dt_fecha_dia").datetimepicker({
         format: "DD-MM-YYYY",
