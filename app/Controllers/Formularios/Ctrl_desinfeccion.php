@@ -73,15 +73,48 @@ class Ctrl_desinfeccion extends BaseController {
           'registrado'=>date_format(date_create($fecha), 'Y-m-d'),
           'estado'=>1
         ];
+          
+          $existe_dia=0;
+          // $existe  = $this->desinfecciones->select("count(*) as cantidad")
+          //                                     ->where("date_format(desinfecciones.dia,'%d-%m-%Y')",$dia)
+          //                                     ->where("desinfecciones.id_apr",$id_apr)
+          //                                     ->where("desinfecciones.estado",1)
+          //                                     ->first();
+          $consulta = "SELECT count(*) as CANTIDAD 
+                      from desinfecciones 
+                      where estado=1 and id_apr=$id_apr and 
+                      date_format(dia,'%d-%m-%Y')='$dia'";
+
+          $query = $this->db->query($consulta);
+          $result  = $query->getResultArray();
+
+          // print_r($result);
+          // exit();
+
+          $existe_dia = $result[0]['CANTIDAD'];
+
+          // echo 'CANTIDAD-->'.$existe_dia;
+          // exit();
+          $permite=true;
+
+          if($id=="" && $existe_dia!=0){
+            $permite=false;
+          }
+
+
       
           if($id!=""){
             $datosDesinfeccion["id"] = $id;
           }
          
-          if ($this->desinfecciones->save($datosDesinfeccion)) {
-            echo 1;
+          if($permite){
+            if ($this->desinfecciones->save($datosDesinfeccion)) {
+              echo 1;
+            }else{
+              echo 'no se pudo guardar el formulario';
+            }
           }else{
-            echo 'no se pudo guardar el formulario';
+            echo 'Ya existen registros para el día seleccionado';
           }
   }
 

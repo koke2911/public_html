@@ -262,6 +262,7 @@ $(document).ready(function() {
         $("#btn_modificar").prop("disabled", true);
         $("#btn_eliminar").prop("disabled", true);
         $("#datosDesinfeccion").collapse("show");
+        $("#dt_fecha_dia").prop("disabled", true);
     });
 
     $("#btn_eliminar").on("click", function() {
@@ -423,7 +424,7 @@ $(document).ready(function() {
             ,txt_cloro_socio1:{
                 required:"El valor es obligatorio",
                 number:"Valor no permitiro solo valores numericos y . para el decimal"
-                
+
             },
         }
     });
