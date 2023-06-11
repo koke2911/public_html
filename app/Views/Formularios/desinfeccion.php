@@ -234,28 +234,28 @@
                     <table id="grid_desinfecciones" class="table table-bordered" width="100%">
                       <thead class="thead-dark">
                         <tr>
-                          <th>Id.</th>
+                          <th>id</th>
+                          <th>id_apr</th>
                           <th>Dia</th>
-                          <th>Planta_hora</th>
-                          <th>Planta_cloro</th>
-                          <th>Socio M1</th>
-                          <th>Hora M1</th>
-                          <th>C. Residual M1</th>
+                          <th>Hora Planta</th>
+                          <th>Cloro Planta</th>
+                          <th> id_socio1</th>
+                          <th>hora_socio1</th>
+                          <th> cloro_socio1</th>
+                          <th> id_socio2</th>
+                          <th>hora_socio2</th>
+                          <th>cloro_socio2</th>
+                          <th>frecuencia</th>
+                          <th>desp</th>
+                          <th>medidor_caudal</th>
+                          <th>electricidad</th>
+                          <th>horometro</th>
+                          <th>Socio Muestra 1</th>
                           <th>Socio Muestra 2</th>
-                          <th>N° Medidor</th>
-                          <th>id_diametro</th>
-                          <th>Diámetro</th>
-                          <th>id_sector</th>
-                          <th>Sector</th>
-                          <th>Alcantarillado</th>
-                          <th>Cuota Socio</th>
-                          <th>id_region</th>
-                          <th>id_provincia</th>
-                          <th>id_comuna</th>
-                          <th>calle</th>
-                          <th>calle</th>
-                          <th>calle</th>
-                          <th>calle</th>
+                          <th>rut_socio1</th>
+                          <th>rut_socio2</th>
+                          <th>rol_socio1</th>
+                          <th>rol_socio2</th>
                         </tr>
                       </thead>
                     </table>

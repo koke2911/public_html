@@ -250,7 +250,7 @@ $(document).ready(function() {
         // des_habilitar(false, true);
         var mes_consulta=$("#dt_mes_export").val();
         if(mes_consulta!=""){
-            window.open(base_url+"/Formularios/Ctrl_desinfeccion/exportar_datos/"+mes_consulta);
+            window.open(base_url+"/Informes/Ctrl_informe_pagos_diarios/reporte_desinfeccion/"+mes_consulta);
         }else{
             alerta.error("alerta", 'Debe Seleccionar un mes para exportar');
         }
@@ -339,7 +339,8 @@ $(document).ready(function() {
                 required:true
             }
             ,txt_cloro_ap:{
-                required:true
+                required:true,
+                number: true
             }
             ,txt_frecuencia:{
                 required:true
@@ -360,7 +361,8 @@ $(document).ready(function() {
                 required:true
             }
             ,txt_cloro_socio2:{
-                required:true
+                required:true,
+                number: true
             },
             dt_fecha_dia:{
                 required:true
@@ -369,7 +371,8 @@ $(document).ready(function() {
                 required:true
             }
             ,txt_cloro_socio1:{
-                required:true
+                required:true,
+                number: true
             }
             
         },
@@ -385,7 +388,8 @@ $(document).ready(function() {
                 required:"El valor es obligatorio"
             }
             ,txt_cloro_ap:{
-                required:"El valor es obligatorio"
+                required:"El valor es obligatorio",
+                number:"Valor no permitiro solo valores numericos y . para el decimal"
             }
             ,txt_frecuencia:{
                 required:"El valor es obligatorio"
@@ -406,7 +410,9 @@ $(document).ready(function() {
                 required:"El valor es obligatorio"
             }
             ,txt_cloro_socio2:{
-                required:"El valor es obligatorio"
+                required:"El valor es obligatorio",
+                number:"Valor no permitiro solo valores numericos y . para el decimal"
+
             },
             dt_fecha_dia:{
                 required:"El valor es obligatorio"
@@ -415,7 +421,9 @@ $(document).ready(function() {
                 required:"El valor es obligatorio"
             }
             ,txt_cloro_socio1:{
-                required:"El valor es obligatorio"
+                required:"El valor es obligatorio",
+                number:"Valor no permitiro solo valores numericos y . para el decimal"
+                
             },
         }
     });
@@ -424,6 +432,7 @@ $(document).ready(function() {
 		responsive: true,
         paging: true,
         destroy: true,
+        pageLength:30,
         select: {
             toggleable: false
         },
@@ -455,7 +464,7 @@ $(document).ready(function() {
             
         ],
         "columnDefs": [
-            // { "targets": [1, 2, 5, 7, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 25, 26, 27, 28, 29], "visible": false, "searchable": false }
+            { "targets": [1,5,6,7,8,9,10,11,12,13,14,15,18,19,20,21], "visible": false, "searchable": false }
         ],
         dom: 'Bfrtip',
         buttons: [ 
