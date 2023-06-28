@@ -100,8 +100,6 @@ class Ctrl_desinfeccion extends BaseController {
           if($id=="" && $existe_dia!=0){
             $permite=false;
           }
-
-
       
           if($id!=""){
             $datosDesinfeccion["id"] = $id;

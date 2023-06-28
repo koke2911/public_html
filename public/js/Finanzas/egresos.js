@@ -85,6 +85,7 @@ function llenar_cmb_tipo_egreso() {
     $.ajax({
         type: "GET",
         dataType: "json",
+        async:false,
         url: base_url + "/Finanzas/Ctrl_egresos/llenar_cmb_tipo_egreso/" + opcion,
     }).done( function(data) {
         $("#cmb_tipo_egreso").html('');
@@ -109,6 +110,7 @@ function mostrar_datos_egreso() {
         type: "POST",
         dataType: "json",
         url: base_url + "/Finanzas/Ctrl_egresos/datos_egreso",
+        async:false,
         data: { id_egreso: id_egreso }
     }).done( function(data) {
         $("#cmb_tipo_egreso").val(data[0].id_tipo_egreso);

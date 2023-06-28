@@ -261,7 +261,8 @@ $(document).ready(function() {
             forma_pago_glosa: data["forma_pago"],
             n_transaccion: data["n_transaccion"],
             nombre_socio: data["nombre_socio"],
-            descuento: data["descuento"]
+            descuento: data["descuento"],
+            total_deuda:data["pagado"]
         }
 
         var datos_json = JSON.stringify(datos);

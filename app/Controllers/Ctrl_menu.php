@@ -380,4 +380,9 @@ class Ctrl_menu extends BaseController {
     $this->validar_sesion();
     echo view('Formularios/desinfeccion');
   }
+
+  public function solicitud_subsidio() {
+    $this->validar_sesion();
+    echo view('Formularios/solicitud_subsidio');
+  }
 }
