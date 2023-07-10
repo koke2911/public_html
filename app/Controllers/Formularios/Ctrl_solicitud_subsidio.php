@@ -266,7 +266,7 @@ class Ctrl_solicitud_subsidio extends BaseController {
 
 
 
-    return redirect()->to($mpdf->Output("Solicitud Subsidio " . $id_sol . ".pdf", "I"));
+    return $mpdf->Output("Solicitud Subsidio " . $id_sol . ".pdf", "D");
 
   }
 

@@ -21,7 +21,8 @@ class Md_egresos_simples extends Model {
    'id_entidad',
    'id_motivo',
    'observaciones',
-   'id_egreso'
+   'id_egreso',
+   'tipo_gasto',
   ];
 
   public function datos_egreso($db, $id_egreso) {
@@ -57,7 +58,8 @@ class Md_egresos_simples extends Model {
 							end as nombre_entidad,
 						    es.id_motivo,
 						    m.motivo,
-						    es.observaciones
+						    es.observaciones,
+						    es.tipo_gasto
 						from 
 							egresos_simples es
 						    left join cuentas c on es.id_cuenta = c.id

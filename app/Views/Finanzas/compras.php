@@ -34,17 +34,23 @@
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
+                          <label class="small mb-1" for="cmb_tipo_gasto">Tipo de Gasto</label>
+                          <select id="cmb_tipo_gasto" name="cmb_tipo_gasto" class="form-control"></select>
+                        </div>
+                      </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
                           <label class="small mb-1" for="txt_n_documento">N° de Documento</label>
                           <input type="text" class="form-control" name="txt_n_documento" id="txt_n_documento" placeholder="Ingrese el N° de Documento"/>
                         </div>
                       </div>
-                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="dt_fecha_documento">Fecha de Documento</label>
                           <input type="text" class="form-control" name="dt_fecha_documento" id="dt_fecha_documento" placeholder="Ingrese la Fecha del Documento"/>
                         </div>
                       </div>
-                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_neto">NETO</label>
                           <div class="input-group">

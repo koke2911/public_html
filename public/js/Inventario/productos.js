@@ -279,11 +279,94 @@ function dar_baja_unidad(observacion, id_detalle) {
     });
 }
 
+function llenar_cmb_productos(id_producto){
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: base_url + "/Inventario/Ctrl_productos/llenar_cmb_productos",
+    }).done( function(data) {
+        $("#cmb_productos").html('');
+
+        var opciones = "<option value=\"\">Seleccione un producto</option>";
+        
+        for (var i = 0; i < data.length; i++) {
+            opciones += "<option value=\"" + data[i].id + "\">" + data[i].producto + "</option>";
+        }
+
+        $("#cmb_productos").append(opciones);
+
+        if (id_producto != "") {
+            $("#cmb_productos").val(id_producto);
+        }
+    }).fail(function(error){
+        respuesta = JSON.parse(error["responseText"]);
+        alerta.error("alerta", respuesta.message);
+    });
+}
+
+function rebaja_stock(Id_producto,cantidad){
+    $.ajax({
+        url: base_url + "/Inventario/Ctrl_productos/rebaja_stock",
+        type: "POST",
+        async: false,
+        data: {
+            id_producto: Id_producto,
+            cantidad: cantidad
+        },
+        success: function(respuesta) {
+            const OK = 1;
+            if (respuesta == OK) {
+                alerta.ok("alerta", "Rebaja realizada con exito");
+                llenar_cmb_productos();
+
+               $("#txt_cantidad_r").val('');
+               $("#grid_productos").dataTable().fnReloadAjax(base_url + "/Inventario/Ctrl_productos/datatable_productos");
+
+            } else {
+                alerta.error("alerta", respuesta);
+            }
+        },
+        error: function(error) {
+            respuesta = JSON.parse(error["responseText"]);
+            alerta.error("alerta", respuesta.message);
+        }
+    });
+
+}
 $(document).ready(function() {
     $("#txt_id_producto").prop("disabled", true);
     des_habilitar(true, false);
     llenar_cmb_estado();
     llenar_cmb_ubicacion();
+    llenar_cmb_productos();
+
+    $('#cmb_productos').on('change', function() {
+        var valorSeleccionado = $(this).val();    
+        var textoMostrado = $(this).find(':selected').text();        
+        
+    });
+
+    $('#btn_agregar_producto').on('click', function() {
+    
+        var Id_producto = $('#cmb_productos').val();    
+        var glosa_producto = $('#cmb_productos').find(':selected').text();
+        var cantidad = parseInt($("#txt_cantidad_r").val());
+        var cantidad_stock = '';
+
+        var cantidad_stock = glosa_producto.split('Stock :');
+
+        console.log(cantidad_stock[1]);
+
+        if(cantidad<=parseInt(cantidad_stock[1]) && cantidad>0){
+            rebaja_stock(Id_producto,cantidad);
+        }else{
+            alerta.aviso("alerta", "No puede descontar una cantidad mayor al Stock");
+
+        }
+    
+    
+  });
+
 
     $("#btn_nuevo").on("click", function() {
         des_habilitar(false, true);

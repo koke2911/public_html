@@ -121,6 +121,33 @@
       <div class="row">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="card mb-4">
+            <div class="card-header"><i class="fas fa-box-open"></i> Rebaja de productos</div>
+            <div class="card shadow mb-12">
+              <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
+                  <div class="form-group">
+                    <label class="small mb-1" for="txt_cantidad_r">Cantidad</label>
+                    <input type="text" class="form-control" name="txt_cantidad_r" id="txt_cantidad_r" placeholder="Ingrese la Cantidad"/>
+                  </div>
+              </div>
+              <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12">
+                  <div class="form-group">
+                    <label class="small mb-1" for="cmb_productos">Producto</label>
+                    <div class="input-group">
+                      <select id="cmb_productos" name="cmb_productos" class="custom-select"></select>
+                      <div class="input-group-append">
+                        <button class="btn btn-outline-danger" type="button" id="btn_agregar_producto" name="btn_agregar_producto" title="Agregar Producto"><i class="fas fa-minus"></i></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+          <div class="card mb-4">
             <div class="card-header"><i class="fas fa-box-open"></i> Listado de Productos</div>
             <div class="card shadow mb-12">
               <div class="card-body">

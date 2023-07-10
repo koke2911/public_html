@@ -39,6 +39,47 @@ class Ctrl_productos extends BaseController {
     }
   }
 
+  public function llenar_cmb_productos() {
+    $this->validar_sesion();
+    $id_apr    = $this->sesión->id_apr_ses;
+
+    $datosProductos = $this->productos->select("id")
+                                      ->select("nombre as producto")
+                                      ->select("(select count(*) from productos_detalles pd where pd.id_producto = productos.id and IFNULL(pd.id_estado, -1) != 0) as cantidad")
+                                      ->select("marca")
+                                      ->select("modelo")
+                                      ->where("id_apr",$id_apr)
+                                      ->where("estado",1)
+                                      ->findAll();
+
+    $data = [];
+
+    foreach ($datosProductos as $key) {
+      if ($key["marca"] != "" && $key["modelo"] != "") {
+        $producto = $key["producto"] . " - " . $key["marca"] . " - " . $key["modelo"]." - Stock :".$key['cantidad'];
+      } else {
+        if ($key["marca"] != "" && $key["modelo"] == "") {
+          $producto = $key["producto"] . " - " . $key["marca"]." - Stock :".$key['cantidad'];
+        } else {
+          if ($key["marca"] == "" && $key["modelo"] != "") {
+            $producto = $key["producto"] . " - " . $key["modelo"]." - Stock :".$key['cantidad'];
+          } else {
+            $producto = $key["producto"]." - Stock :".$key['cantidad'];
+          }
+        }
+      }
+
+      $row = [
+       "id"       => $key["id"],
+       "producto" => $producto
+      ];
+
+      $data[] = $row;
+    }
+
+    echo json_encode($data);
+  }
+
   public function datatable_productos() {
     $this->validar_sesion();
     echo $this->productos->datatable_productos($this->db, $this->sesión->id_apr_ses);
@@ -318,6 +359,40 @@ class Ctrl_productos extends BaseController {
     $this->productos_detalles_traza->save($datosDetalleTraza);
 
     echo OK;
+  }
+
+  public function rebaja_stock(){
+    $this->validar_sesion();
+
+    $fecha      = date("Y-m-d H:i:s");
+    $id_usuario = $this->sesión->id_usuario_ses;
+    $id_apr     = $this->sesión->id_apr_ses;
+
+    $id_producto = $this->request->getPost("id_producto");
+    $cantidad      = $this->request->getPost("cantidad");
+
+    $consulta = "DELETE FROM productos_detalles WHERE id_producto = $id_producto AND IFNULL(id_estado, -1) != 0 LIMIT $cantidad";
+
+      $query = $this->db->query($consulta);
+
+      $datosTraza = [
+       "id_producto" => $id_producto,
+       "estado"      => 2,
+       "observacion" => 'Rebaja de stock - cantidad rebajada: '.$cantidad,
+       "id_usuario"  => $id_usuario,
+       "fecha"       => $fecha
+      ];
+
+      if ($this->db->affectedRows() > 0) {
+
+            if($this->productos_traza->save($datosTraza)) {
+               echo 1;                
+            }else{
+              echo "Falló al guardar la traza";
+            }
+        } else {
+            echo "No se encontraron registros para eliminar.";
+        }
   }
 }
 

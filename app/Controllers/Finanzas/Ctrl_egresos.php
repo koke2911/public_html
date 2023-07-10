@@ -144,6 +144,7 @@ class Ctrl_egresos extends BaseController {
     $total             = $this->request->getPost("total");
     $id_proveedor      = $this->request->getPost("id_proveedor");
     $productos         = $this->request->getPost("productos");
+    $id_tipo_gasto     = $this->request->getPost("id_tipo_gasto");
 
     $datosEgreso = [
      "tipo_egreso" => COMPRA,
@@ -175,7 +176,9 @@ class Ctrl_egresos extends BaseController {
      "iva"               => $iva,
      "total"             => $total,
      "id_proveedor"      => $id_proveedor,
-     "id_egreso"         => $id_egreso
+     "id_egreso"         => $id_egreso,
+     "tipo_gasto"         => $id_tipo_gasto
+
     ];
 
     $this->compras->save($datosCompras);
@@ -200,6 +203,16 @@ class Ctrl_egresos extends BaseController {
 
       $this->compras_detalle->save($datosComprasDetalle);
 
+      $datosTraza = [
+         "id_producto" => $id_producto,
+         "estado"      => 3,
+         "observacion" => "Stock agregado desde el modulo de compras - cantidad : ".$cantidad,
+         "id_usuario"  => $id_usuario,
+         "fecha"       => $fecha
+      ];
+
+      $this->productos_traza->save($datosTraza);
+
       for ($i = 0; $i < $cantidad; $i ++) {
         $datosProductosDetalle = [
          "id_producto" => $id_producto
@@ -208,6 +221,8 @@ class Ctrl_egresos extends BaseController {
         $this->productos_detalles->save($datosProductosDetalle);
       }
     }
+
+
 
     echo OK;
   }
@@ -230,6 +245,18 @@ class Ctrl_egresos extends BaseController {
     }
 
     echo json_encode($datosTiposEgreso);
+  }
+
+   public function llenar_cmb_tipo_gasto($opcion) {
+    $this->validar_sesion();
+    define("ACTIVO", 1);
+    $db=$this->db;
+
+    $consulta = "SELECT id,glosa FROM TIPO_GASTO";
+    $query = $db->query($consulta);
+    $datos_tipo  = $query->getResultArray();
+
+    echo json_encode($datos_tipo);
   }
 
   public function v_buscar_cuenta() {
@@ -261,6 +288,9 @@ class Ctrl_egresos extends BaseController {
     $id_cuenta      = $this->request->getPost("id_cuenta");
     $n_transaccion  = $this->request->getPost("n_transaccion");
     $observaciones  = $this->request->getPost("observaciones");
+    $id_tipo_gasto  = $this->request->getPost("id_tipo_gasto");
+    // echo $id_tipo_gasto;
+    // exit();
 
     $datosEgreso = [
      "tipo_egreso" => EGRESO_SIMPLE,
@@ -294,7 +324,8 @@ class Ctrl_egresos extends BaseController {
      "id_entidad"     => $id_entidad,
      "id_motivo"      => $id_motivo,
      "observaciones"  => $observaciones,
-     "id_egreso"      => $id_egreso
+     "id_egreso"      => $id_egreso,
+     "tipo_gasto"     => $id_tipo_gasto
     ];
 
     $this->egresos_simples->save($datosEgresoSimple);

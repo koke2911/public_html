@@ -4,6 +4,7 @@ function guardar_egreso() {
     var monto = peso.quitar_formato($("#txt_monto").val());
     var fecha_egreso = $("#dt_fecha_egreso").val();
     var id_tipo_egreso = $("#cmb_tipo_egreso").val();
+    var id_tipo_gasto = $("#cmb_tipo_gasto").val();
     var id_entidad = $("#txt_id_proveedor").val();
     var id_motivo = $("#txt_id_motivo").val();
     var id_cuenta = $("#txt_id_cuenta").val();
@@ -31,7 +32,8 @@ function guardar_egreso() {
             id_motivo: id_motivo,
             id_cuenta: id_cuenta,
             n_transaccion: n_transaccion,
-            observaciones: observaciones
+            observaciones: observaciones,
+            id_tipo_gasto:id_tipo_gasto
         },
         success: function(respuesta) {
             const OK = 1;
@@ -103,6 +105,35 @@ function llenar_cmb_tipo_egreso() {
     });
 }
 
+
+function llenar_cmb_tipo_gasto() {
+    if ($("#txt_id_egreso_egre").val()) {
+        var opcion = 1;
+    } else {
+        var opcion = 0;
+    }
+
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        async:false,
+        url: base_url + "/Finanzas/Ctrl_egresos/llenar_cmb_tipo_gasto/" + opcion,
+    }).done( function(data) {
+        $("#cmb_tipo_gasto").html('');
+
+        var opciones = "<option value=\"\">Seleccione un tipo de gasto</option>";
+        
+        for (var i = 0; i < data.length; i++) {
+            opciones += "<option value=\"" + data[i].id + "\">" + data[i].glosa + "</option>";
+        }
+
+        $("#cmb_tipo_gasto").append(opciones);
+    }).fail(function(error){
+        respuesta = JSON.parse(error["responseText"]);
+        alerta.error("alerta", respuesta.message);
+    });
+}
+
 function mostrar_datos_egreso() {
     var id_egreso = $("#txt_id_egreso_egre").val(); 
 
@@ -114,6 +145,7 @@ function mostrar_datos_egreso() {
         data: { id_egreso: id_egreso }
     }).done( function(data) {
         $("#cmb_tipo_egreso").val(data[0].id_tipo_egreso);
+        $("#cmb_tipo_gasto").val(data[0].tipo_gasto);
         $("#dt_fecha_egreso").val(data[0].fecha);
         $("#txt_monto").val(data[0].monto);
         $("#txt_id_cuenta").val(data[0].id_cuenta);
@@ -163,6 +195,7 @@ $(document).ready(function() {
     $("#txt_nombre").prop("readonly", true);
     $("#txt_email").prop("readonly", true);
     llenar_cmb_tipo_egreso();
+    llenar_cmb_tipo_gasto();
 
     $("#btn_guardar").on("click", function() {
         if ($("#form_egresos").valid()) {
@@ -240,6 +273,10 @@ $(document).ready(function() {
             cmb_tipo_egreso: {
                 required: true
             },
+            
+            cmb_tipo_gasto: {
+                required: true
+            },
             txt_monto: {
                 required: true,
                 maxlength: 12
@@ -265,6 +302,10 @@ $(document).ready(function() {
         messages: {
             cmb_tipo_egreso: {
                 required: "El tipo de egreso es obligatorio"
+            },
+            
+            cmb_tipo_gasto: {
+                required: "El tipo de gasto es obligatorio"
             },
             txt_monto: {
                 required: "El monto es obligatorio",

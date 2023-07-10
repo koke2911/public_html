@@ -34,11 +34,17 @@
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
+                          <label class="small mb-1" for="cmb_tipo_gasto">Tipo de Gasto</label>
+                          <select id="cmb_tipo_gasto" name="cmb_tipo_gasto" class="form-control"></select>
+                        </div>
+                      </div>
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
                           <label class="small mb-1" for="dt_fecha_egreso">Fecha</label>
                           <input type="text" class="form-control" name="dt_fecha_egreso" id="dt_fecha_egreso"/>
                         </div>
                       </div>
-                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_monto">Monto $</label>
                           <input type="text" class="form-control" name="txt_monto" id="txt_monto"/>

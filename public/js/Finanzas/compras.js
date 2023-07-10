@@ -21,6 +21,32 @@ function llenar_cmb_tipo_documento() {
     });
 }
 
+function llenar_cmb_tipo_gasto() {
+    
+    var opcion = 0;
+
+
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        async:false,
+        url: base_url + "/Finanzas/Ctrl_egresos/llenar_cmb_tipo_gasto/" + opcion,
+    }).done( function(data) {
+        $("#cmb_tipo_gasto").html('');
+
+        var opciones = "<option value=\"\">Seleccione un tipo de gasto</option>";
+        
+        for (var i = 0; i < data.length; i++) {
+            opciones += "<option value=\"" + data[i].id + "\">" + data[i].glosa + "</option>";
+        }
+
+        $("#cmb_tipo_gasto").append(opciones);
+    }).fail(function(error){
+        respuesta = JSON.parse(error["responseText"]);
+        alerta.error("alerta", respuesta.message);
+    });
+}
+
 var peso = {
     validaEntero: function  ( value ) {
         var RegExPattern = /[0-9]+$/;
@@ -140,6 +166,7 @@ function guardar_compra() {
     var iva = peso.quitar_formato($("#txt_iva").val());
     var total = peso.quitar_formato($("#txt_total").val());
     var id_proveedor = $("#txt_id_proveedor").val();
+    var id_tipo_gasto = $("#cmb_tipo_gasto").val();
 
     var data_grid_productos = $("#grid_productos_fac").DataTable().data();
     var productos = [];
@@ -165,7 +192,8 @@ function guardar_compra() {
             iva: iva,
             total: total,
             id_proveedor: id_proveedor,
-            productos: productos
+            productos: productos,
+            id_tipo_gasto:id_tipo_gasto
         },
         success: function(respuesta) {
             if (respuesta > 0) {
@@ -193,6 +221,7 @@ function mostrar_datos_compras() {
         data: { id_egreso: id_egreso }
     }).done( function(data) {
         $("#cmb_tipo_documento").val(data[0].id_tipo_documento);
+        $("#cmb_tipo_gasto").val(data[0].tipo_gasto);
         $("#txt_n_documento").val(data[0].n_documento);
         $("#dt_fecha_documento").val(data[0].fecha_documento);
         $("#txt_neto").val(peso.formateaNumero(data[0].neto));
@@ -213,6 +242,7 @@ function mostrar_datos_compras() {
 
 $(document).ready(function() {
 	llenar_cmb_tipo_documento();
+    llenar_cmb_tipo_gasto();
     llenar_cmb_productos();
 
 	$("#dt_fecha_documento").datetimepicker({
@@ -351,6 +381,9 @@ $(document).ready(function() {
             cmb_tipo_documento: {
                 required: true
             },
+            cmb_tipo_gasto: {
+                required: true
+            },
             txt_n_documento: {
                 required: true,
                 digits: true,
@@ -394,6 +427,9 @@ $(document).ready(function() {
         messages: {
             cmb_tipo_documento: {
                 required: "El tipo de documento es obligatorio"
+            },
+            cmb_tipo_gasto: {
+                required: "El tipo de gasto es obligatorio"
             },
             txt_n_documento: {
                 required: "El número de documento es obligatorio",

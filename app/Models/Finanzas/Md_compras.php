@@ -19,7 +19,8 @@ class Md_compras extends Model {
    'iva',
    'total',
    'id_proveedor',
-   'id_egreso'
+   'id_egreso',
+   'tipo_gasto'
   ];
 
   public function datos_compra($db, $id_egreso) {
@@ -33,7 +34,8 @@ class Md_compras extends Model {
 						    c.total,
 						    c.id_proveedor,
 						    concat(p.rut, '-', p.dv) as rut_proveedor,
-						    p.razon_social
+						    p.razon_social,
+                c.tipo_gasto
 						from 
 							compras c
 						    inner join proveedores p on c.id_proveedor = p.id

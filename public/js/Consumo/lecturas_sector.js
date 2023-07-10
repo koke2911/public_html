@@ -63,7 +63,9 @@ function ingresar_lectura(data, tipo_facturacion) {
             if (respuesta.estado == "OK") {
                 const table = $("#grid_lecturas_sector").DataTable()
                 alerta.ok("alerta", respuesta.mensaje);
-                // table.ajax.reload(null, false);
+                if(tipo_facturacion==2){
+                     table.ajax.reload(null, false);
+                }
             } else {
                 alerta.error("alerta", respuesta.mensaje);
             }
