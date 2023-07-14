@@ -390,4 +390,9 @@ class Ctrl_menu extends BaseController {
     $this->validar_sesion();
     echo view('Informes/informe_trimestral');
   }
+
+  public function libro_caja() {
+    $this->validar_sesion();
+    echo view('Informes/libro_caja');
+  }
 }
