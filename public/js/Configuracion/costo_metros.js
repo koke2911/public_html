@@ -222,6 +222,7 @@ function actualizar_grid() {
                 } else {
                     $("#txt_cantidad_cargo_fijo").val("");
                     $("#txt_cargo_fijo").val("");
+                    $("#txt_cargo_fijo_sc").val("");
                     $("#txt_id_cargo_fijo").val("");
                     if ($("#grid_costo_metros").DataTable().rows().count() > 0) {
                         alerta.aviso("alerta", "No se pudo cargar el cargo fijo");

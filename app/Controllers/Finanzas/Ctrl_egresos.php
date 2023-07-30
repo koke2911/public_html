@@ -252,7 +252,7 @@ class Ctrl_egresos extends BaseController {
     define("ACTIVO", 1);
     $db=$this->db;
 
-    $consulta = "SELECT id,glosa FROM TIPO_GASTO";
+    $consulta = "SELECT id,glosa FROM tipo_gasto";
     $query = $db->query($consulta);
     $datos_tipo  = $query->getResultArray();
 
