@@ -30,9 +30,10 @@ class Ctrl_costo_metros extends BaseController {
     }
   }
 
-  public function datatable_costo_metros($id_apr, $id_diametro) {
+  public function datatable_costo_metros($id_apr, $id_diametro,$id_tarifa) {
+    // echo $id_tarifa;
     $this->validar_sesion();
-    echo $this->costo_metros->datatable_costo_metros($this->db, $id_apr, $id_diametro);
+    echo $this->costo_metros->datatable_costo_metros($this->db, $id_apr, $id_diametro,$id_tarifa);
   }
 
   public function guardar_costo_metros() {
@@ -53,13 +54,17 @@ class Ctrl_costo_metros extends BaseController {
     $desde               = $this->request->getPost("desde");
     $hasta               = $this->request->getPost("hasta");
     $costo               = $this->request->getPost("costo");
+    $id_tarifa           = $this->request->getPost("id_tarifa");
+    $cargo_fijo_sc          = $this->request->getPost("cargo_fijo_sc");
+
+    // echo $id_tarifa;
 
     if (intval($hasta) <= intval($desde)) {
       echo "Hasta debe ser mayor a desde";
       exit();
     }
 
-    if ($this->costo_metros->validar_metraje_existente($this->db, $desde, $hasta, $cantidad_cargo_fijo, $id_apr, $id_diametro, $id_costo_metros)) {
+    if ($this->costo_metros->validar_metraje_existente($this->db, $desde, $hasta, $cantidad_cargo_fijo, $id_apr, $id_diametro, $id_costo_metros,$id_tarifa)) {
       $respuesta = ["respuesta" => "El rango de metros ingresado, se topa con uno existente"];
       echo json_encode($respuesta);
       exit();
@@ -69,8 +74,12 @@ class Ctrl_costo_metros extends BaseController {
      "cantidad"    => $cantidad_cargo_fijo,
      "cargo_fijo"  => $cargo_fijo,
      "id_apr"      => $id_apr,
-     "id_diametro" => $id_diametro
+     "id_diametro" => $id_diametro,
+     "tarifa"      => $id_tarifa,
+     "sin_consumo" => $cargo_fijo_sc
     ];
+
+    // print_r($datosCargoFijo);
 
     if ($id_cargo_fijo != "") {
       $datosCargoFijo["id"] = $id_cargo_fijo;
@@ -186,21 +195,27 @@ class Ctrl_costo_metros extends BaseController {
     $this->validar_sesion();
     $id_apr      = $this->request->getPost("id_apr");
     $id_diametro = $this->request->getPost("id_diametro");
+    $id_tarifa = $this->request->getPost("id_tarifa");
+
+    // echo $id_tarifa;
 
     $AprCargoFijo = $this->apr_cargo_fijo->select("*")
                                          ->where("id_apr", $id_apr)
                                          ->where("id_diametro", $id_diametro)
+                                         ->where("tarifa", $id_tarifa)
                                          ->first();
 
     if ($AprCargoFijo != NULL) {
       $cantidad      = $AprCargoFijo["cantidad"];
       $cargo_fijo    = $AprCargoFijo["cargo_fijo"];
       $id_cargo_fijo = $AprCargoFijo["id"];
+      $sin_consumo = $AprCargoFijo["sin_consumo"];
 
       $datosAprCargoFijo = [
        "id_cargo_fijo" => $id_cargo_fijo,
        "cantidad"      => $cantidad,
-       "cargo_fijo"    => $cargo_fijo
+       "cargo_fijo"    => $cargo_fijo,
+       "sin_consumo"   => $sin_consumo
       ];
 
       echo json_encode($datosAprCargoFijo);

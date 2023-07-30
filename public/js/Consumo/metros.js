@@ -34,6 +34,7 @@ function des_habilitar (a, b) {
   $("#txt_alcantarillado").prop("disabled", a);
   $("#txt_cuota_socio").prop("disabled", a);
   $("#txt_otros").prop("disabled", a);
+  
 }
 
 function mostrar_datos_metros (data) {
@@ -62,9 +63,32 @@ function mostrar_datos_metros (data) {
   $("#txt_total_mes").val(peso.formateaNumero(data["total_mes"]));
   $("#txt_cuota_socio").val(peso.formateaNumero(data["cuota_socio"]));
   $("#txt_otros").val(peso.formateaNumero(data["otros"]));
+  $("#cmb_tarifa").val(data['tarifa']);
+  $("#txt_cargo_fijo_sc").val(data['sin_consumo']);
 
-  $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_metros/datatable_costo_metros/" + data["metros"] + "/" + data["id_diametro"]);
+  $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_metros/datatable_costo_metros/" + data["metros"] + "/" + data["id_diametro"]+"/"+data['tarifa']);
 
+}
+
+function llenar_cmb_tarifa() {
+    $.ajax({
+        type: "GET",
+        dataType: "json",
+        url: base_url + "/Formularios/Ctrl_arranques/llenar_cmb_tarifa_metros",
+    }).done( function(data) {
+        $("#cmb_tarifa").html('');
+
+        var opciones = "<option value=\"\">Seleccione una Tarifa</option>";
+        
+        for (var i = 0; i < data.length; i++) {
+            opciones += "<option value=\"" + data[i].id + "\">" + data[i].tarifa + "</option>";
+        }
+
+        $("#cmb_tarifa").append(opciones);
+    }).fail(function(error){
+        respuesta = JSON.parse(error["responseText"]);
+        alerta.error("alerta", respuesta.message);
+    });
 }
 
 function guardar_metros () {
@@ -81,7 +105,14 @@ function guardar_metros () {
   var total_servicios = peso.quitar_formato($("#txt_total_servicios").val());
   var cuota_repactacion = peso.quitar_formato($("#txt_cuota_repactacion").val());
   var total_mes = peso.quitar_formato($("#txt_total_mes").val());
+  var cargo_sin_con=$("#txt_cargo_fijo_sc").val();
+
+if(metros==0 && cargo_sin_con>0){
+  var cargo_fijo = peso.quitar_formato($("#txt_cargo_fijo_sc").val());
+}else{
   var cargo_fijo = peso.quitar_formato($("#txt_cargo_fijo").val());
+}
+
   var monto_facturable = peso.quitar_formato($("#txt_monto_facturable").val());
   var alcantarillado = peso.quitar_formato($("#txt_alcantarillado").val());
   var cuota_socio = peso.quitar_formato($("#txt_cuota_socio").val());
@@ -198,6 +229,7 @@ function calcular_montos () {
   var consumo_anterior = $("#txt_c_anterior").val();
   var consumo_actual = $("#txt_c_actual").val();
   var tope_subsidio = $("#txt_tope_subsidio").val();
+  var cargo_sin_con= $("#txt_cargo_fijo_sc").val();
 
   if (parseInt(consumo_actual) >= parseInt(consumo_anterior)) {
     var metros_consumidos = parseInt(consumo_actual) - parseInt(consumo_anterior);
@@ -233,7 +265,12 @@ function calcular_montos () {
         e++;
       });
     }
+
+  if(metros_consumidos==0 && cargo_sin_con>0 ){
+     $("#txt_subtotal").val(peso.formateaNumero(cargo_sin_con));
+  }else{
     $("#txt_subtotal").val(peso.formateaNumero(subtotal));
+  }
     var subsidio_arr = $("#txt_subsidio").val().split("%");
     var subsidio = parseInt(subsidio_arr[0]);
     var monto_subsidio = total_subsidio * subsidio / 100;
@@ -313,6 +350,9 @@ function existe_consumo_mes () {
 }
 
 $(document).ready(function () {
+
+  llenar_cmb_tarifa();
+  $("#cmb_tarifa").prop("disabled", true);
   $("#txt_id_metros").prop("disabled", true);
   $("#txt_id_socio").prop("readonly", true);
   $("#txt_rut_socio").prop("readonly", true);
@@ -338,6 +378,7 @@ $(document).ready(function () {
   $("#txt_alcantarillado").prop("readonly", true);
   $("#txt_cuota_socio").prop("readonly", true);
   $("#txt_otros").prop("readonly", true);
+  $("#txt_cargo_fijo_sc").prop("readonly", true);
 
   des_habilitar(true, false);
 

@@ -99,6 +99,9 @@ $(document).ready(function () {
               if (value >= 0 && value != "") {
                 resolve()
                 $("#txt_id_arranque").val(data["id_arranque"]);
+                $("#cmb_tarifa").val(data["tarifa"]);
+                $("#txt_cargo_fijo_sc").val(data["sin_consumo"]);
+                
                 $("#txt_sector").val(data["sector"]);
                 $("#txt_subsidio").val(data["subsidio"]);
                 $("#txt_tope_subsidio").val(data["tope_subsidio"]);
@@ -112,7 +115,7 @@ $(document).ready(function () {
                 $("#dt_fecha_vencimiento").prop("readonly", false);
                 data["id_tipo_documento"] == 1 || data["id_tipo_documento"] == 2 ? $("#row_iva").addClass("d-none") : $("#row_iva").removeClass("d-none");
 
-                $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_metros/datatable_costo_metros/0/" + data["id_diametro"]);
+                $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_metros/datatable_costo_metros/0/" + data["id_diametro"]+"/"+data["tarifa"]);
                 var subsidio_arr = data["subsidio"].split("%");
                 var subsidio = parseInt(subsidio_arr[0]);
                 $("#txt_alcantarillado").val(peso.formateaNumero(subsidio === 0 ? data["alcantarillado"] : (data["alcantarillado"] * subsidio / 100)));
@@ -126,6 +129,8 @@ $(document).ready(function () {
       } else {
         $("#txt_id_arranque").val(data["id_arranque"]);
         $("#txt_sector").val(data["sector"]);
+        $("#cmb_tarifa").val(data["tarifa"]);
+         $("#txt_cargo_fijo_sc").val(data["sin_consumo"]);
         $("#txt_subsidio").val(data["subsidio"]);
         $("#txt_tope_subsidio").val(data["tope_subsidio"]);
         $("#txt_c_anterior").val(data["consumo_anterior"]);
@@ -138,7 +143,7 @@ $(document).ready(function () {
         $("#dt_fecha_vencimiento").prop("readonly", false);
         data["id_tipo_documento"] == 1 || data["id_tipo_documento"] == 2 ? $("#row_iva").addClass("d-none") : $("#row_iva").removeClass("d-none");
 
-        $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_metros/datatable_costo_metros/0/" + data["id_diametro"]);
+        $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_metros/datatable_costo_metros/0/" + data["id_diametro"]+"/"+data["tarifa"]);
         var subsidio_arr = data["subsidio"].split("%");
         var subsidio = parseInt(subsidio_arr[0]);
         $("#txt_alcantarillado").val(peso.formateaNumero(subsidio === 0 ? data["alcantarillado"] : (data["alcantarillado"] * subsidio / 100)));

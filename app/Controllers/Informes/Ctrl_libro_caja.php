@@ -276,8 +276,8 @@ class Ctrl_libro_caja extends BaseController {
                     date_format(es.fecha,'%m-%Y')='$mes' and e.estado=1 
                     group by dia,tipo_egreso";
 
-                    echo $consulta2;
-                    exit();
+                    // echo $consulta2;
+                    // exit();
 
       $query2 = $db->query($consulta2);
       $result2  = $query2->getResultArray();

@@ -183,22 +183,30 @@ class Ctrl_lecturas_sector extends BaseController {
       $datosApr                  = $this->apr->select("tope_subsidio")
                                              ->where("id", $id_apr)
                                              ->first();
+
       $datosSubsidio             = $this->subsidios
        ->select("p.glosa as porcentaje")
        ->join("porcentajes p", "subsidios.id_porcentaje = p.id")
        ->where("id_socio", $id_socio)
        ->first();
+
       $datosCargoFijo            = $this->arranques
        ->select("cf.cargo_fijo")
        ->select("m.id_diametro")
        ->select("arranques.monto_alcantarillado as alcantarillado")
        ->select("arranques.monto_cuota_socio as cuota_socio")
        ->select("arranques.monto_otros as otros")
+       ->select("arranques.tarifa as tarifa")
+       ->select("cf.sin_consumo as sin_consumo")
        ->join("medidores m", "arranques.id_medidor = m.id")
-       ->join("apr_cargo_fijo cf", "m.id_diametro = cf.id_diametro")
+       ->join("apr_cargo_fijo cf", "m.id_diametro = cf.id_diametro and cf.tarifa=arranques.tarifa")
        ->where("arranques.id_socio", $id_socio)
        ->where("cf.id_apr", $id_apr)
        ->first();
+    
+    // print_r($datosCargoFijo);
+    // exit();
+
       $datosCostoMetros          = $this->costo_metros
        ->select("costo_metros.id as id_costo_metros")
        ->select("costo_metros.desde")
@@ -208,8 +216,10 @@ class Ctrl_lecturas_sector extends BaseController {
        ->join("diametro d", "cf.id_diametro = d.id")
        ->where("cf.id_apr", $id_apr)
        ->where("cf.id_diametro", $datosCargoFijo["id_diametro"])
+       ->where("cf.tarifa", $datosCargoFijo["tarifa"])
        ->where("costo_metros.estado", ACTIVO)
        ->findAll();
+
       $datosConvenioDetalle      = $this->convenio_detalle
        ->select("ifnull(sum(convenio_detalle.valor_cuota), 0) as total_servicios")
        ->join("convenios", "convenio_detalle.id_convenio=convenios.id")
@@ -227,7 +237,19 @@ class Ctrl_lecturas_sector extends BaseController {
 
       $tope_subsidio  = $datosApr["tope_subsidio"];
       $porcentaje     = $datosSubsidio ? substr($datosSubsidio["porcentaje"], 0, strlen($datosSubsidio["porcentaje"]) - 1) : 0;
-      $cargo_fijo     = $datosCargoFijo["cargo_fijo"];
+
+      $cargo_fijo_sc=$datosCargoFijo["sin_consumo"];
+
+      if($id_metros==0 && $cargo_fijo_sc>0){
+        $cargo_fijo     = $datosCargoFijo["sin_consumo"];
+      }else{
+        $cargo_fijo     = $datosCargoFijo["cargo_fijo"];
+      }
+
+      // echo $cargo_fijo;
+      // exit();
+
+      
       $alcantarillado = $datosCargoFijo["alcantarillado"];
       $cuota_socio    = $datosCargoFijo["cuota_socio"];
       $otros          = $datosCargoFijo["otros"];
@@ -419,15 +441,17 @@ class Ctrl_lecturas_sector extends BaseController {
              ->select("ifnull(arranques.monto_cuota_socio, 0) as cuota_socio")
              ->select("ifnull(arranques.monto_otros, 0) as otros")
              ->select("arranques.id_tipo_documento")
+             ->select("arranques.tarifa")
              ->select("m.numero as numero_med")
              ->select("cf.id as id_cargo_fijo")
+             ->select("cf.sin_consumo as sin_consumo")
              ->join("medidores m", "arranques.id_medidor = m.id")
              ->join("diametro d", "m.id_diametro = d.id")
              ->join("socios s", "arranques.id_socio = s.id")
              ->join("sectores sec", "arranques.id_sector = sec.id")
              ->join("subsidios sub", "sub.id_socio = s.id", "left")
              ->join("porcentajes p", "sub.id_porcentaje = p.id", "left")
-             ->join("apr_cargo_fijo cf", "cf.id_apr = s.id_apr and cf.id_diametro = m.id_diametro")
+             ->join("apr_cargo_fijo cf", "cf.id_apr = s.id_apr and cf.id_diametro = m.id_diametro and cf.tarifa=arranques.tarifa")
              ->where("s.id_apr", $id_apr)
              ->where("m.id_apr", $id_apr)
              ->where("m.numero", $medidor)
@@ -453,8 +477,10 @@ class Ctrl_lecturas_sector extends BaseController {
                   $id_tipo_documento = $datosSocios['id_tipo_documento'];
                   $numero_med = $datosSocios['numero_med'];
                   $id_cargo_fijo = $datosSocios['id_cargo_fijo'];
+                  $tarifa = $datosSocios['tarifa'];
+                  $cargo_fijo_sc = $datosSocios['sin_consumo'];
 
-
+                  // echo $cargo_fijo_sc;exit();
                   $existe_consumo_mes = $this->metros->select("count(*) as filas")
                                        ->where("id_socio", $id_socio)
                                        ->where("date_format(fecha_ingreso, '%m-%Y')", $mes)
@@ -462,11 +488,14 @@ class Ctrl_lecturas_sector extends BaseController {
                                        ->first();
                   $filasexiste = $existe_consumo_mes["filas"];
 
-                if($lectura>$consumo_anterior && $id_socio!="" && $filasexiste==0){
+                if($lectura>=$consumo_anterior && $id_socio!="" && $filasexiste==0){
 
                     $metros_consumidos=$lectura-$consumo_anterior;
 
-                    $datosCostoMetros = json_decode($this->costo_metros->datatable_costo_metros_consumo($this->db, $this->sesión->id_apr_ses, $id_diametro, 0));
+                    $datosCostoMetros = json_decode($this->costo_metros->datatable_costo_metros_consumo($this->db, $this->sesión->id_apr_ses, $id_diametro, 0,$tarifa));
+
+                    // print_r($datosCostoMetros);
+                    // exit();
 
                         for ($i = 0; $i <= $metros_consumidos; $i ++) {
                         foreach ($datosCostoMetros as $key => $value) {
@@ -484,6 +513,11 @@ class Ctrl_lecturas_sector extends BaseController {
                             }
                           }
                         }
+                      }
+
+                      if($metros_consumidos==0 && $cargo_fijo_sc>0){
+                        $cargo_fijo=$cargo_fijo_sc;
+                        $subtotal=$cargo_fijo_sc;
                       }
 
                       $subsidio = explode("%",$subsidio);
@@ -558,6 +592,9 @@ class Ctrl_lecturas_sector extends BaseController {
                    "cuota_socio"       => $cuota_socio,
                    "otros"             => $otros
                   ];
+
+                  // print_r($datosMetros);
+                  // exit();
 
                   if($this->metros->save($datosMetros)){
                       $filas_ok++;
