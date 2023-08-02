@@ -64,6 +64,7 @@ function mostrar_datos_metros (data) {
   $("#txt_cuota_socio").val(peso.formateaNumero(data["cuota_socio"]));
   $("#txt_otros").val(peso.formateaNumero(data["otros"]));
   $("#cmb_tarifa").val(data['tarifa']);
+  $("#txt_alcantarillado").val(data['alcantarillado']);
   $("#txt_cargo_fijo_sc").val(data['sin_consumo']);
 
   $("#grid_costo_metros").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_metros/datatable_costo_metros/" + data["metros"] + "/" + data["id_diametro"]+"/"+data['tarifa']);
@@ -241,11 +242,13 @@ function calcular_montos () {
     for (var i = 0; i <= metros_consumidos; i++) {
       var e = 0;
       $("#grid_costo_metros").DataTable().rows().data().each(function (value) {
+        
         if (i >= parseInt(value.desde) && i <= parseInt(value.hasta)) {
-          if (value.id_costo_metros == 0) {
+         
+          if (value.id_costo_metros == 0 && subtotal===0) {
             subtotal = parseInt(value.costo);
             base = parseInt(value.costo);
-          } else {
+          } else if(value.id_costo_metros != 0){
             subtotal += parseInt(value.costo);
           }
 
