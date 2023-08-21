@@ -118,7 +118,7 @@
           </div>
         </div>
       </div>
-      <!-- <div class="row">
+      <div class="row">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="card mb-4">
             <div class="card-header"><i class="fas fa-box-open"></i> Rebaja de productos</div>
@@ -144,7 +144,7 @@
             </div>
           </div>
         </div>
-      </div> -->
+      </div>
       <div class="row">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="card mb-4">
