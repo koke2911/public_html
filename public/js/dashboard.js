@@ -161,7 +161,7 @@ $(document).ready(function() {
     grafico_mensualidad();
 
     $("#card_socios").on("click", function(){
-        $("#content").load(base_url + "/ctrl_menu/socios");
+        $("#content").load(base_url + "/ctrl_menu/caja_expres");
     });
 
     $("#card_informe_mensual").on("click", function(){

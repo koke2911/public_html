@@ -123,9 +123,10 @@ function calcular_iva_neto_total() {
     var neto = $("#grid_productos_fac").DataTable().column(4).data().sum();
     var iva = neto * 0.19;
     var total = neto + iva;
-    $("#txt_neto").val(peso.formateaNumero(neto));
-    $("#txt_iva").val(peso.formateaNumero(iva));
-    $("#txt_total").val(peso.formateaNumero(total));
+
+    $("#txt_neto").val(neto);
+    $("#txt_iva").val(iva.toFixed(2));
+    $("#txt_total").val(total.toFixed(2));
 }
 
 function guardar_producto() {
@@ -163,8 +164,8 @@ function guardar_compra() {
     var n_documento = $("#txt_n_documento").val();
     var fecha_documento = $("#dt_fecha_documento").val();
     var neto = peso.quitar_formato($("#txt_neto").val());
-    var iva = peso.quitar_formato($("#txt_iva").val());
-    var total = peso.quitar_formato($("#txt_total").val());
+    var iva = ($("#txt_iva").val());
+    var total =($("#txt_total").val());
     var id_proveedor = $("#txt_id_proveedor").val();
     var id_tipo_gasto = $("#cmb_tipo_gasto").val();
 
@@ -225,8 +226,8 @@ function mostrar_datos_compras() {
         $("#txt_n_documento").val(data[0].n_documento);
         $("#dt_fecha_documento").val(data[0].fecha_documento);
         $("#txt_neto").val(peso.formateaNumero(data[0].neto));
-        $("#txt_iva").val(peso.formateaNumero(data[0].iva));
-        $("#txt_total").val(peso.formateaNumero(data[0].total));
+        $("#txt_iva").val(data[0].iva);
+        $("#txt_total").val(data[0].total);
         $("#txt_id_proveedor").val(data[0].id_proveedor);
         $("#txt_rut_proveedor").val(data[0].rut_proveedor);
         $("#txt_razon_social").val(data[0].razon_social);

@@ -93,19 +93,19 @@
                     <thead class="thead-dark">
                       <tr>
                         <th>id_caja</th>
+                        <th>Nombre Socio</th>
                         <th>Pagado $</th>
                         <th>Entregado $</th>
                         <th>Vuelto $</th>
                         <th>Forma Pago</th>
-                        <th>N° Transacción</th>
+                        <!-- <th>N° Transacción</th> -->
                         <th>ROL Socio</th>
                         <th>Estado</th>
                         <th>Usuario</th>
                         <th>Fecha</th>
                         <th>Imp.</th>
                         <th>Anular</th>
-                        <th>Traza</th>
-                        <th>Nombre Socio</th>
+                        <th>Traza</th>                        
                         <th>Descuento</th>
                       </tr>
                     </thead>

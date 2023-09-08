@@ -139,6 +139,7 @@ class Ctrl_lecturas_sector extends BaseController {
      ->select("ifnull(mt.consumo_actual, '') as lectura_actual")
      ->join("arranques a", "a.id_socio = socios.id")
      ->join("medidores m", "a.id_medidor = m.id")
+     ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro=m.id_diametro")
      ->join("metros mt", "mt.id_socio = socios.id and date_format(mt.fecha_ingreso, '%m-%Y') = '$mes_consumo'", "left")
      ->where("a.id_sector", $id_sector)
      ->findAll();

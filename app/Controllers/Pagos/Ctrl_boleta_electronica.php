@@ -310,10 +310,12 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
              ->select("cf.cargo_fijo")
              ->select("socios.id")
              ->select("s.nombre as sector")
+             ->select("t.tipo as tarifa")
              ->select("ifnull(afecto_corte(socios.id,socios.id_apr),0) as meses_deuda")
              ->join("arranques a", "a.id_socio = socios.id")
              ->join("sectores s", "a.id_sector = s.id")
              ->join("medidores m", "a.id_medidor = m.id")
+             ->join("tarifas t", "a.tarifa = t.id_tarifa")
              ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro = m.id_diametro")
              ->where("socios.id", $id_socio)
              ->first();
@@ -603,7 +605,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 <Dieciseis>'.$total_servicio.'</Dieciseis>
                                 <Diecisiete></Diecisiete>
                                 <Dieciocho>'.$direccion.'</Dieciocho>
-                                <Diecinueve>ESTANDAR</Diecinueve>
+                                <Diecinueve>'.$datosSocios["tarifa"].'</Diecinueve>
                                 <Veinte>'.$consumo_actual.' M3 </Veinte>
                                 <Veintiuno>'.$consumo_anterior.' M3 </Veintiuno>
                                 <Veintidos>'.$metros_.' M3</Veintidos>

@@ -105,6 +105,91 @@ class Ctrl_caja extends BaseController {
     }
   }
 
+  public function datatable_deuda_socioRut($rut_socio) {
+    $this->validar_sesion();
+
+    $datosDeuda = $this->metros->select("metros.id as id_metros")
+                               ->select("s.rol as rol")
+                               ->select("metros.total_mes as deuda")
+                               ->select("date_format(metros.fecha_vencimiento, '%d-%m-%Y') as fecha_vencimiento")
+                               ->join("socios s","s.id=metros.id_socio")
+                               ->where("s.rut", $rut_socio)
+                               ->where("metros.estado", 1)
+                               ->findAll();
+
+    foreach ($datosDeuda as $key) {
+      $row = [
+       "id_metros"         => $key["id_metros"],
+       "rol"               => $key["rol"],
+       "deuda"             => $key["deuda"],
+       "fecha_vencimiento" => $key["fecha_vencimiento"]
+      ];
+
+      $data[] = $row;
+    }
+
+    if (isset($data)) {
+      $salida = ["data" => $data];
+
+      return json_encode($salida);
+    } else {
+      $salida = ["data" => ""];
+
+      return json_encode($salida);
+    }
+  }
+
+   public function buscar_datos_socio() {
+      $this->validar_sesion();
+      $id_apr          = $this->sesión->id_apr_ses;
+      $rut_socio       = $this->request->getPost("rut_socio");
+      $db=$this->db;
+
+      $consulta = "SELECT 
+                  s.id as id_socio,
+                  concat(s.rut, '-', s.dv) as rut,
+                    s.rol,
+                  s.nombres,
+                  s.ape_pat,
+                  s.ape_mat,
+                  s.abono,
+                concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre_completo FROM SOCIOS  s WHERE ID_APR=$id_apr and rut=$rut_socio
+                  ORDER BY abono DESC
+                  LIMIT 1";
+
+      $query = $db->query($consulta);
+      $datos_socio  = $query->getResultArray();
+
+      // print_r($datos_socio);
+
+      $cantidad_registros = count($datos_socio);
+
+      if($cantidad_registros>1){
+        
+      }if($cantidad_registros==1){
+        $id_socio=$datos_socio[0]['id_socio'];
+        $abono=$datos_socio[0]['abono'];
+        $nombre=$datos_socio[0]['nombre_completo'];
+        $rut=$datos_socio[0]['rut'];
+
+        $data = [
+         "id_socio" => $id_socio,
+         "abono"    => $abono,
+         "nombre"   => $nombre,
+         "rut"  => $rut       
+        ];
+
+        if (isset($data)) {
+          // $salida = ["data" => $data];
+          return json_encode($data);
+        } else {
+          return '0';
+        }   
+      }else{
+        return '0';
+      }
+   }
+
   public function guardar_pago() {
     $this->validar_sesion();
 

@@ -139,6 +139,11 @@ class Ctrl_menu extends BaseController {
     echo view('Pagos/caja');
   }
 
+  public function caja_expres() {
+    $this->validar_sesion();
+    echo view('Pagos/caja_expres');
+  }
+
   public function historial_pagos() {
     $this->validar_sesion();
     echo view('Pagos/historial_pagos');

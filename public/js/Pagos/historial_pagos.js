@@ -122,12 +122,14 @@ $(document).ready(function() {
         orderClasses: true,
         columns: [
             { "data": "id_caja" },
+            { "data": "nombre_socio" },
             { 
             	"data": "pagado",
             	"render": function(data, type, row) {
                     return peso.formateaNumero(data);
                 }
             },
+
             { 
             	"data": "entregado",
             	"render": function(data, type, row) {
@@ -141,7 +143,7 @@ $(document).ready(function() {
                 }
             },
             { "data": "forma_pago" },
-            { "data": "n_transaccion" },
+            // { "data": "n_transaccion" },
             { "data": "rol_socio" },
             { "data": "estado" },
             { "data": "usuario" },
@@ -164,11 +166,11 @@ $(document).ready(function() {
                     return "<button type='button' class='traza_pago btn btn-warning' title='Traza Pago'><i class='fas fa-shoe-prints'></i></button>";
                 }
             },
-            { "data": "nombre_socio" },
+            
             { "data": "descuento" }
         ],
         "columnDefs": [
-            { "targets": [0, 13, 14], "visible": false, "searchable": false }
+            { "targets": [0, 13], "visible": false, "searchable": false }
         ],
         language: {
             "decimal": "",

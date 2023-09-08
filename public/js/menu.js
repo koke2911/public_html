@@ -41,9 +41,13 @@ function actualizar_clave() {
 }
 
 $(document).ready(function() {
+
+    var cajaExpress;
+
 	$.ajax({
 	    type: "POST",
 	    dataType: "json",
+        async:false,
 	    url: base_url + "/Ctrl_menu/permisos_usuario",
 	}).done( function(data) {
     	var menu = "";
@@ -87,6 +91,11 @@ $(document).ready(function() {
         	menu += '<a class="nav-link" href="#" id="' + data[i].div_id + '" onclick="cargar_page(\'' + String(data[i].ruta) + '\')">\
                         <div class="sb-nav-link-icon"><i class="' + data[i].icono + '"></i></div> ' + data[i].permiso + '\
                     </a>';
+
+            if(String(data[i].ruta)==="/ctrl_menu/caja_expres"){
+                cajaExpress=1;
+            }
+            // alert(cajaExpress);
 
             id_subgrupo = data[i].id_subgrupo;
         }
@@ -155,5 +164,13 @@ $(document).ready(function() {
         }
     });
 
-    cargar_page("/ctrl_menu/dashboard");
+    // alert(cajaExpress);
+    console.log(cajaExpress);
+    if(cajaExpress===1){
+        cargar_page("/ctrl_menu/caja_expres");
+        $("body").toggleClass("sb-sidenav-toggled");
+    }else{
+        cargar_page("/ctrl_menu/dashboard");
+    }
+
 });
