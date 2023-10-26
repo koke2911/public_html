@@ -188,6 +188,7 @@
                           <th>Fecha</th>
                           <th>Traza</th>
                           <th>ruta</th>
+                          <th>Cert.</th>
                         </tr>
                       </thead>
                     </table>

@@ -1,5 +1,8 @@
 var base_url = $("#txt_base_url").val();
 
+var cargo_fijoSub=0;
+var valorSub=0;
+
 function des_habilitar (a, b) {
   $("#btn_nuevo").prop("disabled", b);
   $("#btn_modificar").prop("disabled", a);
@@ -109,9 +112,9 @@ function guardar_metros () {
   var cargo_sin_con=$("#txt_cargo_fijo_sc").val();
 
 if(metros==0 && cargo_sin_con>0){
-  var cargo_fijo = peso.quitar_formato($("#txt_cargo_fijo_sc").val());
+  var cargo_fijo = peso.quitar_formato($("#txt_cargo_fijo_sc").val()) - parseInt(peso.quitar_formato($("#txt_cargo_fijo_sc").val())*valorSub/100);
 }else{
-  var cargo_fijo = peso.quitar_formato($("#txt_cargo_fijo").val());
+  var cargo_fijo = peso.quitar_formato($("#txt_cargo_fijo").val()) - parseInt(peso.quitar_formato($("#txt_cargo_fijo").val())*valorSub/100);
 }
 
   var monto_facturable = peso.quitar_formato($("#txt_monto_facturable").val());
@@ -233,6 +236,10 @@ function calcular_montos () {
   var cargo_sin_con= $("#txt_cargo_fijo_sc").val();
 
   if (parseInt(consumo_actual) >= parseInt(consumo_anterior)) {
+    var subsidio_arr = $("#txt_subsidio").val().split("%");
+    var subsidio = parseInt(subsidio_arr[0]);
+    valorSub = subsidio;
+
     var metros_consumidos = parseInt(consumo_actual) - parseInt(consumo_anterior);
     $("#txt_metros").val(metros_consumidos);
     var subtotal = 0;
@@ -256,6 +263,15 @@ function calcular_montos () {
             total_subsidio = subtotal - base;
           }
 
+          if(subsidio>0){
+              cargo_fijoSub = base * subsidio / 100;
+          }else{
+              cargo_fijoSub=0;
+          }
+          // $("#txt_cargo_fijo").val(cargo_fijoSub);
+          // alert(cargo_fijoSub);
+
+
           if (value.id_costo_metros == 0) {
             var cantidad = i - parseInt(value.desde);
           } else {
@@ -270,12 +286,10 @@ function calcular_montos () {
     }
 
   if(metros_consumidos==0 && cargo_sin_con>0 ){
-     $("#txt_subtotal").val(peso.formateaNumero(cargo_sin_con));
+     $("#txt_subtotal").val(peso.formateaNumero(cargo_sin_con - parseInt(cargo_sin_con*valorSub/100)));
   }else{
-    $("#txt_subtotal").val(peso.formateaNumero(subtotal));
-  }
-    var subsidio_arr = $("#txt_subsidio").val().split("%");
-    var subsidio = parseInt(subsidio_arr[0]);
+    $("#txt_subtotal").val(peso.formateaNumero(subtotal-cargo_fijoSub));
+  }    
     var monto_subsidio = total_subsidio * subsidio / 100;
     $("#txt_monto_subsidio").val(peso.formateaNumero(Math.round(monto_subsidio)));
     calcular_total();
@@ -313,11 +327,13 @@ function calcular_total () {
   var total_servicios = $("#txt_total_servicios").val() == "" ? 0 : peso.quitar_formato($("#txt_total_servicios").val());
   var cuota_repactacion = $("#txt_cuota_repactacion").val() == "" ? 0 : peso.quitar_formato($("#txt_cuota_repactacion").val());
   var monto_subsidio = $("#txt_monto_subsidio").val() == "" ? 0 : peso.quitar_formato($("#txt_monto_subsidio").val());
+  
+  var descuento_alca=0;
   var alcantarillado = $("#txt_alcantarillado").val() == "" ? 0 : peso.quitar_formato($("#txt_alcantarillado").val());
   var cuota_socio = $("#txt_cuota_socio").val() == "" ? 0 : peso.quitar_formato($("#txt_cuota_socio").val());
   var otros = $("#txt_otros").val() == "" ? 0 : peso.quitar_formato($("#txt_otros").val());
 
-  var monto_facturable = parseInt(monto_subsidio) > parseInt(subtotal) ? total_mes = 0 : parseInt(subtotal) - parseInt(monto_subsidio);
+  var monto_facturable = parseInt(monto_subsidio) > parseInt(subtotal) ? total_mes = 0 : parseInt(subtotal) - parseInt(monto_subsidio) ;
   var total_mes =
    parseInt(monto_facturable) + parseInt(cuota_repactacion) + parseInt(multa) + parseInt(total_servicios) + parseInt(alcantarillado) + parseInt(cuota_socio) + parseInt(otros);
   $("#txt_total_mes").val(peso.formateaNumero(total_mes));

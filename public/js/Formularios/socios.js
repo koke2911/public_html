@@ -552,7 +552,12 @@ $(document).ready(function () {
           return "<button type='button' class='traza_socio btn btn-warning' title='Traza socio'><i class='fas fa-shoe-prints'></i></button>";
         }
       },
-      {"data": "ruta"}
+      {"data": "ruta"},
+      {"data": "id_socio",
+        "render":function(data,type,row){
+                         return "<button type='button' class='btn_certificado btn btn-primary' title='Imprimir'><i class='fas fa-print'></i></button>"
+               }
+      }
     ],
     "columnDefs": [
       {"targets": [0, 3, 4, 5, 9, 10, 11, 12, 14, 15, 16, 20], "visible": false, "searchable": false}
@@ -633,4 +638,22 @@ $(document).ready(function () {
       $('#dlg_traza_socio').modal('show');
     }
   });
+
+
+   $("#grid_socios tbody").on("click", "button.btn_certificado", function () {
+        var tr = $(this).closest('tr');
+        if ($(tr).hasClass('child') ) {
+            tr = $(tr).prev();  
+        }
+        
+        var data = grid_socios.row(tr).data();
+        var id_socio=data.id_socio;
+        
+
+        window.open(base_url + "/Formularios/Ctrl_socios/imprime_certificado/"+id_socio);
+
+       
+
+        
+    });
 });

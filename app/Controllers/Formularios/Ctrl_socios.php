@@ -218,4 +218,81 @@ class Ctrl_socios extends BaseController {
     // $salida = array("data" => $data);
     echo json_encode($data);
   }
+
+
+   public function imprime_certificado($id_socio){
+      $this->validar_sesion();
+      $apr=$this->sesión->apr_ses;
+      $apr_rut=$this->sesión->rut_apr_ses;
+      $apr_dv=$this->sesión->dv_apr_ses;
+      // echo $id_socio;
+      $mpdf = new \Mpdf\Mpdf([
+                            'mode'          => 'utf-8',
+                            'format'        => 'letter',
+                            'margin_bottom' => 1
+                           ]);
+
+      $pagecount = $mpdf->SetSourceFile("certificadoAPRServicio.pdf");
+
+     
+
+
+       $dia      = date("d");
+       $mes      = date("m");
+       $ano      = date("Y");
+
+      $tplId = $mpdf->ImportPage(1);
+      $mpdf->AddPage();
+      $mpdf->UseTemplate($tplId);
+
+      $mpdf->SetXY(160, 5);
+
+      $html = ' <img src="' . base_url().'/'.$this->sesión->id_apr_ses . '.png" width="150">'; 
+      $mpdf->WriteHTML($html);
+
+      $x = 47;
+      $y = 43;
+      $mpdf->SetXY($x, $y);
+
+      $mpdf->Cell(0, 0, $dia, 0, 1, 'L');
+      $mpdf->SetX(56);
+      $mpdf->Cell(0, 0, $mes, 0, 1, 'L');
+      $mpdf->SetX(68);
+      $mpdf->Cell(0, 0, $ano, 0, 1, 'L');
+      $mpdf->SetX(120);
+      $mpdf->Cell(0, 0, 'Id Socio N° : '.$id_socio, 0, 1, 'L');
+      $mpdf->SetXY(25,63);
+      $mpdf->Cell(0, 0, $apr, 0, 1, 'L');
+      $mpdf->SetX(150);
+      $mpdf->Cell(0, 0, $apr_rut.'-'.$apr_dv, 0, 1, 'L');
+
+      $consulta = "SELECT nombres ,ape_pat, ape_mat,rut,dv from socios s where s.id=$id_socio";
+
+      $query = $this->db->query($consulta);
+      $data  = $query->getResultArray();
+
+      $nombres=$data[0]['nombres'];
+      $ape_pat=$data[0]['ape_pat'];
+      $ape_mat=$data[0]['ape_mat'];
+      $rut=$data[0]['rut'];
+      $dv=$data[0]['dv'];
+
+      $mpdf->SetXY(63,70);
+      $mpdf->Cell(0, 0, $nombres.' '.$ape_pat.' '.$ape_mat, 0, 1, 'L');
+      $mpdf->SetXY(50,77);
+      $mpdf->Cell(0, 0, $rut.'-'.$dv, 0, 1, 'L');
+
+
+
+            // print_r($data);
+            // exit();
+
+      return $mpdf->Output("Certificado Dotacion " . $id_socio . ".pdf","D");
+
+       // header("Content-type:application/pdf");
+   
+       //   return redirect()->to($mpdf->Output());
+
+
+    }
 }

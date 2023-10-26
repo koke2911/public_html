@@ -295,6 +295,8 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
       $periodo_hasta     = $this->periodo_hasta($mes_consumo);
       $fecha_vencimiento = $datosMetros["fecha_vencimiento"];
       $id_socio          = $datosMetros["id_socio"];
+      $cargo_fijo        = $datosMetros["cargo_fijo"];
+      
 
      
 
@@ -352,7 +354,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
             $tipo_dte = tipo_dte($datosSocios["tipo_documento"]);
 
             $num_medidor = $datosSocios["num_medidor"];
-            $cargo_fijo  = $datosSocios["cargo_fijo"];
+            // $cargo_fijo  = $datosSocios["cargo_fijo"];
             $sector      = $datosSocios["sector"];
 
             $datosParaGrafico = $this->metros->select("date_format(fecha_ingreso, '%m-%Y') as fecha")

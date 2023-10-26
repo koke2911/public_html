@@ -153,7 +153,7 @@ class Ctrl_caja extends BaseController {
                   s.ape_pat,
                   s.ape_mat,
                   s.abono,
-                concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre_completo FROM SOCIOS  s WHERE ID_APR=$id_apr and rut=$rut_socio
+                concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre_completo FROM socios  s WHERE ID_APR=$id_apr and rut=$rut_socio
                   ORDER BY abono DESC
                   LIMIT 1";
 

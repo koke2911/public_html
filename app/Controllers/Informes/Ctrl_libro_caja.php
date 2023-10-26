@@ -109,7 +109,29 @@ class Ctrl_libro_caja extends BaseController {
             inner join metros m on m.id=d.id_metros
             where date_format(c.fecha,'%m-%Y')='$mes' 
             and c.id_apr=$id_apr  and c.estado =1 and m.multa !=0
-        group by dia,glosa order by dia,glosa asc";
+            group by dia,glosa 
+        UNION
+          select date_format(es.fecha,'%d-%m') as dia,
+                    concat(te.tipo_egreso,' (Por Egresos Simple)') as glosa,
+                    '' as total,
+                    '' as total2,
+                    '' as total3,
+                    sum(es.monto) as total4,
+                    '' as total5,
+                     sum(es.monto) as total6                    
+                     from  
+              egresos_simples es
+                left join cuentas c on es.id_cuenta = c.id
+                left join bancos b on c.id_banco = b.id
+                left join banco_tipo_cuenta btc on c.id_tipo_cuenta = btc.id
+                inner join motivos m on es.id_motivo = m.id
+                            inner join tipos_egreso te on es.id_tipo_egreso = te.id
+                            inner join egresos e on es.id_egreso = e.id
+                             where e.id_apr=$id_apr 
+              and date_format(es.fecha,'%m-%Y')='$mes' 
+              and e.estado=1  and btc.id not in (5,6)
+              group by dia,te.tipo_egreso   
+              order by dia,glosa asc";
 
       $query = $db->query($consulta);
       $result  = $query->getResultArray();
@@ -274,7 +296,26 @@ class Ctrl_libro_caja extends BaseController {
                     inner join tipo_gasto tg on tg.id=es.tipo_gasto
                     where es.tipo_gasto=6 and e.id_apr=$id_apr and 
                     date_format(es.fecha,'%m-%Y')='$mes' and e.estado=1 
-                    group by dia,tipo_egreso";
+                    group by dia,tipo_egreso
+              UNION
+                    select date_format(c.fecha,'%d-%m-%Y') as dia , 
+                    'PAGO AGUA POTABLE WEBPAY/TRANSFERENCIAS' as glosa,
+                    '' as total1,
+                    '' as total2,
+                    '' as total3,
+                    '' as total4,
+                    '' as total5,
+                    sum(c.total_pagar-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0))  as total6,
+                    '' as total7,
+                    sum(c.total_pagar-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0))  as  total8
+
+                    from caja c 
+                    inner join caja_detalle d on d.id_caja=c.id
+                    inner join metros m on m.id=d.id_metros where c.id_forma_pago in (3,4) 
+                    and date_format(c.fecha,'%m-%Y')='$mes'
+                    and c.id_apr=$id_apr 
+                    and c.estado =1
+                    group by dia,glosa";
 
                     // echo $consulta2;
                     // exit();
