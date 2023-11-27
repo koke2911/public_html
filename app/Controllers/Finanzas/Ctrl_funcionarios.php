@@ -56,6 +56,14 @@ class Ctrl_funcionarios extends BaseController {
     $numero          = $this->request->getPost("numero");
     $resto_direccion = $this->request->getPost("resto_direccion");
 
+    $prevision      = $this->request->getPost("prevision");
+    $prev_porcentaje = $this->request->getPost("prev_porcentaje");
+    $afp            = $this->request->getPost("afp");
+    $afp_porcentaje = $this->request->getPost("afp_porcentaje");
+    $sueldo_bruto   = $this->request->getPost("sueldo_bruto");
+    $fecha_contrato = $this->request->getPost("fecha_contrato");
+    $jornada        = $this->request->getPost("jornada");
+
     if ($id_comuna == "") {
       $id_comuna = NULL;
     }
@@ -83,6 +91,13 @@ class Ctrl_funcionarios extends BaseController {
      "id_usuario"      => $id_usuario,
      "fecha"           => $fecha,
      "id_apr"          => $id_apr,
+     "prevision"      =>$prevision,
+     "prev_porcentaje"=>$prev_porcentaje,
+     "afp"            =>$afp,
+     "afp_porcentaje" =>$afp_porcentaje,
+     "sueldo_bruto"   =>$sueldo_bruto,
+     "fecha_contrato" =>date_format(date_create($fecha_contrato), 'Y-m-d'),
+     "jornada"        =>$jornada
     ];
 
     if ($id_funcionario != "") {

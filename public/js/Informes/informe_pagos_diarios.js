@@ -9,6 +9,16 @@ $(document).ready(function() {
         if(dt_fecha_dia!=""){
             window.open(base_url + "/Informes/Ctrl_informe_pagos_diarios/reporte_pagos_resumen/"+dt_fecha_dia);
         }else{
+            alert("Debe Seleccionar el dia de consumo");
+        }
+    });
+
+
+    $("#btn_exportar_mes").on("click", function () {
+        var dt_fecha_mes = $("#dt_fecha_mes").val();
+        if(dt_fecha_mes!=""){
+            window.open(base_url + "/Informes/Ctrl_informe_pagos_diarios/reporte_pagos_resumen_mes/"+dt_fecha_mes);
+        }else{
             alert("Debe Seleccionar el mes de consumo");
         }
     });
@@ -28,6 +38,16 @@ $(document).ready(function() {
         $("#grid_pagos_diarios").dataTable().fnReloadAjax(base_url +"/Informes/Ctrl_informe_pagos_diarios/datatable_informe_pagos_diarios/"+$("#dt_fecha_dia").val());
 
     });
+
+    $("#dt_fecha_mes").datetimepicker({
+        format: "MM-YYYY",
+        useCurrent: false,
+        locale: moment.locale("es")
+      }).on("dp.change", function() {
+        $("#dt_fecha_mes").blur();
+    });
+
+    $("#dt_fecha_mes").val(moment().format("MM-YYYY"));
 
     
     var grid_pagos_diarios = $("#grid_pagos_diarios").DataTable({

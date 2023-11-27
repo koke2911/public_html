@@ -13,7 +13,13 @@ function calcular_montos(
  $otros
 ) {
   $metros_consumidos = intval($lectura_actual) - intval($lectura_anterior);
-  $subtotal          = $cargo_fijo;
+
+  $cargo_fijoSub=0;
+  if($porcentaje>0){
+    $cargo_fijoSub= $cargo_fijo * $porcentaje / 100;
+  }
+  $subtotal = $cargo_fijo;  
+
   $total_subsidio    = 0;
   if ($metros_consumidos > 0) {
     for ($i = 1; $i <= $metros_consumidos; $i ++) {
@@ -21,12 +27,16 @@ function calcular_montos(
         if ($i >= intval($key["desde"]) && $i <= intval($key["hasta"])) {
           $subtotal += intval($key["costo"]);
           if ($i <= intval($tope_subsidio)) {
-            $total_subsidio = $subtotal;
+            $total_subsidio = $subtotal-$cargo_fijo;
           }
         }
       }
     }
   }
+
+  // echo $total_servicios;
+
+  $subtotal=$subtotal-$cargo_fijoSub;
 
   $monto_subsidio   = $total_subsidio * $porcentaje / 100;
   $monto_facturable = intval($monto_subsidio) > intval($subtotal) ? $total_mes = 0 : intval($subtotal) - intval($monto_subsidio);
@@ -40,6 +50,8 @@ function calcular_montos(
    "total_mes"         => $total_mes
   ];
 
+  // print_r($respuesta);
+  // exit();
   return $respuesta;
 }
 

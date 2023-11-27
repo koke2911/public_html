@@ -400,4 +400,9 @@ class Ctrl_menu extends BaseController {
     $this->validar_sesion();
     echo view('Informes/libro_caja');
   }
+
+  public function liquidaciones() {
+    $this->validar_sesion();
+    echo view('RecursosH/Liquidaciones');
+  }
 }

@@ -113,6 +113,48 @@
                           <textarea class="form-control" id="txt_resto_direccion" name="txt_resto_direccion"></textarea>
                         </div>
                       </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_prevision">Prevision (FONASA o ISAPRE)</label>
+                          <input class="form-control" id="txt_prevision" name="txt_prevision"></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_prevision_porcen">% o UF</label>
+                          <input class="form-control" id="txt_prevision_porcen" name="txt_prevision_porcen"></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_afp">AFP</label>
+                          <input class="form-control" id="txt_afp" name="txt_afp"></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_afp_porcent">% AFP</label>
+                          <input class="form-control" id="txt_afp_porcent" name="txt_afp_porcent"></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_sueldo_bruto">Sueldo Bruto</label>
+                          <input class="form-control" id="txt_sueldo_bruto" name="txt_sueldo_bruto"></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="dt_contrato">Fecha Contrato</label>
+                          <input class="form-control" id="dt_contrato" name="dt_contrato"></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_jornada">Jornada (Dias)</label>
+                          <input class="form-control" id="txt_jornada" name="txt_jornada"></input>
+                        </div>
+                      </div>
                     </div>
                   </form>
                 </div>

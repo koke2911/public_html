@@ -9,7 +9,7 @@ use App\Models\Pagos\Md_caja_traza;
 use App\Models\Pagos\Md_caja_detalle;
 use App\Models\Formularios\Md_socios;
 use App\Models\Consumo\Md_metros_traza;
-
+use App\Models\Formularios\Md_socios_traza;
 class Ctrl_historial_pagos extends BaseController {
 
   protected $metros;
@@ -20,7 +20,8 @@ class Ctrl_historial_pagos extends BaseController {
   protected $socios;
   protected $sesión;
   protected $db;
-
+  protected $socios_traza;
+  
   public function __construct() {
     $this->metros       = new Md_metros();
     $this->metros_traza = new Md_metros_traza();
@@ -30,6 +31,7 @@ class Ctrl_historial_pagos extends BaseController {
     $this->socios       = new Md_socios();
     $this->sesión       = session();
     $this->db           = \Config\Database::connect();
+    $this->socios_traza     = new Md_socios_traza();
   }
 
   public function validar_sesion() {
@@ -80,6 +82,8 @@ class Ctrl_historial_pagos extends BaseController {
     $fecha      = date("Y-m-d H:i:s");
     $id_usuario = $this->sesión->id_usuario_ses;
 
+
+
     $datosPago = [
      "id"         => $id_caja,
      "estado"     => ANULADO,
@@ -121,6 +125,35 @@ class Ctrl_historial_pagos extends BaseController {
 
           if (!$this->metros_traza->save($datosMetrosTraza)) {
             echo "Error al registrar traza al registro de metros";
+          }else{
+             $datosSocios = $this->socios->select("socios.id,socios.abono,c.abono as abono_caja")
+                                             ->join("caja c","c.id_socio=socios.id")
+                                             ->where("c.id", $id_caja)
+                                             ->findAll();
+              $id_socio=$datosSocios[0]['id'];
+              $abono_socio=$datosSocios[0]['abono'];
+              $abono_caja=$datosSocios[0]['abono_caja'];
+
+              $anula_abono=$abono_socio+$abono_caja;
+
+               $datosSocios = [
+               "id"         => $id_socio,
+               "abono"      => $anula_abono,
+               "id_usuario" => $id_usuario,
+               "fecha"      => $fecha
+              ];
+
+              $this->socios->save($datosSocios);
+
+              $datosSociosTraza = [
+               "id_socio"   => $id_socio,
+               "estado"     => 8,
+               "id_usuario" => $id_usuario,
+               "fecha"      => $fecha
+              ];
+
+              $this->socios_traza->save($datosSociosTraza);
+
           }
         }
       }

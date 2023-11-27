@@ -20,6 +20,14 @@ function des_habilitar(a, b) {
     $("#txt_calle").prop("disabled", a);
     $("#txt_numero").prop("disabled", a);
     $("#txt_resto_direccion").prop("disabled", a);
+    $("#txt_prevision").prop("disabled",a);
+    $("#txt_prevision_porcen").prop("disabled",a);
+    $("#txt_afp").prop("disabled",a);
+    $("#txt_afp_porcent").prop("disabled",a);
+
+    $("#txt_sueldo_bruto").prop("disabled",a);
+    $("#dt_contrato").prop("disabled",a);
+    $("#txt_jornada").prop("disabled",a);
 }
 
 function mostrar_datos_funcionarios(data) {
@@ -35,6 +43,17 @@ function mostrar_datos_funcionarios(data) {
     $("#txt_calle").val(data["calle"]);
     $("#txt_numero").val(data["numero"]);
     $("#txt_resto_direccion").val(data["resto_direccion"]);
+
+    $("#txt_prevision").val(data["prevision"]);
+    $("#txt_prevision_porcen").val(data["prev_porcentaje"]);
+    $("#txt_afp").val(data["afp"]);
+    $("#txt_afp_porcent").val(data["afp_porcentaje"]);
+
+    $("#txt_sueldo_bruto").val(data["sueldo_bruto"]);
+    $("#dt_contrato").val(data["fecha_contrato"]);
+    $("#txt_jornada").val(data["jornada"]);
+
+
 }
 
 function llenar_cmb_region() {
@@ -118,6 +137,13 @@ function guardar_funcionario() {
     var calle = $("#txt_calle").val();
     var numero = $("#txt_numero").val();
     var resto_direccion = $("#txt_resto_direccion").val();
+    var prevision=$("#txt_prevision").val();
+    var prev_porcentaje=$("#txt_prevision_porcen").val();
+    var afp=$("#txt_afp").val();
+    var afp_porcentaje=$("#txt_afp_porcent").val();
+    var sueldo_bruto=$("#txt_sueldo_bruto").val();
+    var fecha_contrato=$("#dt_contrato").val();
+    var jornada=$("#txt_jornada").val();
 
     $.ajax({
         url: base_url + "/Finanzas/Ctrl_funcionarios/guardar_funcionario",
@@ -133,7 +159,14 @@ function guardar_funcionario() {
             id_comuna: comuna,
             calle: calle,
             numero: numero,
-            resto_direccion: resto_direccion
+            resto_direccion: resto_direccion,
+            prevision: prevision,
+            prev_porcentaje: prev_porcentaje,
+            afp: afp,
+            afp_porcentaje: afp_porcentaje,
+            sueldo_bruto: sueldo_bruto,
+            fecha_contrato: fecha_contrato,
+            jornada: jornada
         },
         success: function(respuesta) {
             const OK = 1;
@@ -233,6 +266,15 @@ $(document).ready(function() {
     llenar_cmb_region();
     llenar_cmb_provincia();
     llenar_cmb_comuna();
+
+    $("#dt_contrato").datetimepicker({
+        format: "DD-MM-YYYY",
+        useCurrent: false,
+        locale: moment.locale("es")
+      }).on("dp.change", function () {
+        $("#dt_contrato").blur();
+      });
+
 
     $("#btn_nuevo").on("click", function() {
         des_habilitar(false, true);
@@ -336,9 +378,32 @@ $(document).ready(function() {
         $(this).val(convertirMayusculas($(this).val()));
     });
 
+    $("#txt_prevision").on("blur",function(){
+        $(this).val(convertirMayusculas($(this).val()));        
+    });
+
+    $("#txt_prevision_porcen").on("blur",function(){
+        $(this).val(convertirMayusculas($(this).val()));        
+    });
+
+    $("#txt_afp").on("blur",function(){
+        $(this).val(convertirMayusculas($(this).val()));        
+    });
+
+    $("#txt_afp_porcent").on("blur",function(){
+        $(this).val(convertirMayusculas($(this).val()));        
+    });
+
+
     $.validator.addMethod("charspecial", function(value, element) {
         return this.optional(element) || /^[^;\"'{}\[\]^<>=]+$/.test(value);
     });
+
+
+    $.validator.addMethod("valores", function(value, element) {
+        return this.optional(element) || /^(FONASA|ISAPRE)$/i.test(value);
+    });
+
 
     $.validator.addMethod("rut", function(value, element) {
         return this.optional(element) || /^[0-9-.Kk]*$/.test(value);
@@ -346,6 +411,10 @@ $(document).ready(function() {
 
     $.validator.addMethod("letras", function(value, element) {
         return this.optional(element) || /^[a-zA-ZñÑáÁéÉíÍóÓúÚ ]*$/.test(value);
+    });
+
+    $.validator.addMethod("decimal", function(value, element) {
+        return this.optional(element) || /^-?\d+(\.\d{1,2})?$/.test(value);
     });
 
     $("#form_funcionario").validate({
@@ -387,6 +456,31 @@ $(document).ready(function() {
             txt_resto_direccion: {
                 charspecial: true,
                 maxlength: 200
+            },
+            txt_prevision:{
+                letras: true,
+                maxlength: 45,
+                valores:true
+            },
+            txt_prevision_porcen:{
+                maxlength: 5,
+                decimal:true
+            },
+            txt_afp:{
+                letras: true,
+                maxlength: 45
+            },
+            txt_afp_porcent:{
+                maxlength: 5,
+                decimal:true
+            },
+            txt_sueldo_bruto:{
+                maxlength: 7,
+                digits: true
+            },
+            txt_jornada:{
+                maxlength: 2,
+                digits: true
             }
         },
         messages: {
@@ -419,6 +513,31 @@ $(document).ready(function() {
             txt_resto_direccion: {
                 charspecial: "Hay caracteres extraños no permitdos",
                 maxlength: "Máximo 200 caracteres"
+            },
+            txt_prevision:{
+                letras: "Solo Puede ingresar Letras",
+                maxlength: "Maximo 45 caracteres",
+                valores:"Solo Puede ingresa FONASA o ISAPRE"
+            },
+            txt_prevision_porcen:{
+                maxlength: "Maximo 4 caracteres",
+                decimal:"Solo se permiten numero o decimales separados por punto (.) "
+            },
+            txt_afp:{
+                letras: "Solo Puede ingresar Letras",
+                maxlength: "Maximo 45 caracteres"
+            },
+            txt_afp_porcent:{
+                maxlength: "Maximo 4 caracteres",
+                decimal:"Solo se permiten numero o decimales separados por punto (.) "
+            },
+             txt_sueldo_bruto:{
+                maxlength: "Maximo 7 caracteres", 
+                digits: "Solo se permiten numeros"
+            },
+            txt_jornada:{
+                maxlength: "Maximo 2 caracteres",
+                digits: "Solo se permiten numeros"
             }
         }
     });

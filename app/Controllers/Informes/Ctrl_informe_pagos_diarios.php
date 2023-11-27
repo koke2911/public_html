@@ -34,9 +34,9 @@ class Ctrl_informe_pagos_diarios extends BaseController {
         $objPHPExcel->setActiveSheetIndex(0);
 
 
-        $objPHPExcel->getActiveSheet()->setCellValue('A1', 'CANTIDAD PAGOS');
-        $objPHPExcel->getActiveSheet()->setCellValue('B1', 'TOTAL');
-        $objPHPExcel->getActiveSheet()->setCellValue('C1', 'TIPO');
+        $objPHPExcel->getActiveSheet()->setCellValue('A1', 'N° PAGOS');
+        $objPHPExcel->getActiveSheet()->setCellValue('B1', 'TOTAL PAGADO');
+        $objPHPExcel->getActiveSheet()->setCellValue('C1', 'METODO DE PAGO');
         $sheet = $objPHPExcel->getActiveSheet();
 
        foreach ($sheet->getColumnIterator() as $column) {
@@ -62,6 +62,45 @@ class Ctrl_informe_pagos_diarios extends BaseController {
 
       header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); 
       header('Content-Disposition: attachment;filename="Resumen informe Pagos Diarios '.$fecha.'.xlsx"'); 
+
+      $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
+      $writer->save('php://output');
+
+  }
+
+   public function reporte_pagos_resumen_mes($fecha){
+        $objPHPExcel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $objPHPExcel->setActiveSheetIndex(0);
+
+
+        $objPHPExcel->getActiveSheet()->setCellValue('A1', 'N° PAGOS');
+        $objPHPExcel->getActiveSheet()->setCellValue('B1', 'TOTAL PAGADO');
+        $objPHPExcel->getActiveSheet()->setCellValue('C1', 'METODO DE PAGO');
+        $sheet = $objPHPExcel->getActiveSheet();
+
+       foreach ($sheet->getColumnIterator() as $column) {
+         $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+      }
+
+      $this->validar_sesion();
+      $id_apr=$this->sesión->id_apr_ses;
+
+      $datosCaja = $this->caja
+             ->select("count(caja.id) as  cantidad")
+             ->select("sum(caja.total_pagar) as TOTAL")
+             ->select("fp.glosa as forma_pago")
+             ->join("forma_pago fp", "caja.id_forma_pago = fp.id")
+             ->join("caja_detalle cd","cd.id_caja = caja.id")
+             ->where("caja.id_apr", $id_apr)
+             ->where("date_format(caja.fecha, '%m-%Y')",$fecha) 
+             ->where("caja.estado",1) 
+             ->groupBy("forma_pago")
+             ->findAll();
+
+      $sheet->fromArray($datosCaja, NULL, 'A2'); 
+
+      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); 
+      header('Content-Disposition: attachment;filename="Resumen informe Pagos Mensual '.$fecha.'.xlsx"'); 
 
       $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
       $writer->save('php://output');

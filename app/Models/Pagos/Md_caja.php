@@ -22,7 +22,8 @@ class Md_caja extends Model {
    'id_usuario',
    'fecha',
    'id_apr',
-   'descuento'
+   'descuento',
+   'abono'
   ];
 
   public function datatable_historial_pagos($db, $id_apr, $id_socio, $desde, $hasta) {

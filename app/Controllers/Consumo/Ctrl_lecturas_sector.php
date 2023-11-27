@@ -221,32 +221,47 @@ class Ctrl_lecturas_sector extends BaseController {
        ->where("costo_metros.estado", ACTIVO)
        ->findAll();
 
-      $datosConvenioDetalle      = $this->convenio_detalle
-       ->select("ifnull(sum(convenio_detalle.valor_cuota), 0) as total_servicios")
-       ->join("convenios", "convenio_detalle.id_convenio=convenios.id")
-       ->where("date_format(convenio_detalle.fecha_pago, '%m-%Y')", $fecha_vencimiento)
-       ->where("convenios.id_socio", $id_socio)
-       ->where("convenios.estado", ACTIVO)
-       ->first();
-      $datosRepactacionesDetalle = $this->repactaciones_detalle
-       ->select("ifnull(sum(repactaciones_detalle.valor_cuota), 0) as total_servicios")
-       ->join("repactaciones", "repactaciones_detalle.id_repactacion=repactaciones.id")
-       ->where("date_format(repactaciones_detalle.fecha_pago, '%m-%Y')", $fecha_vencimiento)
-       ->where("repactaciones.id_socio", $id_socio)
-       ->where("repactaciones.estado", ACTIVO)
-       ->first();
+      $fecha_vencimiento2 = date_format(date_create($this->request->getPost("fecha_vencimiento")), 'm-Y');
 
-      $tope_subsidio  = $datosApr["tope_subsidio"];
-      $porcentaje     = $datosSubsidio ? substr($datosSubsidio["porcentaje"], 0, strlen($datosSubsidio["porcentaje"]) - 1) : 0;
+     $datosConvenioDetalle = $this->convenio_detalle
+     ->select("ifnull(sum(convenio_detalle.valor_cuota), 0) as total_servicios")
+     ->join("convenios", "convenio_detalle.id_convenio=convenios.id")
+     ->where("date_format(convenio_detalle.fecha_pago, '%m-%Y')", $fecha_vencimiento2)
+     ->where("convenios.id_socio", $id_socio)
+     ->where("convenios.estado", ACTIVO)
+     ->first();
+
+    $datosRepactacionesDetalle = $this->repactaciones_detalle
+     ->select("ifnull(sum(repactaciones_detalle.valor_cuota), 0) as total_servicios")
+     ->join("repactaciones", "repactaciones_detalle.id_repactacion=repactaciones.id")
+     ->where("date_format(repactaciones_detalle.fecha_pago, '%m-%Y')", $fecha_vencimiento2)
+     ->where("repactaciones.id_socio", $id_socio)
+     ->where("repactaciones.estado", ACTIVO)
+     ->first();
+
+        // echo $fecha_vencimiento;
+    // print_r($datosServicios);
+    // exit();
+
+    $tope_subsidio  = $datosApr["tope_subsidio"];
+    $porcentaje     = $datosSubsidio ? substr($datosSubsidio["porcentaje"], 0, strlen($datosSubsidio["porcentaje"]) - 1) : 0;
+
 
       $cargo_fijo_sc=$datosCargoFijo["sin_consumo"];
 
-      if($id_metros==0 && $cargo_fijo_sc>0){
+      
+      $sin_consumo=$lectura_actual-$lectura_anterior;
+
+      if($sin_consumo<1 && $cargo_fijo_sc>0){
         $cargo_fijo     = $datosCargoFijo["sin_consumo"];
       }else{
         $cargo_fijo     = $datosCargoFijo["cargo_fijo"];
       }
 
+      if($porcentaje>0 and $porcentaje!=""){
+        $cargo_fijoSub=($cargo_fijo*$porcentaje) / 100;
+      }
+      // echo $sin_consumo;
       // echo $cargo_fijo;
       // exit();
 
@@ -291,7 +306,7 @@ class Ctrl_lecturas_sector extends BaseController {
        "total_servicios"   => $total_servicios,
        "cuota_repactacion" => $cuota_repactacion,
        "total_mes"         => $total_mes,
-       "cargo_fijo"        => $cargo_fijo,
+       "cargo_fijo"        => $cargo_fijoSub,
        "monto_facturable"  => $monto_facturable,
        "alcantarillado"    => $alcantarillado,
        "cuota_socio"       => $cuota_socio,

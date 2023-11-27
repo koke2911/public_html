@@ -25,7 +25,14 @@ class Md_funcionarios extends Model {
    'estado',
    'id_usuario',
    'fecha',
-   'id_apr'
+   'id_apr',
+   'prevision',
+   'prev_porcentaje',
+   'afp',
+   'afp_porcentaje',
+   'sueldo_bruto',
+   'fecha_contrato',
+   'jornada'
   ];
 
   public function datatable_funcionarios($db, $id_apr) {
@@ -45,7 +52,14 @@ class Md_funcionarios extends Model {
 							s.numero,
 							s.resto_direccion,
 							u.usuario,
-							date_format(s.fecha, '%d-%m-%Y %H:%i:%s') as fecha
+							date_format(s.fecha, '%d-%m-%Y %H:%i:%s') as fecha,
+              s.prevision,
+              s.prev_porcentaje,
+              s.afp,
+              s.afp_porcentaje,
+              s.sueldo_bruto,
+              date_format(s.fecha_contrato, '%d-%m-%Y') as fecha_contrato,
+              s.jornada
 						from 
 							funcionarios s
 							inner join usuarios u on u.id = s.id_usuario
@@ -75,7 +89,14 @@ class Md_funcionarios extends Model {
        "numero"          => $key["numero"],
        "resto_direccion" => $key["resto_direccion"],
        "usuario"         => $key["usuario"],
-       "fecha"           => $key["fecha"]
+       "fecha"           => $key["fecha"],
+        "prevision"      =>$key["prevision"],
+        "prev_porcentaje" =>$key["prev_porcentaje"],
+        "afp"            =>$key["afp"],
+        "afp_porcentaje" =>$key["afp_porcentaje"],
+        "sueldo_bruto"   =>$key["sueldo_bruto"],
+        "fecha_contrato" =>$key["fecha_contrato"],
+        "jornada"        =>$key["jornada"]
       ];
 
       $data[] = $row;

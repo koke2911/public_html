@@ -229,7 +229,8 @@ class Ctrl_caja extends BaseController {
      "id_socio"           => $id_socio,
      "id_usuario"         => $id_usuario,
      "fecha"              => $fecha,
-     "id_apr"             => $id_apr
+     "id_apr"             => $id_apr,
+     "abono"              => $abono
     ];
 
     $this->db->transStart();
