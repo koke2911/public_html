@@ -258,6 +258,8 @@ class Ctrl_lecturas_sector extends BaseController {
         $cargo_fijo     = $datosCargoFijo["cargo_fijo"];
       }
 
+      $cargo_fijoSub=$cargo_fijo;
+      
       if($porcentaje>0 and $porcentaje!=""){
         $cargo_fijoSub=($cargo_fijo*$porcentaje) / 100;
       }
@@ -315,6 +317,8 @@ class Ctrl_lecturas_sector extends BaseController {
        "fecha"             => $fecha,
        "id_apr"            => $id_apr
       ];
+
+      print_r($datosMetros);
 
       if ($tipo_facturacion == T_MEDIO) {
         $datosMetros["tipo_facturacion"] = T_MEDIO;
