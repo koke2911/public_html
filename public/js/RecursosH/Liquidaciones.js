@@ -70,6 +70,7 @@ function mostrar_datos_funcionarios(rut) {
                             $("#txt_sueldo_bruto").val(data.data[0].sueldo_bruto);
                             $("#dt_contrato").val(data.data[0].fecha_contrato);
                             $("#txt_jornada").val(data.data[0].jornada);
+                            $("#txt_valor_extra").val(data.data[0].horas_extras);
                                                    
                         }
                     },
@@ -81,21 +82,41 @@ function mostrar_datos_funcionarios(rut) {
 }
 
 function guardar_liquidacion() {
-    var rut =$("#txt_rut").val();
-    var mes =$("#dt_mes").val();
+    var rut=$("#txt_rut").val();
+    var id_funcionario=$("#txt_id_funcionario").val();
+    var mes=$("#dt_mes").val();
     var valor_uf=$("#txt_valor_uf").val();
     var dias_trabajados=$("#txt_dias_trabajados").val();
-    var sueldo_bruto=$("#txt_sueldo").val();
+    var sueldo_base=$("#txt_sueldo").val();
+    var h_extras_c=$("#txt_horas_extras").val();
+    var h_extras_v=$("#txt_valor_h_extra").val();
+    var gratif_por=$("#txt_gratificacion_por").val();
+    var gratif_val=$("#txt_gratificacion").val();
+    var bono_respon=$("#txt_bonos").val();
+    var total_imponible=$("#txt_imponible").val();
+    var bono_colacion=$("#txt_colacion").val();
+    var asig_familiar=$("#txt_cargas").val();
+    var bono_movil=$("#txt_movilizacion").val();
+    var viatico=$("#txt_viaticos").val();
+    var feriado_proporcional=$("#txt_proporcional").val();
+    var total_otros_haberes=$("#txt_otros_haberes").val();
     var afp=$("#txt_cotizacion_afp").val();
     var obligatorio=$("#txt_obligatorio").val();
     var pactada=$("#txt_cotizacion_pactada").val();
-    var diferencia_isapre=$("#txt_diferencia_isapre").val();
-    var afc =$("#txt_afc").val();
-    var otros =$("#txt_otros_descuentos").val();
-    var total_prevision =$("#txt_total_prevision").val();
+    var diferencia_isa=$("#txt_diferencia_isapre").val();
+    var afc_tra_por=$("#txt_afc_trab_por").val();
+    var afc_tra_v=$("#txt_afc_trab").val();
+    var afc_empl_por=$("#txt_afc_empl_por").val();
+    var afc_empl_v=$("#txt_afc_empl").val();
+    var sis_por=$("#txt_sis_por").val();
+    var sis_v=$("#txt_sis").val();
+    var acc_trab_por=$("#txt_acci_por").val();
+    var acc_trab_v=$("#txt_acci").val();
+    var aporte_empl=$("#txt_aporte_empl").val();
+    var otros=$("#txt_otros_descuentos").val();
+    var total_prevision=$("#txt_total_prevision").val();
     var base_tributable=$("#txt_base_tributable").val();
-    var cargas =$("#txt_cargas").val();
-    var a_pagar=$("#txt_apagar").val();
+    var apagar=$("#txt_apagar").val();
     
     
 
@@ -104,21 +125,41 @@ function guardar_liquidacion() {
         type: "POST",
         async: false,
         data: {
-            rut: rut,
-            mes: mes,
-            valor_uf: valor_uf,
-            dias_trabajados: dias_trabajados,
-            sueldo_bruto: sueldo_bruto,
-            afp: afp,
-            obligatorio: obligatorio,
-            pactada: pactada,
-            diferencia_isapre: diferencia_isapre,
-            afc: afc,
-            otros: otros,
-            total_prevision: total_prevision,
-            base_tributable: base_tributable,
-            cargas: cargas,
-            a_pagar: a_pagar
+            rut:rut,
+            id_funcionario:id_funcionario,
+            mes:mes,
+            valor_uf:valor_uf,
+            dias_trabajados:dias_trabajados,
+            sueldo_base:sueldo_base,
+            h_extras_c:h_extras_c,
+            h_extras_v:h_extras_v,
+            gratif_por:gratif_por,
+            gratif_val:gratif_val,
+            bono_respon:bono_respon,
+            total_imponible:total_imponible,
+            bono_colacion:bono_colacion,
+            asig_familiar:asig_familiar,
+            bono_movil:bono_movil,
+            viatico:viatico,
+            feriado_proporcional:feriado_proporcional,
+            total_otros_haberes:total_otros_haberes,
+            afp:afp,
+            obligatorio:obligatorio,
+            pactada:pactada,
+            diferencia_isa:diferencia_isa,
+            afc_tra_por:afc_tra_por,
+            afc_tra_v:afc_tra_v,
+            afc_empl_por:afc_empl_por,
+            afc_empl_v:afc_empl_v,
+            sis_por:sis_por,
+            sis_v:sis_v,
+            acc_trab_por:acc_trab_por,
+            acc_trab_v:acc_trab_v,
+            aporte_empl:aporte_empl,
+            otros:otros,
+            total_prevision:total_prevision,
+            base_tributable:base_tributable,
+            apagar:apagar
         },
         success: function(respuesta) {
             const OK = 1;
@@ -174,23 +215,79 @@ $(document).ready(function() {
         // $("#btn_eliminar").prop("disabled", true);
         $("#datosLiquidacion").collapse("show");
     });
-
-    $("#btn_calcular").on("click", function() {
-        
-        var  obligatorio= $("#txt_obligatorio").val();
-        var  pactada= 0;//$("#txt_cotizacion_pactada").val();
+    
+    function calcularTotales(){
+         var  obligatorio= $("#txt_obligatorio").val();
+        var  pactada= 0;
         var  isapre= $("#txt_diferencia_isapre").val();
-        var  afc = $("#txt_afc").val();
         var  afp = $("#txt_cotizacion_afp").val();
+
+
+        var afc_trab_por=parseFloat($("#txt_afc_trab_por").val());
+        var afc_empl_por=parseFloat($("#txt_afc_empl_por").val());
+        var imponible=parseFloat($("#txt_imponible").val());
+
+        if(afc_empl_por!=0){
+            var afc_empl=(afc_empl_por*imponible)/100;
+            $("#txt_afc_empl").val(afc_empl);
+        }else{
+            $("#txt_afc_empl").val(0);
+        }
+        if(afc_trab_por!=0){
+            var afc_trab=(afc_trab_por*imponible)/100;
+            $("#txt_afc_trab").val(afc_trab);
+        }else{
+            $("#txt_afc_trab").val(0);
+        }
+
+        var afc=$("#txt_afc_trab").val();
+
+
+        var sis_por=parseFloat($("#txt_sis_por").val());        
+        var acci_por=parseFloat($("#txt_acci_por").val());
+
+        if(sis_por!=0){
+            var sis=(sis_por*imponible)/100;
+            $("#txt_sis").val(sis);
+        }else{
+            $("#txt_sis").val(0);
+        }
+
+        if(acci_por!=0){
+            var acci=(acci_por*imponible)/100;
+            $("#txt_acci").val(acci);
+        }else{
+            $("#txt_acci").val(0);
+        }
+
+        var v_afc_empl=parseFloat($("#txt_afc_empl").val());
+        var v_sis=parseFloat($("#txt_sis").val());
+        var v_acci=parseFloat($("#txt_acci").val());
+
+        $("#txt_aporte_empl").val(v_afc_empl+v_sis+v_acci);
+
+
+        var colacion=parseFloat($("#txt_colacion").val());
+        var cargas=parseFloat($("#txt_cargas").val());
+        var movilizacion=parseFloat($("#txt_movilizacion").val());
+        var viaticos=parseFloat($("#txt_viaticos").val());
+        var proporcional=parseFloat($("#txt_proporcional").val());
+
+        var otros_haberes=colacion+cargas+movilizacion+viaticos+proporcional;
+        $("#txt_otros_haberes").val(otros_haberes);
 
         var total_prevision = parseFloat(obligatorio) + parseFloat(pactada) + parseFloat(isapre) + parseFloat(afc) + parseFloat(afp);
         $("#txt_total_prevision").val(total_prevision);
 
-        var base_tributable = parseFloat($("#txt_sueldo").val()) - parseFloat($("#txt_total_prevision").val());
+        var base_tributable = parseFloat($("#txt_imponible").val());
         $("#txt_base_tributable").val(base_tributable);
 
-        var a_pagar= base_tributable + parseFloat($("#txt_cargas").val()) - parseFloat($("#txt_otros_descuentos").val());
+        var a_pagar= otros_haberes + parseFloat(base_tributable)- total_prevision - parseFloat($("#txt_otros_descuentos").val());
         $("#txt_apagar").val(a_pagar);
+    }
+
+    $("#btn_calcular").on("click", function() {
+        calcularTotales();       
     });
 
     // $("#btn_modificar").on("click", function() {
@@ -247,15 +344,35 @@ $(document).ready(function() {
         }
     });
 
-    $("#txt_dias_trabajados").on("blur", function() {
+    function calculaImponible(){
         var bruto = parseFloat($("#txt_sueldo_bruto").val());
         var dias_total = parseFloat($("#txt_jornada").val());
         var dias_trabajados = parseFloat($("#txt_dias_trabajados").val());
 
-        var valor_dia = bruto / dias_total;
-        var sueldo = Math.round(valor_dia * dias_trabajados);
+        var valorHExtra=parseFloat($("#txt_valor_extra").val())*parseFloat($("#txt_horas_extras").val());
 
-        $("#txt_sueldo").val((sueldo));
+        $("#txt_valor_h_extra").val(valorHExtra);
+
+        var horas = parseFloat($("#txt_valor_h_extra").val());
+
+        var bonos = parseFloat($("#txt_bonos").val());
+
+
+        var valor_dia = bruto / dias_total;
+        var sueldo_base = Math.round(valor_dia * dias_trabajados);
+
+        $("#txt_sueldo").val((sueldo_base));
+
+        var grati = parseFloat($("#txt_gratificacion_por").val());
+        var gatificacion=0;
+
+        if(grati!=0){
+            var gatificacion = Math.round((grati * sueldo_base )/100);       
+            $("#txt_gratificacion").val(gatificacion);
+        }
+
+        var sueldo=sueldo_base+horas+gatificacion+bonos;
+        $("#txt_imponible").val((sueldo));
 
         var total_afp= Math.round(sueldo * parseFloat($("#txt_afp_porcent").val()) / 100);
         $("#txt_cotizacion_afp").val(total_afp);
@@ -275,6 +392,65 @@ $(document).ready(function() {
             $("#txt_diferencia_isapre").val(diferencia_isapre);
 
         }
+
+
+
+        calcularTotales();
+    }
+
+    $("#txt_horas_extras").on("blur", function() {
+        calculaImponible();
+    });
+
+    $("#txt_gratificacion_por").on("blur", function() {
+        calculaImponible();
+    });
+
+    $("#txt_bonos").on("blur", function() {
+        calculaImponible();
+    });
+
+
+    $("#txt_dias_trabajados").on("blur", function() {
+        calculaImponible();
+    });
+
+    $("#txt_gratificacion_por").on("blur", function() {
+        calculaImponible();
+    });
+
+    $("#txt_afc_empl_por").on("blur", function() {
+        calcularTotales();
+    });
+
+    $("#txt_afc_trab_por").on("blur", function() {
+        calcularTotales();
+    });
+
+    $("#txt_sis_por").on("blur", function() {
+        calcularTotales();
+    });
+
+    $("#txt_acci_por").on("blur", function() {
+        calcularTotales();
+    });
+
+
+
+    $("#txt_colacion").on("blur", function() {
+        calculaImponible();
+    });
+    $("#txt_cargas").on("blur", function() {
+        calculaImponible();
+    });
+    $("#txt_movilizacion").on("blur", function() {
+        calculaImponible();
+    });
+    $("#txt_viaticos").on("blur", function() {
+        calculaImponible();
+    });
+    $("#txt_proporcional").on("blur", function() {
+        calculaImponible();
     });
 
     $("#txt_nombres").on("blur", function() {
@@ -428,7 +604,63 @@ $(document).ready(function() {
             txt_otros_descuentos:{
                 required:true,
                 digits:true
-            }
+            },
+            txt_horas_extras:{
+                required:true,
+                digits:true
+            },
+            txt_gratificacion:{
+                required:true,
+                digits:true
+            },
+            txt_bonos:{
+                required:true,
+                digits:true
+            },
+            txt_gratificacion_por:{
+                required:true,
+                decimal:true
+            },
+            txt_bonos:{
+                required:true,
+                digits:true
+            },
+            txt_colacion:{
+                required:true,
+                digits:true
+            },
+            txt_cargas:{
+                required:true,
+                digits:true
+            },
+            txt_movilizacion:{
+                required:true,
+                digits:true
+            },
+            txt_viaticos:{
+                required:true,
+                digits:true
+            },
+            txt_proporcional:{
+                required:true,
+                digits:true
+            },
+            txt_afc_trab_por:{
+                required:true,
+                decimal:true
+            },
+            txt_afc_empl_por:{
+                required:true,
+                decimal:true
+            },
+            txt_sis_por:{
+                required:true,
+                decimal:true
+            },
+            txt_acci_por:{
+                required:true,
+                decimal:true
+            },
         },
         messages: {
             txt_rut: {
@@ -527,6 +759,54 @@ $(document).ready(function() {
             txt_otros_descuentos:{
                 required:"Valor Requerido",
                 digits:"Solo se aceptan numeros"
+            }            ,
+            txt_horas_extras:{
+                required:"Valor Requerido",
+                digits:"Solo se aceptan numeros"
+            },
+            txt_gratificacion_por:{
+                required:"Valor Requerido",
+                decimal:"Solo se aceptan numeros y punto (.)"
+            },
+             txt_bonos:{
+                required:"Valor Requerido",
+                digits:"Solo se aceptan numeros"
+            },
+            txt_colacion:{
+                required:"Valor Requerido",
+                digits:"Solo se aceptan numeros"
+            },
+            txt_cargas:{
+               required:"Valor Requerido",
+                digits:"Solo se aceptan numeros"
+            },
+            txt_movilizacion:{
+                required:"Valor Requerido",
+                digits:"Solo se aceptan numeros"
+            },
+            txt_viaticos:{
+                required:"Valor Requerido",
+                digits:"Solo se aceptan numeros"
+            },
+            txt_proporcional:{
+                required:"Valor Requerido",
+                digits:"Solo se aceptan numeros"
+            },
+            txt_afc_trab_por:{
+                required:"Valor Requerido",
+                decimal:"Solo se aceptan numeros y punto (.)"                
+            },
+            txt_afc_empl_por:{
+                required:"Valor Requerido",
+                decimal:"Solo se aceptan numeros y punto (.)"                
+            },
+            txt_sis_por:{
+                required:"Valor Requerido",
+                decimal:"Solo se aceptan numeros y punto (.)"                
+            },
+            txt_acci_por:{
+                required:"Valor Requerido",
+                decimal:"Solo se aceptan numeros y punto (.)"                
             }
         }
     });
@@ -548,16 +828,11 @@ $(document).ready(function() {
             {"data":"valor_uf"},
             {"data":"dias_trabajados"},
             {"data":"sueldo_bruto"},
-            {"data":"afp"},
-            {"data":"obligatorio"},
-            {"data":"pactada"},
-            {"data":"diferencia_isapre"},
-            {"data":"afc"},
-            {"data":"otros"},
+            {"data":"total_imponible"},
             {"data":"total_prevision"},
-            {"data":"base_tributable"},
-            {"data":"cargas"},
-            {"data":"a_pagar"},
+            {"data":"total_otros_haberes"},
+            {"data":"aporte_empl"},
+            {"data":"apagar"},
             {"data":"id_apr"},
             {"data":"fecha_genera"},
             {"data":"usuario_registra"},
@@ -568,7 +843,7 @@ $(document).ready(function() {
               }
         ],
         "columnDefs": [
-            { "targets": [0,4,7,8,9,10,11,12,13,14,15,17], "visible": false, "searchable": false }
+            { "targets": [0,6,9,10,12,14], "visible": false, "searchable": false }
         ],
         language: {
             "decimal": "",

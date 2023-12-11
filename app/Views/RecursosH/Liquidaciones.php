@@ -10,11 +10,8 @@
           <div class="container-fluid">
             <center>
               <button type="button" name="btn_nuevo" id="btn_nuevo" class="btn btn-primary"><i class="fas fa-plus"></i> Nuevo</button>
-              <!-- <button type="button" name="btn_modificar" id="btn_modificar" class="btn btn-primary"><i class="fas fa-edit"></i> Modificar</button>
-              <button type="button" name="btn_eliminar" id="btn_eliminar" class="btn btn-primary"><i class="fas fa-trash"></i> Eliminar</button> -->
-              <button type="button" name="btn_aceptar" id="btn_aceptar" class="btn btn-success"><i class="fas fa-check"></i> Aceptar</button>
-              <button type="button" name="btn_cancelar" id="btn_cancelar" class="btn btn-danger"><i class="fas fa-ban"></i> Cancelar</button>
-              
+             <button type="button" name="btn_aceptar" id="btn_aceptar" class="btn btn-success"><i class="fas fa-check"></i> Aceptar</button>
+              <button type="button" name="btn_cancelar" id="btn_cancelar" class="btn btn-danger"><i class="fas fa-ban"></i> Cancelar</button>              
             </center>
           </div>
         </div>
@@ -127,6 +124,12 @@
                           <input class="form-control" id="txt_valor_uf" name="txt_valor_uf"></input>
                         </div>
                       </div>
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_valor_extra">$ H Extra</label>
+                          <input class="form-control" id="txt_valor_extra" name="txt_valor_extra" disabled="true"></input>
+                        </div>
+                      </div>
                     </div>
                     <div class="row">
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
@@ -135,48 +138,182 @@
                           <input class="form-control" id="txt_dias_trabajados" name="txt_dias_trabajados"></input>
                         </div>
                       </div>
+                    </div>
+                    <strong><h>HABERES DEL TRABAJADOR</h></strong><BR>
+
+                    <div class="row">
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
-                          <label class="small mb-1" for="txt_sueldo">Sueldo Imponible</label>
+                          <label class="small mb-1" for="txt_sueldo">Sueldo Base</label>
                           <input class="form-control" id="txt_sueldo" name="txt_sueldo" disabled="true"></input>
                         </div>
                       </div>
-                      
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_horas_extras">Horas Extras</label>
+                          <input class="form-control" id="txt_horas_extras" name="txt_horas_extras" value=0></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_valor_h_extra">$ H.Extras</label>
+                          <input class="form-control" id="txt_valor_h_extra" name="txt_valor_h_extra" value=0 disabled="true"></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_gratificacion_por">Gratif. %</label>
+                          <input class="form-control" id="txt_gratificacion_por" name="txt_gratificacion_por" value=0></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_gratificacion">Gratif. $</label>
+                          <input class="form-control" id="txt_gratificacion" name="txt_gratificacion" value=0 disabled="true"></input>
+                        </div>
+                      </div>
+                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_bonos">Bono Responsabilidad</label>
+                          <input class="form-control" id="txt_bonos" name="txt_bonos" value=0></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_imponible"><strong>Remuneracion Imponible</strong></label>
+                          <input class="form-control" id="txt_imponible" name="txt_imponible" disabled="true"></input>
+                        </div>
+                      </div>                     
                     </div>
-                    <strong><h>DESCUENTOS OBLIGATORIOS</h></strong><BR>
+                    <strong><h>OTROS HABERES</h></strong><BR>
+                    <div class="row">
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_colacion"> $ Bono Colación</label>
+                          <input class="form-control" id="txt_colacion" name="txt_colacion"  value=0></input>
+                        </div>
+                      </div>   
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_cargas"> $ Aig. Familiar</label>
+                          <input class="form-control" id="txt_cargas" name="txt_cargas"  value=0></input>
+                        </div>
+                      </div>   
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_movilizacion"> $ B.Movilizacion</label>
+                          <input class="form-control" id="txt_movilizacion" name="txt_movilizacion"  value=0></input>
+                        </div>
+                      </div>   
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_viaticos"> $ Viaticos</label>
+                          <input class="form-control" id="txt_viaticos" name="txt_viaticos"  value=0></input>
+                        </div>
+                      </div>   
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_proporcional"> $ F.L Proporcional</label>
+                          <input class="form-control" id="txt_proporcional" name="txt_proporcional"  value=0></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_otros_haberes"><strong> Total Otros Haberes</strong></label>
+                          <input class="form-control" id="txt_otros_haberes" name="txt_otros_haberes"  value=0 disabled="true"></input>
+                        </div>
+                      </div>   
+                    </div>
+                    <strong><h>DESCUENTOS OBLIGATORIOS TRABAJADOR</h></strong><BR>
                     <div class="row">
 
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_cotizacion_afp"> $ Cotizacion AFP</label>
-                          <input class="form-control" id="txt_cotizacion_afp" name="txt_cotizacion_afp"></input>
+                          <input class="form-control" id="txt_cotizacion_afp" name="txt_cotizacion_afp" disabled="true"></input>
                         </div>
                       </div>
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_obligatorio"> 7% obligatorio$</label>
-                          <input class="form-control" id="txt_obligatorio" name="txt_obligatorio"></input>
+                          <input class="form-control" id="txt_obligatorio" name="txt_obligatorio" disabled="true"></input>
                         </div>
                       </div>
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_cotizacion_pactada"> Cotizacion Pactada $</label>
-                          <input class="form-control" id="txt_cotizacion_pactada" name="txt_cotizacion_pactada"></input>
+                          <input class="form-control" id="txt_cotizacion_pactada" name="txt_cotizacion_pactada" disabled="true"></input>
                         </div>
                       </div>
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_diferencia_isapre"> Diferencia Isapre $</label>
-                          <input class="form-control" id="txt_diferencia_isapre" name="txt_diferencia_isapre" value=0></input>
+                          <input class="form-control" id="txt_diferencia_isapre" name="txt_diferencia_isapre" value=0 disabled="true"></input>
                         </div>
                       </div>
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_afc_trab_por">AFC Traba. %</label>
+                          <input class="form-control" id="txt_afc_trab_por" name="txt_afc_trab_por" value=0></input>
+                        </div>
+                      </div>
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_afc_trab">AFC Trab $</label>
+                          <input class="form-control" id="txt_afc_trab" name="txt_afc_trab" value=0 disabled="true"></input>
+                        </div>
+                      </div>                    
+                    </div>
+                    <strong><h>APORTES EMPLEADOR</h></strong><BR>
+                    <div class="row">
+                     <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_afc_empl_por">AFC Empl. %</label>
+                          <input class="form-control" id="txt_afc_empl_por" name="txt_afc_empl_por" value=0></input>
+                        </div>
+                      </div>
+
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_afc_empl">AFC Empl. $</label>
+                          <input class="form-control" id="txt_afc_empl" name="txt_afc_empl" value=0 disabled="true"></input>
+                        </div>
+                      </div>
+
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_sis_por">SIS %</label>
+                          <input class="form-control" id="txt_sis_por" name="txt_sis_por" value=0></input>
+                        </div>
+                      </div>
+
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_sis">SIS $</label>
+                          <input class="form-control" id="txt_sis" name="txt_sis" value=0 disabled="true"></input>
+                        </div>
+                      </div>
+
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_acci_por">Acid Trab %</label>
+                          <input class="form-control" id="txt_acci_por" name="txt_acci_por" value=0></input>
+                        </div>
+                      </div>
+
+                      <div class="col-xl-1 col-lg-1 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_acci">Acid Trab. $</label>
+                          <input class="form-control" id="txt_acci" name="txt_acci" value=0 disabled="true"></input>
+                        </div>
+                      </div>
+
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
-                          <label class="small mb-1" for="txt_afc"> Cotización AFC Trabajador $</label>
-                          <input class="form-control" id="txt_afc" name="txt_afc" value=0></input>
+                          <label class="small mb-1" for="txt_aporte_empl"><strong>$ Aporte Empleador</strong></label>
+                          <input class="form-control" id="txt_aporte_empl" name="txt_aporte_empl" value=0 disabled="true"></input>
                         </div>
                       </div>
-                      
                     </div>
                     <strong><h>OTROS DESCUENTOS</h></strong><BR>
                     <div class="row">
@@ -190,25 +327,19 @@
                     <div class="row">
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
-                          <label class="small mb-1" for="txt_total_prevision"> Total Previsión $</label>
+                          <label class="small mb-1" for="txt_total_prevision"> <strong>Descuentos Previsión $</strong></label>
                           <input class="form-control" id="txt_total_prevision" name="txt_total_prevision" disabled="true"></input>
                         </div>
                       </div>
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
-                          <label class="small mb-1" for="txt_base_tributable"> Base Tributable</label>
+                          <label class="small mb-1" for="txt_base_tributable"><strong> Base Tributable</strong></label>
                           <input class="form-control" id="txt_base_tributable" name="txt_base_tributable" disabled="true"></input>
                         </div>
                       </div>
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
-                          <label class="small mb-1" for="txt_cargas"> Cargas</label>
-                          <input class="form-control" id="txt_cargas" name="txt_cargas"  value=0></input>
-                        </div>
-                      </div>
-                      <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
-                        <div class="form-group">
-                          <label class="small mb-1" for="txt_apagar"> A pagar</label>
+                          <label class="small mb-1" for="txt_apagar"> <strong>A pagar</strong></label>
                           <input class="form-control" id="txt_apagar" name="txt_apagar"  value=0></input>
                         </div>
                       </div>
@@ -243,20 +374,16 @@
                           <th>valor_uf</th>
                           <th>dias_trabajados</th>
                           <th>sueldo_bruto</th>
-                          <th>afp</th>
-                          <th>obligatorio</th>
-                          <th>pactada</th>
-                          <th>diferencia_isapre</th>
-                          <th>afc</th>
-                          <th>otros</th>
+                          <th>total_imponible</th>
                           <th>total_prevision</th>
-                          <th>base_tributable</th>
-                          <th>cargas</th>
-                          <th>a_pagar</th>
+                          <th>total_otros_haberes</th>
+                          <th>aporte_empl</th>
+                          <th>apagar</th>
                           <th>id_apr</th>
                           <th>fecha_genera</th>
-                          <th>usuario_genera</th>
+                          <th>usuario_registra</th>
                           <th>imprimir</th>
+                          
                         </tr>
                       </thead>
                     </table>
@@ -266,9 +393,7 @@
             </div>
           </div>
         </div>
-      </div>
-      
-      
+      </div>     
     </div>
   </div>
 </main>

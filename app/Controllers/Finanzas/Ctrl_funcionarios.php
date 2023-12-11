@@ -63,6 +63,7 @@ class Ctrl_funcionarios extends BaseController {
     $sueldo_bruto   = $this->request->getPost("sueldo_bruto");
     $fecha_contrato = $this->request->getPost("fecha_contrato");
     $jornada        = $this->request->getPost("jornada");
+    $vacaciones     = $this->request->getPost("vacaciones");
 
     if ($id_comuna == "") {
       $id_comuna = NULL;
@@ -97,7 +98,8 @@ class Ctrl_funcionarios extends BaseController {
      "afp_porcentaje" =>$afp_porcentaje,
      "sueldo_bruto"   =>$sueldo_bruto,
      "fecha_contrato" =>date_format(date_create($fecha_contrato), 'Y-m-d'),
-     "jornada"        =>$jornada
+     "jornada"        =>$jornada,
+     "vacaciones"     =>$vacaciones
     ];
 
     if ($id_funcionario != "") {

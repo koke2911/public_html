@@ -32,7 +32,9 @@ class Md_funcionarios extends Model {
    'afp_porcentaje',
    'sueldo_bruto',
    'fecha_contrato',
-   'jornada'
+   'jornada',
+   'vacaciones',
+   'vacaciones_disponibles'
   ];
 
   public function datatable_funcionarios($db, $id_apr) {
@@ -59,7 +61,8 @@ class Md_funcionarios extends Model {
               s.afp_porcentaje,
               s.sueldo_bruto,
               date_format(s.fecha_contrato, '%d-%m-%Y') as fecha_contrato,
-              s.jornada
+              s.jornada,
+              s.vacaciones
 						from 
 							funcionarios s
 							inner join usuarios u on u.id = s.id_usuario
@@ -96,7 +99,8 @@ class Md_funcionarios extends Model {
         "afp_porcentaje" =>$key["afp_porcentaje"],
         "sueldo_bruto"   =>$key["sueldo_bruto"],
         "fecha_contrato" =>$key["fecha_contrato"],
-        "jornada"        =>$key["jornada"]
+        "jornada"        =>$key["jornada"],
+        "vacaciones"     =>$key["vacaciones"]
       ];
 
       $data[] = $row;

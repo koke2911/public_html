@@ -405,4 +405,9 @@ class Ctrl_menu extends BaseController {
     $this->validar_sesion();
     echo view('RecursosH/Liquidaciones');
   }
+
+  public function vacaciones() {
+    $this->validar_sesion();
+    echo view('RecursosH/Vacaciones');
+  }
 }

@@ -22,6 +22,7 @@ function des_habilitar (a, b) {
   $("#txt_ultimo").prop("disabled", a);
   $("#txt_octava").prop("disabled", a);
   $("#txt_octava_web").prop("disabled", a);
+  $("#txt_horas_extras").prop("disabled", a);
 }
 
 function mostrar_datos_apr (data) {
@@ -43,6 +44,7 @@ function mostrar_datos_apr (data) {
   $("#txt_ultimo").val(data['ultimo_folio']);
   $("#txt_octava").val(data['clave_dete']);
   $("#txt_octava_web").val(data['clave_appoct']);
+  $("#txt_horas_extras").val(data['horas_extras']);
   $("#txt_nombre_apr").val(data['nombre_apr']);
   $("#cmb_comuna").val(data['id_comuna']);
   $("#cmb_calle").val(data['calle']);
@@ -184,7 +186,8 @@ function guardar_apr () {
       website: $("#txt_website").val(),
       ultimo_folio:$("#txt_ultimo").val(),
       clave_dete:$("#txt_octava").val(),
-      clave_appoct:$("#txt_octava_web").val()      
+      clave_appoct:$("#txt_octava_web").val()   ,
+      horas_extras:$("#txt_horas_extras").val()   ,
 
     },
     success: function (respuesta) {

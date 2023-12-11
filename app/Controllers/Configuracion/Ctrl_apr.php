@@ -79,6 +79,7 @@ class Ctrl_apr extends BaseController {
     $clave_dete           = $this->request->getPost('clave_dete');
     $email_dte            = $this->request->getPost('email_dte');
     $clave_appoct            = $this->request->getPost('clave_appoct');
+    $horas_extras            = $this->request->getPost('horas_extras');
 
     $rut_completo = explode("-", $rut_apr);
     $rut          = $rut_completo[0];
@@ -106,7 +107,8 @@ class Ctrl_apr extends BaseController {
      'email_dte'            =>$email_dte,    
      'clave_dete'           => $clave_dete,
      'ultimo_folio'         => $ultimo_folio,
-     'clave_appoct'         => $clave_appoct
+     'clave_appoct'         => $clave_appoct,
+     'horas_extras'         => $horas_extras
     ];
 
     // print_r($datosAPR);

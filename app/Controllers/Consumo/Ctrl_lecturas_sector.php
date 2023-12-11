@@ -318,7 +318,7 @@ class Ctrl_lecturas_sector extends BaseController {
        "id_apr"            => $id_apr
       ];
 
-      print_r($datosMetros);
+      // print_r($datosMetros);
 
       if ($tipo_facturacion == T_MEDIO) {
         $datosMetros["tipo_facturacion"] = T_MEDIO;

@@ -28,6 +28,7 @@ function des_habilitar(a, b) {
     $("#txt_sueldo_bruto").prop("disabled",a);
     $("#dt_contrato").prop("disabled",a);
     $("#txt_jornada").prop("disabled",a);
+    $("#txt_vacaciones").prop("disabled",a);
 }
 
 function mostrar_datos_funcionarios(data) {
@@ -52,6 +53,7 @@ function mostrar_datos_funcionarios(data) {
     $("#txt_sueldo_bruto").val(data["sueldo_bruto"]);
     $("#dt_contrato").val(data["fecha_contrato"]);
     $("#txt_jornada").val(data["jornada"]);
+    $("#txt_vacaciones").val(data["vacaciones"]);
 
 
 }
@@ -144,6 +146,7 @@ function guardar_funcionario() {
     var sueldo_bruto=$("#txt_sueldo_bruto").val();
     var fecha_contrato=$("#dt_contrato").val();
     var jornada=$("#txt_jornada").val();
+    var vacaciones=$("#txt_vacaciones").val();
 
     $.ajax({
         url: base_url + "/Finanzas/Ctrl_funcionarios/guardar_funcionario",
@@ -166,7 +169,8 @@ function guardar_funcionario() {
             afp_porcentaje: afp_porcentaje,
             sueldo_bruto: sueldo_bruto,
             fecha_contrato: fecha_contrato,
-            jornada: jornada
+            jornada: jornada,
+            vacaciones:vacaciones
         },
         success: function(respuesta) {
             const OK = 1;
@@ -481,6 +485,10 @@ $(document).ready(function() {
             txt_jornada:{
                 maxlength: 2,
                 digits: true
+            },
+            txt_vacaciones:{
+                maxlength: 2,
+                digits: true
             }
         },
         messages: {
@@ -536,6 +544,10 @@ $(document).ready(function() {
                 digits: "Solo se permiten numeros"
             },
             txt_jornada:{
+                maxlength: "Maximo 2 caracteres",
+                digits: "Solo se permiten numeros"
+            },
+            txt_vacaciones:{
                 maxlength: "Maximo 2 caracteres",
                 digits: "Solo se permiten numeros"
             }
