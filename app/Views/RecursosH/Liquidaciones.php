@@ -383,6 +383,7 @@
                           <th>fecha_genera</th>
                           <th>usuario_registra</th>
                           <th>imprimir</th>
+                          <th>Anular</th>
                           
                         </tr>
                       </thead>

@@ -68,6 +68,97 @@ class Ctrl_informe_pagos_diarios extends BaseController {
 
   }
 
+  public function reporte_diferencia_consumo($mes){
+     $this->validar_sesion();
+     $id_apr=$this->sesión->id_apr_ses;
+     $db=$this->db;
+
+     $meses=explode('-',$mes);
+     $ano=$meses[1];
+     $mes2=$meses[0]-1;
+
+     if($mes2<10){
+      $mes2='0'.$mes2;
+     }
+
+    $mes_anterior=$mes2.'-'.$ano;
+
+
+     $sql="SELECT 
+    id,
+    rol,
+    rut,
+    nombre,
+    metros_anterior ,
+    metros_actual,    
+    metros_actual - metros_anterior as diferencia,
+    concat(round(((metros_actual - metros_anterior) / metros_anterior * 100),1),'%') AS diferencia_porcentaje
+FROM (
+    SELECT 
+        s.id,
+        s.rol,
+        CONCAT(s.rut, '-', s.dv) AS rut,
+        CONCAT(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) AS nombre,
+        m.metros AS metros_actual,
+        (
+            SELECT distinct m2.metros 
+            FROM metros m2 
+            INNER JOIN socios s2 ON s2.id = m2.id_socio
+            WHERE s2.id = s.id 
+                AND m2.id_apr = $id_apr 
+                AND date_format(m2.fecha_ingreso, '%m-%Y') = '$mes_anterior' 
+                AND m2.estado != 0
+        ) AS metros_anterior
+    FROM 
+        metros m
+    INNER JOIN 
+        socios s ON s.id = m.id_socio
+    WHERE 
+        m.id_apr = $id_apr
+        AND date_format(m.fecha_ingreso, '%m-%Y') = '$mes' 
+        AND m.estado != 0
+) tabla";
+
+      // echo $sql;
+      $query = $db->query($sql);
+      $result  = $query->getResultArray();
+
+
+      $objPHPExcel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+      $objPHPExcel->setActiveSheetIndex(0);
+
+
+      $objPHPExcel->getActiveSheet()->setCellValue('A1', 'id');
+      $objPHPExcel->getActiveSheet()->setCellValue('B1', 'rol');
+      $objPHPExcel->getActiveSheet()->setCellValue('C1', 'rut');
+      $objPHPExcel->getActiveSheet()->setCellValue('D1', 'nombre');
+      $objPHPExcel->getActiveSheet()->setCellValue('E1', 'Consumo M3 de agua '.$mes_anterior);
+      $objPHPExcel->getActiveSheet()->setCellValue('F1', 'Consuimo M3 de agua '.$mes);
+      $objPHPExcel->getActiveSheet()->setCellValue('G1', 'Diferencia M3');
+      $objPHPExcel->getActiveSheet()->setCellValue('H1', 'Diferencia %');
+    
+
+      $sheet = $objPHPExcel->getActiveSheet();
+
+     foreach ($sheet->getColumnIterator() as $column) {
+       $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+      }
+
+
+        $sheet->fromArray($result, NULL, 'A2'); 
+
+      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); 
+      header('Content-Disposition: attachment;filename="Resumen diferencia consumo '.$mes.'.xlsx"'); 
+
+      $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
+      $writer->save('php://output');
+
+
+
+
+
+
+  }
    public function reporte_pagos_resumen_mes($fecha){
         $objPHPExcel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $objPHPExcel->setActiveSheetIndex(0);
@@ -104,6 +195,7 @@ class Ctrl_informe_pagos_diarios extends BaseController {
 
       $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
       $writer->save('php://output');
+
 
   }
 

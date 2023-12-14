@@ -121,6 +121,86 @@ class Ctrl_informe_subsidios extends BaseController {
 
 
   }
+
+  public function consolidado_local($fecha){
+    // echo $fecha;
+    $objPHPExcel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $objPHPExcel->setActiveSheetIndex(0);
+
+
+        $objPHPExcel->getActiveSheet()->setCellValue('A1', 'Nro');
+        $objPHPExcel->getActiveSheet()->setCellValue('B1', 'APPATERNO');
+        $objPHPExcel->getActiveSheet()->setCellValue('C1', 'APMATERNO');
+        $objPHPExcel->getActiveSheet()->setCellValue('D1', 'NOMBRES');
+        $objPHPExcel->getActiveSheet()->setCellValue('E1', 'RUT');
+        $objPHPExcel->getActiveSheet()->setCellValue('F1', 'DV');
+        $objPHPExcel->getActiveSheet()->setCellValue('G1', 'DIRECCION');
+        $objPHPExcel->getActiveSheet()->setCellValue('H1', 'FECHA DECRETO');
+        $objPHPExcel->getActiveSheet()->setCellValue('I1', 'NUM-DECRETO');
+        $objPHPExcel->getActiveSheet()->setCellValue('J1', 'CONSUMO');
+        $objPHPExcel->getActiveSheet()->setCellValue('K1', 'TOTAL MES');
+        $objPHPExcel->getActiveSheet()->setCellValue('L1', 'DESCUENTO');
+        $objPHPExcel->getActiveSheet()->setCellValue('M1', 'APAGAR SOCIO');
+        $objPHPExcel->getActiveSheet()->setCellValue('N1', 'N° CUENTAS IMPAGAS');
+        $objPHPExcel->getActiveSheet()->setCellValue('O1', 'DEUDAS IMPAGAS');
+        $objPHPExcel->getActiveSheet()->setCellValue('P1', 'VENC DECRETO');
+        
+       $sheet = $objPHPExcel->getActiveSheet();
+
+       foreach ($sheet->getColumnIterator() as $column) {
+         $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+      }
+
+      $this->validar_sesion();
+      $id_apr=$this->sesión->id_apr_ses;
+
+      $datosSocios = "SELECT
+                      ROW_NUMBER() OVER (ORDER BY s.rut) AS rownum ,
+                      s.ape_pat AS ape_pat,
+                      s.ape_mat AS ape_mat,
+                      s.nombres AS nombres,
+                      s.rut AS RUT,
+                      s.dv AS DV,
+                      s.calle AS direccion,
+                      DATE_FORMAT(subsidios.fecha_decreto, '%d-%m-%Y') AS fecha_decreto,
+                      subsidios.numero_decreto AS n_decreto,
+                          m.metros AS metros,
+                           m.total_mes AS total_mes,
+                          m.monto_subsidio AS monto_subsidio,
+                         
+                          m.total_mes-m.monto_subsidio as a_pagar,
+                          IFNULL(afecto_corte(s.id, s.id_apr), 0) AS meses_pendientes,
+                          total_deuda(s.id, s.id_apr) AS total_deuda,
+                          subsidios.fecha_caducidad
+                      FROM
+                          subsidios
+                      JOIN socios s ON s.id = subsidios.id_socio
+                      JOIN metros m ON m.id_socio = subsidios.id_socio
+                      LEFT JOIN comunas c ON c.id = s.id_comuna
+                      WHERE
+                          subsidios.id_apr = $id_apr
+                          AND s.id_apr = $id_apr
+                          AND m.id_apr = $id_apr
+                          AND m.estado <> 0
+                          AND DATE_FORMAT(m.fecha_ingreso, '%m-%Y') = '$fecha'";
+      $query = $this->db->query($datosSocios);
+      $data  = $query->getResultArray();
+
+      // print_r($data);
+      // exit();
+      $sheet->fromArray($data, NULL, 'A2'); 
+
+      // print_r($datosSocios);
+      // exit();
+
+      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); 
+      header('Content-Disposition: attachment;filename="Subsidios Consolidado '.$fecha.'.xlsx"'); 
+
+      $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
+      $writer->save('php://output');
+
+
+  }
 }
 
 ?>

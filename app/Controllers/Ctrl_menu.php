@@ -410,4 +410,12 @@ class Ctrl_menu extends BaseController {
     $this->validar_sesion();
     echo view('RecursosH/Vacaciones');
   }
+
+  public function informe_diferencia_consumo() {
+    $this->validar_sesion();
+    echo view('Informes/informe_diferencia_consumo');
+  }
+
+
+  
 }

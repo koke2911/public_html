@@ -112,6 +112,22 @@ class Ctrl_liquidaciones extends BaseController {
     }
   }
 
+  public function anula_liquidacion($id){
+    
+      $datosLiquidacion=[
+         "id" => $id,
+         "estado"=>0
+      ];
+
+      if ($this->liquidaciones->save($datosLiquidacion)) {
+        echo 1;
+     }else{
+        echo "Error al anular liquidacion";
+     }
+
+
+  }
+
   public function guardar_liquidacion(){
     $this->validar_sesion();
     $fecha_genera      = date("Y-m-d H:i:s");
@@ -201,6 +217,7 @@ class Ctrl_liquidaciones extends BaseController {
     "id_apr"  => $id_apr,
     "fecha_genera"  => date_format(date_create($fecha_genera), 'Y-m-d'),
     "usuario_genera"  => $usuario_genera,
+    "estado"          =>1
     ];
 
      if ($this->liquidaciones->save($datosLiquidacion)) {
@@ -217,6 +234,8 @@ class Ctrl_liquidaciones extends BaseController {
   }
 
   public function imprime_liquidacion($id){
+
+
       $this->validar_sesion();
       $apr=$this->sesión->apr_ses;
       $id_apr=$this->sesión->id_apr_ses;
@@ -322,11 +341,15 @@ class Ctrl_liquidaciones extends BaseController {
             l.id_apr,
             l.fecha_genera,
             l.usuario_genera,
-            f.sueldo_bruto
+            f.sueldo_bruto,
+            f.prevision,
+            F.prev_porcentaje,
+            f.afp as afp_fun,
+            f.afp_porcentaje
             FROM liquidaciones l
             inner join funcionarios f on l.id_funcionario=f.id
             inner join usuarios u on u.id=l.usuario_genera
-            and l.id_apr=$id_apr  and f.estado=1 and l.id=1";
+            and l.id_apr=$id_apr  and f.estado=1 and l.id=$id";
       $query = $this->db->query($sql);
       $data  = $query->getResultArray();
 
@@ -378,7 +401,16 @@ class Ctrl_liquidaciones extends BaseController {
       $usuario_genera = $data[0]["usuario_genera"];
       $sueldo_bruto = $data[0]["sueldo_bruto"];
 
+      $prevision=$data[0]['prevision'];
+      $prev_porcentaje=$data[0]['prev_porcentaje'];
+      $afp_fun=$data[0]['afp_fun'];
+      $afp_porcentaje=$data[0]['afp_porcentaje'];
 
+      if($prevision=='ISAPRE'){
+        $dife_isapre=$prev_porcentaje.' UF';
+      }else{
+        $dife_isapre='--';
+      }
       $mpdf->SetXY(40, 47);
       $mpdf->SetFont('Arial', '', 9);
       $mpdf->Cell(0, 0, $rut, 0, 1, 'L');
@@ -417,14 +449,14 @@ class Ctrl_liquidaciones extends BaseController {
       $mpdf->Cell(0, 0, '$'.$total_imponible, 0, 1, 'L');
 
 
-      $mpdf->SetXY(195, 72);
-      $mpdf->Cell(0, 0, '$'.$afp, 0, 1, 'L');
+      $mpdf->SetXY(158, 72);
+      $mpdf->Cell(0, 0, $afp_fun.' '.$afp_porcentaje.'%         $'.$afp, 0, 1, 'L');
 
       $mpdf->SetXY(195, 78);
       $mpdf->Cell(0, 0, '$'.$obligatorio, 0, 1, 'L');
 
-      $mpdf->SetXY(195, 83);
-      $mpdf->Cell(0, 0, '$'.$diferencia_isa, 0, 1, 'L');
+      $mpdf->SetXY(178, 83);
+      $mpdf->Cell(0, 0, $dife_isapre.'     $'.$diferencia_isa, 0, 1, 'L');
 
       $mpdf->SetXY(181, 88.5);
       $mpdf->Cell(0, 0, ''.$afc_tra_por.'%     $'.$afc_tra_v, 0, 1, 'L');
@@ -473,65 +505,9 @@ class Ctrl_liquidaciones extends BaseController {
       $mpdf->SetXY(195, 138);
       $mpdf->Cell(0, 0, '$'.$apagar, 0, 1, 'L');
       
-      
+   
 
-
-      // $mpdf->SetXY(180, 71.5);
-      // $mpdf->Cell(0, 0, $afp_funcionario, 0, 1, 'L');
-
-      // $mpdf->SetXY(180, 77.5);
-      // $mpdf->Cell(0, 0, $sueldo, 0, 1, 'L');
-
-      // $mpdf->SetXY(180, 82.5);
-      // $mpdf->Cell(0, 0, $afp, 0, 1, 'L');
-
-      //  $mpdf->SetXY(180, 88);
-      // $mpdf->Cell(0, 0, $prevision, 0, 1, 'L');
-
-      //  $mpdf->SetXY(180, 93);
-      // $mpdf->Cell(0, 0, $obligatorio, 0, 1, 'L');
-
-      //  $mpdf->SetXY(180, 98);
-      // $mpdf->Cell(0, 0, $pactada, 0, 1, 'L');
-
-      //  $mpdf->SetXY(180, 103);
-      // $mpdf->Cell(0, 0, $diferencia_isapre, 0, 1, 'L');
-
-
-      // $mpdf->SetXY(180, 110);
-      // $mpdf->Cell(0, 0, $sueldo, 0, 1, 'L');
-
-      // $mpdf->SetXY(180, 115);
-      // $mpdf->Cell(0, 0, $afc, 0, 1, 'L');
-
-      // $mpdf->SetXY(180, 120);
-      // $mpdf->Cell(0, 0, $total_prevision, 0, 1, 'L');
-
-      // $mpdf->SetXY(180, 145);
-      // $mpdf->Cell(0, 0, $otros, 0, 1, 'L');
-
-      // $mpdf->SetXY(180, 150);
-      // $mpdf->Cell(0, 0, $base_tributable, 0, 1, 'L');
-
-      // $mpdf->SetXY(80, 145);
-      // $mpdf->Cell(0, 0, $sueldo, 0, 1, 'L');
-
-      // $mpdf->SetXY(80, 150);
-      // $mpdf->Cell(0, 0, $cargas, 0, 1, 'L');
-
-      // $mpdf->SetXY(80, 155.5);
-      // $mpdf->Cell(0, 0, ($sueldo+$cargas), 0, 1, 'L');
-
-
-      // $mpdf->SetXY(180, 181);
-      // $mpdf->Cell(0, 0, ($total_prevision+$otros), 0, 1, 'L');
-      // $mpdf->SetXY(180, 186);
-      // $mpdf->Cell(0, 0, ($a_pagar), 0, 1, 'L');
-
-      // $mpdf->SetXY(180, 192);
-      // $mpdf->Cell(0, 0, ($a_pagar), 0, 1, 'L');
-
-      // return $mpdf->Output("Certificado Dotacion " . $id_socio . ".pdf","D");
+      // return $mpdf->Output("liquidacion sueldo " . $funcionario ." ".$mes."-".$ano. ".pdf","D");
          header("Content-type:application/pdf");
    
          return redirect()->to($mpdf->Output());

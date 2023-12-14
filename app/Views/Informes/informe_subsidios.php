@@ -11,7 +11,8 @@
               
               <label class="small mb-1" for="dt_mes_año">Mes Consumo</label>
               <input type='text' class="form-control" id='dt_mes_año' name="dt_mes_año" style="width: 20%"/> 
-              <button type="button" name="btn_emitir" id="btn_emitir" class="btn btn-success" ><i class="fas fa-receipt"></i> Generar Consolidado</button>
+              <button type="button" name="btn_emitir" id="btn_emitir" class="btn btn-success" ><i class="fas fa-receipt"></i> Generar Consolidado Municipal</button>
+              <button type="button" name="btn_emitir_local" id="btn_emitir_local" class="btn btn-success" ><i class="fas fa-receipt"></i> Generar Consolidado Local</button>
 
             </center>
           </div>

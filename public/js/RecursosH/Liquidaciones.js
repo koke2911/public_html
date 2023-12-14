@@ -840,10 +840,15 @@ $(document).ready(function() {
                 "render":function(data,type,row){
                                  return "<button type='button' class='btn_imprimir btn btn-primary' title='Imprimir'><i class='fas fa-print'></i></button>"
                        }
+              },
+            {"data": "id",
+                "render":function(data,type,row){
+                                 return "<button type='button' class='btn_eliminar btn btn-danger' title='Eliminar'><i class='fas fa-ban'></i></button>"
+                       }
               }
         ],
         "columnDefs": [
-            { "targets": [0,6,9,10,12,14], "visible": false, "searchable": false }
+            { "targets": [0,6,9,10,12,13,14], "visible": false, "searchable": false }
         ],
         language: {
             "decimal": "",
@@ -877,8 +882,36 @@ $(document).ready(function() {
         var id=data.id;        
 
         window.open(base_url + "/RecursosH/Ctrl_liquidaciones/imprime_liquidacion/"+id);
+             
+    });
 
-               
+     $("#grid_liquidaciones tbody").on("click", "button.btn_eliminar", function () {
+        var tr = $(this).closest('tr');
+        if ($(tr).hasClass('child') ) {
+            tr = $(tr).prev();  
+        }
+
+        var data = grid_liquidaciones.row(tr).data();
+        var id=data.id;    
+
+        $.ajax({
+            url: base_url + "/RecursosH/Ctrl_liquidaciones/anula_liquidacion/"+id,
+            method: "GET",
+            dataType: "json",
+            success: function (data) {
+                if(data==1){
+                    $("#grid_liquidaciones").dataTable().fnReloadAjax(base_url + "/RecursosH/Ctrl_liquidaciones/datatable_liquidaciones");
+                    alerta.error("alerta", "Liquidacion anulada con éxito");
+                    
+                }else{
+                     console.error("No se pudo anular", data);
+
+                }
+            },
+            error: function (error) {
+                console.error("No se pudo anular", error);
+            }
+        });               
     });
 
     // $("#grid_liquidaciones tbody").on("click", "tr", function () {

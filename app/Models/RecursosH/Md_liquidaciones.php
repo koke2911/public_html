@@ -49,7 +49,8 @@ class Md_liquidaciones extends Model {
     'apagar',
     'id_apr',
     'fecha_genera',
-    'usuario_genera'
+    'usuario_genera',
+    'estado'
 
   ];
 
@@ -73,7 +74,7 @@ class Md_liquidaciones extends Model {
                 from liquidaciones l
                 inner join funcionarios f on l.rut=f.rut
                 inner join usuarios u on u.id=l.usuario_genera
-                and l.id_apr=40  and f.estado=1 order by l.id asc";
+                and l.id_apr=$id_apr and f.id=l.id_funcionario  and f.estado=1 and l.estado=1 order by l.id asc";
 
     $query        = $db->query($consulta);
     $funcionarios = $query->getResultArray();
@@ -116,6 +117,7 @@ class Md_liquidaciones extends Model {
     $this->where("rut", $rut);
     $this->where("date_format(mes,'%m-%Y')",$mes);
     $this->where("id_apr", $id_apr);
+    $this->where("estado=1");
     $datos = $this->first();
 
     if (intval($datos["filas"]) > 0) {

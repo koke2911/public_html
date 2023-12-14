@@ -17,6 +17,15 @@ $(document).ready(function() {
         }
     });
 
+    $("#btn_emitir_local").on("click", function () {
+        var mes_año = $("#dt_mes_año").val();
+        if(mes_año!=""){
+            window.open(base_url + "/Informes/Ctrl_informe_subsidios/consolidado_local/"+mes_año);
+        }else{
+            alert("Debe Seleccionar el mes de consumo");
+        }
+    });
+
 
     var grid_subsidios = $("#grid_subsidios").DataTable({
 		responsive: true,
