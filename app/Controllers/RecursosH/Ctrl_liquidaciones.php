@@ -343,7 +343,7 @@ class Ctrl_liquidaciones extends BaseController {
             l.usuario_genera,
             f.sueldo_bruto,
             f.prevision,
-            F.prev_porcentaje,
+            f.prev_porcentaje,
             f.afp as afp_fun,
             f.afp_porcentaje
             FROM liquidaciones l
