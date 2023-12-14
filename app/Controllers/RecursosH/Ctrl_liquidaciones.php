@@ -288,7 +288,7 @@ class Ctrl_liquidaciones extends BaseController {
             l.rut,
             date_format(f.fecha_contrato ,'%d-%m-%Y') as fecha_contrato,
                   concat(l.rut,'-',f.dv) as rut,
-                  concat(f.nombres,' ',f.APE_PAT,' ',F.APE_MAT) as funcionario,
+                  concat(f.nombres,' ',f.ape_pat,' ',f.ape_mat) as funcionario,
                    CASE
                   WHEN MONTH(mes) = 1 THEN 'Enero'
                   WHEN MONTH(mes) = 2 THEN 'Febrero'
