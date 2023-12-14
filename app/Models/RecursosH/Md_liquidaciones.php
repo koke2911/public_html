@@ -58,7 +58,7 @@ class Md_liquidaciones extends Model {
     $consulta = "SELECT
                 l.id,
                 concat(l.rut,'-',f.dv) as rut,
-                concat(f.nombres,' ',f.APE_PAT,' ',F.APE_MAT) as funcionario,
+                concat(f.nombres,' ',f.ape_pat,' ',f.ape_mat) as funcionario,
                 date_format(mes,'%m-%Y') as mes,
                 valor_uf,
                 dias_trabajados,
