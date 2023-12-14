@@ -507,10 +507,10 @@ class Ctrl_liquidaciones extends BaseController {
       
    
 
-      // return $mpdf->Output("liquidacion sueldo " . $funcionario ." ".$mes."-".$ano. ".pdf","D");
-         header("Content-type:application/pdf");
+      return $mpdf->Output("liquidacion sueldo " . $funcionario ." ".$mes."-".$ano. ".pdf","D");
+         // header("Content-type:application/pdf");
    
-         return redirect()->to($mpdf->Output());
+         // return redirect()->to($mpdf->Output());
 
     }
 
