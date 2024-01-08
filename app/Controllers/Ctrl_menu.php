@@ -416,6 +416,11 @@ class Ctrl_menu extends BaseController {
     echo view('Informes/informe_diferencia_consumo');
   }
 
+  public function arqueo_caja() {
+    $this->validar_sesion();
+    echo view('Informes/arqueo_caja');
+  }
+
 
   
 }

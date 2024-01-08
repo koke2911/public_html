@@ -3,15 +3,19 @@
 namespace App\Controllers\Informes;
 
 use App\Controllers\BaseController;
+use App\Models\Informes\Md_arqueo_caja;
 
 class Ctrl_libro_caja extends BaseController {
 
   protected $sesión;
   protected $db;
+  protected $arqueo_caja;
+
 
   public function __construct() {
     $this->sesión = session();
     $this->db     = \Config\Database::connect();
+    $this->arqueo_caja = new Md_arqueo_caja();
   }
 
   public function validar_sesion() {
@@ -379,6 +383,325 @@ class Ctrl_libro_caja extends BaseController {
 
       $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
       $writer->save('php://output');
+
+
+  }
+
+  public function buscar_datos_arqueo($mes){
+    $this->validar_sesion();
+    $id_apr=$this->sesión->id_apr_ses;
+
+    $ingresos="SELECT sum(total)  as ingresos from (SELECT date_format(c.fecha,'%d-%m-%Y') as dia , 
+        'PAGO CONSUMO MES AGUA POTABLE' as glosa,
+        sum(c.total_pagar-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0)) 
+        as total ,'' as total2 , '' as total3, '' as total4,'' as total5,sum(c.total_pagar-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0))  as total6
+        from caja c
+        inner join caja_detalle d on d.id_caja=c.id
+        inner join metros m on m.id=d.id_metros
+        where date_format(c.fecha,'%m-%Y')='$mes' 
+        and c.id_apr=$id_apr and c.estado =1
+        group by dia,glosa 
+        UNION
+              select date_format(c.fecha,'%m-Y') as dia , 
+              'CUOTA SOCIO $mes ' as glosa,
+              ' ' as total ,sum(ifnull(m.alcantarillado,0)) , ''as total3 , ''as total4,''as total5 ,sum(ifnull(m.alcantarillado,0)) as total6
+              from caja c
+              inner join caja_detalle d on d.id_caja=c.id
+              inner join metros m on m.id=d.id_metros
+              where date_format(c.fecha,'%m-%Y')='$mes' 
+              and c.id_apr=$id_apr and c.estado =1 and m.cuota_socio!=0
+              group by dia,glosa 
+        UNION
+              select date_format(c.fecha,'%m-%Y') as dia , 
+              'ALCANTARILLADO $mes' as glosa,
+              '' as total ,'' as total2 , ''as total3 , '' as total4,sum(ifnull(m.alcantarillado,0))as total5,sum(ifnull(m.alcantarillado,0)) as total6
+              from caja c
+              inner join caja_detalle d on d.id_caja=c.id
+              inner join metros m on m.id=d.id_metros
+              where date_format(c.fecha,'%m-%Y')='$mes' 
+              and c.id_apr=$id_apr and c.estado =1 and m.alcantarillado !=0
+              group by dia,glosa 
+        UNION
+            select date_format(c.fecha,'%m-%Y') as dia , 
+            'MULTAS $mes' as glosa,
+            '' as total ,'' as total2 , ''as total3 , '' as total4,sum(ifnull(m.multa,0))as total5,sum(ifnull(m.multa,0))as total6
+            from caja c
+            inner join caja_detalle d on d.id_caja=c.id
+            inner join metros m on m.id=d.id_metros
+            where date_format(c.fecha,'%m-%Y')='$mes' 
+            and c.id_apr=$id_apr and c.estado =1 and m.multa !=0
+            group by dia,glosa 
+        UNION
+          select date_format(es.fecha,'%d-%m') as dia,
+                    concat(te.tipo_egreso,' (Por Egresos Simple)') as glosa,
+                    '' as total,
+                    '' as total2,
+                    '' as total3,
+                    sum(es.monto) as total4,
+                    '' as total5,
+                     sum(es.monto) as total6                    
+                     from  
+              egresos_simples es
+                left join cuentas c on es.id_cuenta = c.id
+                left join bancos b on c.id_banco = b.id
+                left join banco_tipo_cuenta btc on c.id_tipo_cuenta = btc.id
+                inner join motivos m on es.id_motivo = m.id
+                            inner join tipos_egreso te on es.id_tipo_egreso = te.id
+                            inner join egresos e on es.id_egreso = e.id
+                             where e.id_apr=$id_apr
+              and date_format(es.fecha,'%m-%Y')='$mes' 
+              and e.estado=1  and btc.id not in (5,6)
+              group by dia,te.tipo_egreso   
+              order by dia,glosa asc) algo";
+
+              $egresos="SELECT sum(total8) as egresos from(
+                SELECT date_format(es.fecha,'%d-%m') as dia,
+              te.tipo_egreso, sum(es.monto) as total1,
+              '' as total2,
+              '' as total3,
+              '' as total4,
+              '' as total5,
+              '' as total6,
+              '' as total7,
+              sum(es.monto) as total8
+              from egresos_simples es
+              inner join egresos e on e.id=es.id_egreso
+              inner join tipos_egreso te on te.id=es.id_tipo_egreso
+              inner join tipo_gasto tg on tg.id=es.tipo_gasto
+              where es.tipo_gasto=1 and e.id_apr=$id_apr and 
+              date_format(es.fecha,'%m-%Y')='$mes' and e.estado=1
+              group by dia,tipo_egreso
+              UNION
+                    select date_format(es.fecha,'%d-%m') as dia,
+                    te.tipo_egreso, 
+                    '' as total1,
+                    sum(es.monto) as total2,
+                    '' as total3,
+                    '' as total4,
+                    '' as total5,
+                    '' as total6,
+                    '' as total7,
+                    sum(es.monto) as total8
+                    from egresos_simples es
+                    inner join egresos e on e.id=es.id_egreso
+                    inner join tipos_egreso te on te.id=es.id_tipo_egreso
+                    inner join tipo_gasto tg on tg.id=es.tipo_gasto
+                    where es.tipo_gasto=2 and e.id_apr=$id_apr and 
+                    date_format(es.fecha,'%m-%Y')='$mes' and e.estado=1 
+                    group by dia,tipo_egreso
+              UNION
+                    select date_format(es.fecha,'%d-%m') as dia,
+                    te.tipo_egreso, 
+                    '' as total1,
+                    '' as total2,
+                    sum(es.monto) as total3,
+                    '' as total4,
+                    '' as total5,
+                    '' as total6,
+                    '' as total7,
+                    sum(es.monto) as total8
+                    from egresos_simples es
+                    inner join egresos e on e.id=es.id_egreso
+                    inner join tipos_egreso te on te.id=es.id_tipo_egreso
+                    inner join tipo_gasto tg on tg.id=es.tipo_gasto
+                    where es.tipo_gasto=3 and e.id_apr=$id_apr and 
+                    date_format(es.fecha,'%m-%Y')='$mes' and e.estado=1 
+                    group by dia,tipo_egreso
+              UNION
+                    select date_format(es.fecha,'%d-%m') as dia,
+                    te.tipo_egreso, 
+                    '' as total1,
+                    '' as total2,
+                    '' as total3,
+                    sum(es.monto) as total4,
+                    '' as total5,
+                    '' as total6,
+                    '' as total7,
+                    sum(es.monto) as total8
+                    from egresos_simples es
+                    inner join egresos e on e.id=es.id_egreso
+                    inner join tipos_egreso te on te.id=es.id_tipo_egreso
+                    inner join tipo_gasto tg on tg.id=es.tipo_gasto
+                    where es.tipo_gasto=4 and e.id_apr=$id_apr and 
+                    date_format(es.fecha,'%m-%Y')='$mes' and e.estado=1 
+                    group by dia,tipo_egreso
+              UNION
+                    select date_format(es.fecha,'%d-%m') as dia,
+                    te.tipo_egreso, 
+                    '' as total1,
+                    '' as total2,
+                    '' as total3,
+                    '' as total4,
+                    sum(es.monto) as total5,
+                    '' as total6,
+                    '' as total7,
+                    sum(es.monto) as total8
+                    from egresos_simples es
+                    inner join egresos e on e.id=es.id_egreso
+                    inner join tipos_egreso te on te.id=es.id_tipo_egreso
+                    inner join tipo_gasto tg on tg.id=es.tipo_gasto
+                    where es.tipo_gasto=5 and e.id_apr=$id_apr and 
+                    date_format(es.fecha,'%m-%Y')='$mes' and e.estado=1 
+                    group by dia,tipo_egreso
+              UNION
+                    select date_format(es.fecha,'%d-%m') as dia,
+                    te.tipo_egreso, 
+                    '' as total1,
+                    '' as total2,
+                    '' as total3,
+                    '' as total4,
+                    '' as total5,
+                    sum(es.monto) as total6,
+                    '' as total7,
+                    sum(es.monto) as total8
+                    from egresos_simples es
+                    inner join egresos e on e.id=es.id_egreso
+                    inner join tipos_egreso te on te.id=es.id_tipo_egreso
+                    inner join tipo_gasto tg on tg.id=es.tipo_gasto
+                    where es.tipo_gasto=6 and e.id_apr=$id_apr and 
+                    date_format(es.fecha,'%m-%Y')='$mes' and e.estado=1 
+                    group by dia,tipo_egreso
+              UNION
+                    select date_format(c.fecha,'%d-%m-%Y') as dia , 
+                    'PAGO AGUA POTABLE WEBPAY/TRANSFERENCIAS' as glosa,
+                    '' as total1,
+                    '' as total2,
+                    '' as total3,
+                    '' as total4,
+                    '' as total5,
+                    sum(c.total_pagar-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0))  as total6,
+                    '' as total7,
+                    sum(c.total_pagar-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0))  as  total8
+
+                    from caja c 
+                    inner join caja_detalle d on d.id_caja=c.id
+                    inner join metros m on m.id=d.id_metros where c.id_forma_pago in (3,4) 
+                    and date_format(c.fecha,'%m-%Y')='$mes'
+                    and c.id_apr=$id_apr 
+                    and c.estado =1
+                    group by dia,glosa
+              ) egresos";
+
+              $query2 = $this->db->query($egresos);
+              $result2  = $query2->getResultArray();
+
+              // echo $ingresos;
+
+              $query = $this->db->query($ingresos);
+              $result  = $query->getResultArray();
+
+              // echo($result[0]['ingresos']);
+
+               $meses=explode('-',$mes);
+               $ano=$meses[1];
+               $mes2=$meses[0]-1;
+
+               if($mes2<10){
+                $mes2='0'.$mes2;
+               }
+
+              $mes_anterior=$mes2.'-'.$ano;
+
+              $anterior="SELECT saldo_periodo as anterior FROM arqueo_caja where date_format(mes, '%m-%Y') = '$mes_anterior' ";
+
+              // echo $anterior;
+
+              $query3 = $this->db->query($anterior);
+              $result3  = $query3->getResultArray();
+
+              if($result[0]['ingresos']==""){
+                $result[0]['ingresos']=0;
+              }
+
+              if($result[0]['egresos']==""){
+                $result[0]['egresos']=0;
+              }
+
+              if($result[0]['anterior']==""){
+                $result[0]['anterior']=0;
+              }
+
+               $row = [
+                 "ingresos"  => $result[0]['ingresos'],
+                 "egresos"    => $result2[0]['egresos'],
+                 "saldo_anterior"    => $result3[0]['anterior']
+                ];
+
+              $data[] = $row;
+
+               if (isset($data)) {
+                $salida = ["data" => $data];
+
+                return json_encode($salida);
+              } else {
+                $salida = ["data" => ""];
+
+                return json_encode($salida);
+              }
+  }
+
+  public function guarda_arqueo(){
+    $this->validar_sesion();
+    $fecha_genera      = date("Y-m-d H:i:s");
+    $usuario_genera = $this->sesión->id_usuario_ses;
+    $id_apr     = $this->sesión->id_apr_ses;
+
+    $mes = $this->request->getPost("dt_mes");
+    $ingreos= $this->request->getPost("txt_ingresos");
+    $egresos= $this->request->getPost("txt_egresos");
+    $saldo_periodo= $this->request->getPost("txt_saldo_periodo");
+    $saldo_anterior= $this->request->getPost("txt_saldo_anterior");
+    $saldo_siguiente= $this->request->getPost("txt_saldo_siguiente");
+    $saldo_banco= $this->request->getPost("txt_saldo_banco");
+    $saldo_deposito= $this->request->getPost("txt_saldo_deposito");
+    $total_fondos= $this->request->getPost("txt_total_fondos");
+
+    $datosAqueo=[
+        "mes"=>date_format(date_create('01-'.$mes), 'Y-m-d'),
+        "ingreos"=>$ingreos,
+        "egresos"=>$egresos,
+        "saldo_periodo"=>$saldo_periodo,
+        "saldo_anterior"=>$saldo_anterior,
+        "saldo_siguiente"=>$saldo_siguiente,
+        "saldo_banco"=>$saldo_banco,
+        "saldo_deposito"=>$saldo_deposito,
+        "total_fondos"=>$total_fondos,
+        "fecha_reg"=>date_format(date_create($fecha_genera), 'Y-m-d'),
+        "usu_reg"=>$usuario_genera,
+        'id_apr'=>$id_apr,
+        "estado"=>1
+    ];
+
+    if ($this->arqueo_caja->existe_arqueo($mes, $id_apr)) {
+      echo "YA POSEE UN ARQUEO PARA ESTE MES";
+      exit();
+    }
+
+    if ($this->arqueo_caja->save($datosAqueo)) {
+        echo 1;
+     }else{
+        echo "Error al generar la liquidacion";
+     }    
+  }
+
+  public function datatable_arqueo() {
+    $this->validar_sesion();
+    echo $this->arqueo_caja->datatable_arqueo($this->db, $this->sesión->id_apr_ses);
+  }
+
+
+  public function anula_arqueo($id){
+    
+      $datosArqueo=[
+         "id" => $id,
+         "estado"=>0
+      ];
+
+      if ($this->arqueo_caja->save($datosArqueo)) {
+        echo 1;
+     }else{
+        echo "Error al anular arqueo";
+     }
 
 
   }

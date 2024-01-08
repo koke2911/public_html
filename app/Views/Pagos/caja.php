@@ -111,6 +111,12 @@
                   </div>
                   <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                     <div class="form-group">
+                      <label class="small mb-1" for="txt_n_transaccion" style="font-size: 150%;">Fecha Transferencia</label>
+                      <input type='text' class="form-control bg-light text-dark" id='dt_f_transa' name="dt_f_transa" style="font-size: 150%;"/>
+                    </div>
+                  </div>
+                  <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="form-group">
                       <label class="small mb-1" for="txt_n_transaccion" style="font-size: 150%;">N° de Transacción</label>
                       <input type='text' class="form-control bg-light text-dark" id='txt_n_transaccion' name="txt_n_transaccion" style="font-size: 150%;"/>
                     </div>

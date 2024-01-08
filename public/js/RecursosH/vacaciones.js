@@ -69,6 +69,7 @@ function guardar_vacaciones() {
     var desde =$("#dt_desde").val();
     var hasta =$("#dt_hasta").val();
     var dias =$("#txt_dias").val();
+    var disponibles =$("#txt_disponibles").val();
     
     $.ajax({
         url: base_url + "/RecursosH/Ctrl_vacaciones/guardar_vacaciones",
@@ -78,13 +79,14 @@ function guardar_vacaciones() {
             id_funcionario: id_funcionario,
             desde: desde,
             hasta: hasta,
-            dias: dias
+            dias: dias,
+            disponibles:disponibles
             
         },
         success: function(respuesta) {
             const OK = 1;
             if (respuesta == OK) {
-                $("#grid_vacaciones").dataTable().fnReloadAjax(base_url + "/RecursosH/Ctrl_liquidaciones/datatable_liquidaciones");
+                $("#grid_vacaciones").dataTable().fnReloadAjax(base_url + "/RecursosH/Ctrl_vacaciones/datatable_vacaciones");
                 $("#form_liquidaciones")[0].reset();
                 des_habilitar(true, false);
                 alerta.ok("alerta", "vacaciones guardado con éxito");
@@ -126,12 +128,15 @@ $(document).ready(function() {
         fechaActual.add(1, 'days'); 
       }
 
-      // if(diasHabiles <= $("#txt_vacaciones").val()){
+      if(diasHabiles <= $("#txt_disponibles").val()){
         $("#txt_dias").val(diasHabiles);
 
-      // }else{
-      //       alerta.error("alerta", "Los dias solicitados no pueden superar al TOTAL de vacaciones disponibles");        
-      // }
+      }else{
+            alerta.error("alerta", "Los dias solicitados no pueden superar al TOTAL de vacaciones disponibles");        
+            $("#txt_dias").val("");
+            $("#dt_hasta").val("");
+
+      }
 
     }
 
@@ -167,14 +172,14 @@ $(document).ready(function() {
    
     $("#btn_aceptar").on("click", function() {
         var funcionario=$("#txt_id_funcionario").val();
-        var disponible=$("#txt_disponibles").val();
-        var solicitados=$("#txt_dias").val();
+        var disponible=parseFloat($("#txt_disponibles").val());
+        var solicitados=parseFloat($("#txt_dias").val());
 
         if (funcionario!="") {
-            if(solicitados<=disponible && solicitados!=""){
+            if(funcionario!=""){
                 guardar_vacaciones();
             }else{
-              alerta.error("alerta","Lo solicitado no puede sobrepasar lo disponible");
+              alerta.error("alerta","Debe indicar un funcionario");
             }
         }else{
             alerta.error("alerta","Debe indicar el funcionario");
@@ -416,37 +421,26 @@ $(document).ready(function() {
         select: {
             toggleable: false
         },
-        ajax: base_url + "/RecursosH/Ctrl_liquidaciones/datatable_liquidaciones",
+        ajax: base_url + "/RecursosH/Ctrl_vacaciones/datatable_vacaciones",
         orderClasses: true,
         columns: [
             {"data":"id"},
             {"data":"rut"},
             {"data":"funcionario"},
-            {"data":"mes"},
-            {"data":"valor_uf"},
-            {"data":"dias_trabajados"},
-            {"data":"sueldo_bruto"},
-            {"data":"afp"},
-            {"data":"obligatorio"},
-            {"data":"pactada"},
-            {"data":"diferencia_isapre"},
-            {"data":"afc"},
-            {"data":"otros"},
-            {"data":"total_prevision"},
-            {"data":"base_tributable"},
-            {"data":"cargas"},
-            {"data":"a_pagar"},
-            {"data":"id_apr"},
+            {"data":"desde"},
+            {"data":"hasta"},
+            {"data":"Dias"},
             {"data":"fecha_genera"},
-            {"data":"usuario_registra"},
+            {"data":"usuario_registra"},   
             {"data": "id",
                 "render":function(data,type,row){
-                                 return "<button type='button' class='btn_imprimir btn btn-primary' title='Imprimir'><i class='fas fa-print'></i></button>"
+                                 return "<button type='button' class='btn_eliminar btn btn-danger' title='Eliminar'><i class='fas fa-ban'></i></button>"
                        }
-              }
+              }         
+
         ],
         "columnDefs": [
-            { "targets": [0,4,7,8,9,10,11,12,13,14,15,17], "visible": false, "searchable": false }
+            { "targets": [], "visible": false, "searchable": false }
         ],
         language: {
             "decimal": "",
@@ -470,18 +464,33 @@ $(document).ready(function() {
         }
     });
 
-     $("#grid_vacaciones tbody").on("click", "button.btn_imprimir", function () {
+    $("#grid_vacaciones tbody").on("click", "button.btn_eliminar", function () {
         var tr = $(this).closest('tr');
         if ($(tr).hasClass('child') ) {
             tr = $(tr).prev();  
         }
 
         var data = grid_vacaciones.row(tr).data();
-        var id=data.id;        
+        var id=data.id;    
 
-        window.open(base_url + "/RecursosH/Ctrl_liquidaciones/imprime_liquidacion/"+id);
+        $.ajax({
+            url: base_url + "/RecursosH/Ctrl_vacaciones/anula_vacacion/"+id,
+            method: "GET",
+            dataType: "json",
+            success: function (data) {
+                if(data==1){
+                    $("#grid_vacaciones").dataTable().fnReloadAjax(base_url + "/RecursosH/Ctrl_vacaciones/datatable_vacaciones");
+                    alerta.error("alerta", "vacaciones anulada con éxito");
+                    
+                }else{
+                     console.error("No se pudo anular", data);
 
-               
+                }
+            },
+            error: function (error) {
+                console.error("No se pudo anular", error);
+            }
+        });               
     });
 
     

@@ -98,6 +98,7 @@
                         <th>Entregado $</th>
                         <th>Vuelto $</th>
                         <th>Forma Pago</th>
+                        <th>Fecha Transferencia</th>
                         <!-- <th>N° Transacción</th> -->
                         <th>ROL Socio</th>
                         <th>Estado</th>

@@ -132,6 +132,12 @@ function guardar_pago() {
     var nombre_socio = $("#txt_nombre_socio").val();
     var abono = peso.quitar_formato($("#txt_abono").val());
 
+    if(forma_pago_glosa=="Transferencia"){
+        var f_transa = $("#dt_f_transa").val();
+    }else{
+        var f_transa="";
+    }
+
     if (parseInt(entregado) < parseInt(total_pagar)) {
         alerta.error("alerta", "Lo entregado no puede ser menor al total a pagar");
     } else {
@@ -168,7 +174,8 @@ function guardar_pago() {
                         n_transaccion: n_transaccion,
                         abono: abono,
                         arr_ids_metros: arr_ids_metros,
-                        total_deuda:total_deuda
+                        total_deuda:total_deuda,
+                        f_transa:f_transa
                     },
                     success: function(respuesta) {
                         const OK = 1;
@@ -189,6 +196,7 @@ function guardar_pago() {
                             $("#txt_descuento").val("");
                             $("#txt_n_transaccion").prop("disabled", true);
                             $("#txt_n_transaccion").val(""); 
+                            $("#dt_f_transa").val("");
 
                             $("#grid_deuda").DataTable().clear().draw();
 
@@ -204,7 +212,8 @@ function guardar_pago() {
                                 nombre_socio: nombre_socio,
                                 descuento: descuento,
                                 id_caja: respuesta.id_caja,
-                                total_deuda:total_deuda
+                                total_deuda:total_deuda,
+                                fecha_transa:f_transa
                             }
 
                             var datos_json = JSON.stringify(datos);
@@ -225,6 +234,21 @@ function guardar_pago() {
 }
 
 $(document).ready(function() {
+
+
+     $("#dt_f_transa").datetimepicker({
+      format: "DD-MM-YYYY",
+      maxDate: moment(),
+      locale: moment.locale("es")
+    }).on("dp.change", function (e) {
+      $("#dt_f_transa").blur();
+    });
+
+    $("#dt_f_transa").prop("disabled",true);
+    $("#dt_f_transa").val("");
+
+
+
     $("#txt_id_socio").prop("disabled", true);
     $("#txt_rut_socio").prop("disabled", true);
     $("#txt_rol").prop("disabled", true);
@@ -252,6 +276,13 @@ $(document).ready(function() {
             $("#txt_n_transaccion").prop("disabled", false);
         } else {
             $("#txt_n_transaccion").prop("disabled", true);
+        }
+
+        if ($(this).val() == "3"){
+            $("#dt_f_transa").prop("disabled", false);
+        }else{
+            $("#dt_f_transa").prop("disabled", true);
+            $("#dt_f_transa").val("");
         }
     });
 

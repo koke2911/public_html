@@ -23,7 +23,8 @@ class Md_caja extends Model {
    'fecha',
    'id_apr',
    'descuento',
-   'abono'
+   'abono',
+   'fecha_pago'
   ];
 
   public function datatable_historial_pagos($db, $id_apr, $id_socio, $desde, $hasta) {
@@ -35,11 +36,13 @@ class Md_caja extends Model {
 							c.vuelto,
 							c.descuento,
 						    fp.glosa as forma_pago,
+                date_format(c.fecha_pago, '%d-%m-%Y') as fecha_transa,
 						    -- ifnull(c.numero_transaccion, 'No Registrado') as n_transaccion,
 							s.rol as rol_socio,
 							IFNULL(ELT(FIELD(c.estado, 0, 1), 'Anulado', 'Pagado'),'Sin registro') as estado,
 							u.usuario,
-							date_format(c.fecha, '%d-%m-%Y') as fecha							
+							date_format(c.fecha, '%d-%m-%Y') as fecha
+
 						from 
 							caja c
 							inner join socios s on c.id_socio = s.id

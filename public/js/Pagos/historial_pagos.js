@@ -143,7 +143,7 @@ $(document).ready(function() {
                 }
             },
             { "data": "forma_pago" },
-            // { "data": "n_transaccion" },
+            { "data": "fecha_transa" },
             { "data": "rol_socio" },
             { "data": "estado" },
             { "data": "usuario" },
@@ -264,7 +264,8 @@ $(document).ready(function() {
             n_transaccion: data["n_transaccion"],
             nombre_socio: data["nombre_socio"],
             descuento: data["descuento"],
-            total_deuda:data["pagado"]
+            total_deuda:data["pagado"],
+            fecha_transa:data["fecha_transa"]
         }
 
         var datos_json = JSON.stringify(datos);

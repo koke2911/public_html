@@ -210,6 +210,13 @@ class Ctrl_caja extends BaseController {
     $abono          = $this->request->getPost("abono");
     $arr_ids_metros = $this->request->getPost("arr_ids_metros");
     $total_deuda = $this->request->getPost("total_deuda");
+    $f_transa    = $this->request->getPost("f_transa");
+    
+    if($f_transa!=""){
+      $f_transa=date_format(date_create($f_transa), 'Y-m-d');
+    }else{
+      $f_transa=null;
+    }
 
     if ($n_transaccion == "") {
       $n_transaccion = NULL;
@@ -230,7 +237,8 @@ class Ctrl_caja extends BaseController {
      "id_usuario"         => $id_usuario,
      "fecha"              => $fecha,
      "id_apr"             => $id_apr,
-     "abono"              => $abono
+     "abono"              => $abono,
+     "fecha_pago"         => $f_transa
     ];
 
     $this->db->transStart();
@@ -417,7 +425,11 @@ class Ctrl_caja extends BaseController {
     $nombre_socio  = $datos["nombre_socio"];
     $descuento     = $datos["descuento"];
     $id_caja       = $datos["id_caja"];
-    $total_deuda       = $datos["total_deuda"];
+    $total_deuda    = $datos["total_deuda"];
+    $fecha_transa   = $datos["fecha_transa"];
+
+    // echo $fecha_transa;
+    // exit();
 
 
 
@@ -429,13 +441,14 @@ class Ctrl_caja extends BaseController {
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center">Hora: ' . date("H:i:s") . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center">Usuario: ' . $this->sesión->nombres_ses . ' ' . $this->sesión->ape_pat_ses . ' ' . $this->sesión->ape_mat_ses . '</div><br>');
 
-    $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center"><b>DETALLE DEL PAGO</b></div><br>');
+    $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;" align="center"><b>DETALLE DEL PAGO</b></div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Folio Transaccion: ' . $id_caja . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Total a Pagar: ' . $total_deuda . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Descuento: ' . $descuento . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Entregado: ' . $entregado . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Vuelto: ' . $vuelto . '</div>');
     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Medio de Pago: ' . $forma_pago . '</div>');
+     $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">Fecha Transferencia: ' . $fecha_transa . '</div>');
 
     if ($n_transaccion != "") {
       $this->mpdf->WriteHTML('<div style="font-size: ' . $font_size . '%;">N° Trans: ' . $n_transaccion . '</div>');

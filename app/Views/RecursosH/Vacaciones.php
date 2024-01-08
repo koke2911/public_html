@@ -1,6 +1,6 @@
 <main>
   <div class="container-fluid">
-    <h3 class="mt-4" align="center"><i class="fas fa-briefcase"></i> Liquidaciones</h3>
+    <h3 class="mt-4" align="center"><i class="fas fa-briefcase"></i> Vacaciones</h3>
     <div class="alert alerta-fijo hidden" role="alert" id="alerta"></div>
 
     <div class="container-fluid">
@@ -172,24 +172,12 @@
                           <th>id</th>
                           <th>rut</th>
                           <th>funcionario</th>
-                          <th>mes</th>
-                          <th>valor_uf</th>
-                          <th>dias_trabajados</th>
-                          <th>sueldo_bruto</th>
-                          <th>afp</th>
-                          <th>obligatorio</th>
-                          <th>pactada</th>
-                          <th>diferencia_isapre</th>
-                          <th>afc</th>
-                          <th>otros</th>
-                          <th>total_prevision</th>
-                          <th>base_tributable</th>
-                          <th>cargas</th>
-                          <th>a_pagar</th>
-                          <th>id_apr</th>
+                          <th>desde</th>
+                          <th>hasta</th>
+                          <th>Dias</th>                          
                           <th>fecha_genera</th>
-                          <th>usuario_genera</th>
-                          <th>imprimir</th>
+                          <th>usuario_registra</th>
+                          <th>Anular</th>
                         </tr>
                       </thead>
                     </table>

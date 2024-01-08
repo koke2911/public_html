@@ -16,7 +16,7 @@ var peso = {
         return 0;
     },
     quitar_formato : function(numero){
-        numero = numero.split('.').join('');
+        var numero = numero.split('.').join('');
         return numero;
     }
 }
@@ -56,66 +56,43 @@ $(document).ready(function() {
             { 
                 "data": "subtotal",
                 "render": function(data, type, row) {
-                    return peso.formateaNumero(data);
+                    return data;
                 }
             },
             { 
                 "data": "multa",
                 "render": function(data, type, row) {
-                    return peso.formateaNumero(data);
+                    return data;
                 }
             },
             { 
                 "data": "total_servicios",
                 "render": function(data, type, row) {
-                    return peso.formateaNumero(data);
+                    return data;
                 }
             },
             { 
                 "data": "monto_subsidio",
                 "render": function(data, type, row) {
-                    return peso.formateaNumero(data);
+                    return data;
                 }
             },
             { 
                 "data": "saldo_anterior",
                 "render": function(data, type, row) {
-                    return peso.formateaNumero(data);
+                    return data;
                 }
             },
             { 
                 "data": "total_mes",
                 "render": function(data, type, row) {
-                    return peso.formateaNumero(data);
+                    return data;
                 }
             },
             { "data": "estado" }
         ],
         footerCallback: function (row, data, start, end, display) {
-            var api = this.api();
-            $( api.column(6).footer()).html(
-                peso.formateaNumero(api.column(6, {page:'current'} ).data().sum())
-            );
-
-            $( api.column(7).footer()).html(
-                peso.formateaNumero(api.column(7, {page:'current'} ).data().sum())
-            );
-
-            $( api.column(8).footer()).html(
-                peso.formateaNumero(api.column(8, {page:'current'} ).data().sum())
-            );
-
-            $( api.column(9).footer()).html(
-                peso.formateaNumero(api.column(9, {page:'current'} ).data().sum())
-            );
-
-            $( api.column(10).footer()).html(
-                peso.formateaNumero(api.column(10, {page:'current'} ).data().sum())
-            );
-
-            $( api.column(11).footer()).html(
-                peso.formateaNumero(api.column(11, {page:'current'} ).data().sum())
-            );
+          
         },
         buttons: [ 
             {
@@ -132,13 +109,14 @@ $(document).ready(function() {
                     format: {
                         body: function ( data, row, column, node ) {
                             if (column == 7 || column == 8 || column == 9 || column == 10 || column == 11) {
-                                return peso.quitar_formato(data);
+                                                              
+                                return data;
                             } else {
                                 return data;
                             }
                         },
                         footer: function ( data, row, column, node ) {
-                            return peso.quitar_formato(data);
+                            return data;
                         }
                     }
                 }

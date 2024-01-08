@@ -301,7 +301,7 @@ $(document).ready(function() {
 
     $("#txt_costo").on("blur", function() {
         var numero = peso.quitar_formato(this.value);
-        this.value = peso.formateaNumero(numero);
+        this.value = numero;
     });
 
     $("#btn_repactar").on("click", function() {
@@ -366,7 +366,7 @@ $(document).ready(function() {
             },
             txt_costo: {
                 required: true,
-                number: true,
+               // number: true,
                 maxlength: 11
             }
         },
