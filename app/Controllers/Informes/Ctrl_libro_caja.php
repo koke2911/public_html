@@ -609,6 +609,70 @@ class Ctrl_libro_caja extends BaseController {
               $query3 = $this->db->query($anterior);
               $result3  = $query3->getResultArray();
 
+
+
+              $banco="SELECT saldo_banco as anterior FROM arqueo_caja where date_format(mes, '%m-%Y') = '$mes_anterior' ";
+
+              // echo $anterior;
+              $query4 = $this->db->query($banco);
+              $result4  = $query4->getResultArray();
+
+              if($result4[0]['anterior']==""){
+                //$result4[0]['anterior']=0;
+                $saldoBanco=0;
+              }else{
+
+                  $sqlegre="SELECT sum(es.monto) as total4                                        
+                    from  
+                    egresos_simples es
+                    left join cuentas c on es.id_cuenta = c.id
+                    left join bancos b on c.id_banco = b.id
+                    left join banco_tipo_cuenta btc on c.id_tipo_cuenta = btc.id
+                    inner join motivos m on es.id_motivo = m.id
+                    inner join tipos_egreso te on es.id_tipo_egreso = te.id
+                    inner join egresos e on es.id_egreso = e.id
+                    where  e.id_apr=$id_apr
+                    and  date_format(es.fecha,'%m-%Y')='$mes' 
+                    and e.estado=1  and btc.id not in (5,6)";
+
+                    $query5 = $this->db->query($sqlegre);
+                    $result5  = $query5->getResultArray();
+
+                    if($result5[0]['total4']==""){
+                      $egresoBanco=0;
+                    }else{
+                      $egresoBanco=$result5[0]['total4'];
+                    }
+
+
+                    $sqlingre="SELECT 
+                    sum(c.total_pagar-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0))  as total6
+                    from caja c 
+                    inner join caja_detalle d on d.id_caja=c.id
+                    inner join metros m on m.id=d.id_metros where c.id_forma_pago in (3,4) 
+                    and date_format(c.fecha,'%m-%Y')='$mes'
+                    and c.id_apr=$id_apr
+                    and c.estado =1";
+
+                    $query6 = $this->db->query($sqlingre);
+                    $result6  = $query6->getResultArray();
+
+                    if($result6[0]['total6']==""){
+                      $ingresoBanco=0;
+                    }else{
+                      $ingresoBanco=$result6[0]['total6'];
+                    }
+
+                    $saldoBanco= $result4[0]['anterior'] + $ingresoBanco - $egresoBanco;
+                       //else{
+                      //   $saldoBanco= $result4[0]['anterior'] - $result5[0]['total4'];
+                      // }
+
+              }
+
+
+
+
               if($result[0]['ingresos']==""){
                 $result[0]['ingresos']=0;
               }
@@ -624,7 +688,8 @@ class Ctrl_libro_caja extends BaseController {
                $row = [
                  "ingresos"  => $result[0]['ingresos'],
                  "egresos"    => $result2[0]['egresos'],
-                 "saldo_anterior"    => $result3[0]['anterior']
+                 "saldo_anterior"    => $result3[0]['anterior'],
+                 "saldo_banco"        =>$saldoBanco
                 ];
 
               $data[] = $row;

@@ -39,6 +39,16 @@ function busca_datos(mes){
             var total=parseFloat( $("#txt_saldo_siguiente").val())+parseFloat( $("#txt_saldo_banco").val())+parseFloat( $("#txt_saldo_deposito").val());
     		$("#txt_total_fondos").val(total);
 
+            $("#txt_saldo_banco").val(data.data[0].saldo_banco);
+
+
+            var siguiente=parseFloat( $("#txt_saldo_periodo").val())+parseFloat( $("#txt_saldo_anterior").val());
+            $("#txt_saldo_siguiente").val(siguiente);
+
+            var total=parseFloat( $("#txt_saldo_siguiente").val())+parseFloat( $("#txt_saldo_banco").val())+parseFloat( $("#txt_saldo_deposito").val());
+            $("#txt_total_fondos").val(total);
+
+
 
 
             
@@ -196,7 +206,7 @@ $(document).ready(function() {
 			,
 			txt_saldo_anterior:{
 				required:true,
-				digits:true,
+				digits:false,
 			}
 			,
 			txt_saldo_siguiente:{
@@ -206,17 +216,17 @@ $(document).ready(function() {
 			,
 			txt_saldo_banco:{
 				required:true,
-				digits:true,
+				digits:false,
 			}
 			,
 			txt_saldo_deposito:{
 				required:true,
-				digits:true,
+				digits:false,
 			}
 			,
 			txt_total_fondos:{
 				required:true,
-				digits:true,
+				digits:false,
 			}
         },
         messages: {

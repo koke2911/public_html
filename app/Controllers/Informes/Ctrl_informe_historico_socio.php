@@ -494,13 +494,24 @@ class Ctrl_informe_historico_socio extends BaseController {
 		                <tbody>
 		    	');
 
+     // echo $datosMetros['cuota_repactacion']);
+
       foreach ($datosMetros as $key) {
+
+        
+
+        // if($key["cuota_repactacion"]==""){
+        //     $key["cuota_repactacion"]=0;
+        // }
+
+        // echo '--->'.$key["cuota_repactacion"].'<-->';
+
         $html .= ('
 	                    <tr>
 	                    	<th style="border: 1px solid; font-weight: normal;">' . $key["folio_bolect"] . '</th>
 	                    	<th style="border: 1px solid; font-weight: normal;">' . $key["metros"] . 'm<sup>3</sup></th>
 	                        <th style="border: 1px solid; font-weight: normal;">' . $key["metros_consumidos"] . 'm<sup>3</sup></th>
-	                        <th style="border: 1px solid; font-weight: normal;">' . number_format($key["subtotal"], 0, ',', '.') . '</th>
+	                        
 	                        <th style="border: 1px solid; font-weight: normal;">' . number_format($key["monto_subsidio"], 0, ',', '.') . '</th>
 	                        <th style="border: 1px solid; font-weight: normal;">' . number_format($key["multa"], 0, ',', '.') . '</th>
 	                        <th style="border: 1px solid; font-weight: normal;">' . number_format($key["total_servicios"], 0, ',', '.') . '</th>
@@ -512,6 +523,8 @@ class Ctrl_informe_historico_socio extends BaseController {
 	                    </tr>
 			    	');
       }
+
+  
 
       $html .= ('
 		    			</tbody>

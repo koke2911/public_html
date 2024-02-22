@@ -5,6 +5,7 @@ namespace App\Controllers\RecursosH;
 use App\Controllers\BaseController;
 use App\Models\Finanzas\Md_funcionarios;
 use App\Models\RecursosH\Md_vacaciones;
+use App\Models\RecursosH\Md_inasistencia;
 
 
 class Ctrl_vacaciones extends BaseController {
@@ -13,11 +14,13 @@ class Ctrl_vacaciones extends BaseController {
   protected $sesión;
   protected $db;
   protected $vacaciones;
+  protected $inasistencia;
 
 
   public function __construct() {
     $this->funcionarios       = new Md_funcionarios();
     $this->vacaciones         = new Md_vacaciones();
+    $this->inasistencia         = new Md_inasistencia();
     $this->sesión             = session();
     $this->db                 = \Config\Database::connect();
     
@@ -77,9 +80,49 @@ class Ctrl_vacaciones extends BaseController {
     
   }
 
+
+   public function guardar_inasistencia(){
+   
+    $this->validar_sesion();
+    $fecha      = date("Y-m-d H:i:s");
+    $id_usuario = $this->sesión->id_usuario_ses;
+    $id_apr     = $this->sesión->id_apr_ses;
+        
+    $id_funcionario=$this->request->getPost("id_funcionario");
+    $desde=$this->request->getPost("desde");
+    $hasta=$this->request->getPost("hasta");
+    $dias=$this->request->getPost("dias");
+    $disponibles=$this->request->getPost("disponibles");
+
+    $datosInasistencia = [
+      "id_funcionario"=>$id_funcionario ,
+      "desde"=> date_format(date_create($desde), 'Y-m-d'),
+      "hasta"=> date_format(date_create($hasta), 'Y-m-d'),
+      "cantidad"=>$dias ,
+      "fecha_reg"=> date_format(date_create($fecha), 'Y-m-d'),
+      "usu_reg"=>$id_usuario,
+      "estado"=>1,
+      "id_apr"=>$id_apr
+    ];
+
+     if ($this->inasistencia->save($datosInasistencia)) {
+
+        echo 1;
+
+     }else{
+        echo "Error al  registrar inasistencia";
+     }
+    
+  }
+
    public function datatable_vacaciones() {
     $this->validar_sesion();
     echo $this->vacaciones->datatable_vacaciones($this->db, $this->sesión->id_apr_ses);
+  }
+
+  public function datatable_inasistencia() {
+    $this->validar_sesion();
+    echo $this->inasistencia->datatable_inasistencia($this->db, $this->sesión->id_apr_ses);
   }
 
   public function anula_vacacion($id){
@@ -130,6 +173,23 @@ class Ctrl_vacaciones extends BaseController {
             }
       }else{
         echo "Error al anular vacaciones";
+      }
+
+  }
+
+
+   public function anula_inansistencia($id){  
+    
+
+      $datosIna=[
+         "id" => $id,
+         "estado"=>0
+      ];
+
+       if ($this->inasistencia->save($datosIna)) {
+            echo 1;           
+      }else{
+        echo "Error al anular inasistencia";
       }
 
   }
