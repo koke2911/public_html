@@ -91,7 +91,8 @@ class Md_caja extends Model {
 						    c.vuelto,
 						    m.metros as consumo,
 						    u.usuario as usu_reg,
-                fp.glosa as forma_pago
+                fp.glosa as forma_pago,
+                c.fecha_pago as fecha_trans
 						from 
 							caja c
 						    inner join caja_detalle cd on cd.id_caja = c.id
@@ -123,7 +124,8 @@ class Md_caja extends Model {
        "vuelto"       => $key["vuelto"],
        "consumo"      => $key["consumo"],
        "usu_reg"      => $key["usu_reg"],
-       "forma_pago"      => $key["forma_pago"]
+       "forma_pago"      => $key["forma_pago"],
+       "fecha_trans"      => $key["fecha_trans"]
       ];
 
       $data[] = $row;

@@ -46,6 +46,7 @@
                           <th>Consumo</th>
                           <th>Usuario Reg.</th>
                           <th>Forma Pago</th>
+                          <th>F. Transferencia</th>
                         </tr>
                       </thead>
                     </table>

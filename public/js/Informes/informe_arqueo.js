@@ -114,6 +114,7 @@ $(document).ready(function() {
             { "data": "nombre_socio" },
             { "data": "forma_pago" },
             { "data": "n_transaccion" },
+            { "data": "f_transaccion" },
             { "data": "fecha_pago" },
             { 
                 "data": "total",

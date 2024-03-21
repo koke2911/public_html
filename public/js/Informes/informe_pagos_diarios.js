@@ -66,7 +66,8 @@ $(document).ready(function() {
             { "data": "vuelto" },
             { "data": "consumo" },
             { "data": "usu_reg" },
-            { "data": "forma_pago" }
+            { "data": "forma_pago" },
+            { "data": "fecha_trans" }
         ],
         buttons: [ 
             {

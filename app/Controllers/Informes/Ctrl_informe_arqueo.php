@@ -41,6 +41,7 @@ class Ctrl_informe_arqueo extends BaseController {
      ->select("concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre_socio")
      ->select("fp.glosa as forma_pago")
      ->select("ifnull(caja.numero_transaccion, 'No Registrado') as n_transaccion")
+     ->select("caja.fecha_pago as f_transaccion")
      ->select("date_format(caja.fecha, '%d-%m-%Y %H:%m:%s') as fecha_pago")
      ->select("m.monto_facturable as total")
      ->select("m.monto_subsidio")
@@ -48,6 +49,7 @@ class Ctrl_informe_arqueo extends BaseController {
      ->select("caja.entregado")
      ->select("caja.vuelto")
      ->select("u.usuario")
+
      ->join("caja_detalle cd", "cd.id_caja = caja.id")
      ->join("metros m", "cd.id_metros = m.id")
      ->join("socios s", "caja.id_socio = s.id")

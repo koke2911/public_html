@@ -113,6 +113,7 @@
                         <th>Nombre Socio</th>
                         <th>Forma Pago</th>
                         <th>N° Transacción</th>
+                        <th>F. Transferencia</th>
                         <th>F. Pago</th>
                         <th>Total</th>
                         <th>Subsidio</th>

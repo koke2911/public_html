@@ -16,6 +16,14 @@ $(document).ready(function() {
         $("#dt_mes_consulta").blur();
     });
 
+    $("#dt_ano").datetimepicker({
+        format: "YYYY",
+        useCurrent: false,
+        locale: moment.locale("es")
+      }).on("dp.change", function() {
+        $("#dt_ano").blur();
+    });
+
 
     $("#btn_export").on("click", function() {
 
@@ -26,6 +34,18 @@ $(document).ready(function() {
 	        }else{
 	            alerta.error("alerta", 'Debe Seleccionar un mes  para exportar');
 	        }
+        
+    });
+
+    $("#btn_export_anual").on("click", function() {
+
+            var mes_consulta=$("#dt_ano").val();
+
+            if(mes_consulta!="" ){
+                window.open(base_url+"/Informes/Ctrl_libro_caja/reporte_anual/"+mes_consulta);
+            }else{
+                alerta.error("alerta", 'Debe Seleccionar un mes  para exportar');
+            }
         
     });
 

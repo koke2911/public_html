@@ -426,6 +426,11 @@ class Ctrl_menu extends BaseController {
     echo view('RecursosH/inasistencias');
   }
 
+  public function caja_vecina() {
+    $this->validar_sesion();
+    echo view('Informes/caja_vecina');
+  }
+
 
   
 }

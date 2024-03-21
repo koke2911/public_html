@@ -479,6 +479,48 @@ FROM (
       $writer->save('php://output');
 
   }
+
+ public function rep_caja_vecina(){
+
+        $objPHPExcel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $objPHPExcel->setActiveSheetIndex(0);
+
+
+        $objPHPExcel->getActiveSheet()->setCellValue('A1', 'ID CLIENTE');
+        $objPHPExcel->getActiveSheet()->setCellValue('B1', 'NUMERO DOCUMENTO');
+        $objPHPExcel->getActiveSheet()->setCellValue('C1', 'FECHA VENCIMIENTO');
+        $objPHPExcel->getActiveSheet()->setCellValue('D1', 'MONTO DEUDA');
+        $sheet = $objPHPExcel->getActiveSheet();
+
+       foreach ($sheet->getColumnIterator() as $column) {
+         $sheet->getColumnDimension($column->getColumnIndex())->setAutoSize(true);
+      }
+
+      $this->validar_sesion();
+      $id_apr=$this->sesión->id_apr_ses;
+      $db=$this->db;
+
+      $consulta="SELECT s.id ,
+                concat(s.rut,'-',s.dv) as rut ,
+                date_format(m.fecha_vencimiento,'%d%m%Y') as vencimiento,
+                m.total_mes 
+                from metros m  
+                inner join socios s on m.id_socio=s.id 
+                where m.estado=1 and s.rut !='' and m.id_apr=$id_apr
+                 order by s.id asc";
+
+      $query = $db->query($consulta);
+      $result  = $query->getResultArray();
+
+      $sheet = $objPHPExcel->getActiveSheet();
+      $sheet->fromArray($result, NULL, 'A2'); 
+
+      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); 
+      header('Content-Disposition: attachment;filename="Reporte_caja_vecina.xlsx"'); 
+
+      $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
+      $writer->save('php://output');
+    }
 }
 
 ?>

@@ -560,6 +560,7 @@ class Ctrl_informe_historico_socio extends BaseController {
      ->select("concat(usuarios.nombres, ' ', usuarios.ape_paterno, ' ', usuarios.ape_materno) as usuario")
      ->select("date_format(caja.fecha, '%d-%m-%Y %H:%m:%s') as fecha")
     ->select(" case when caja.estado=1 then 'PAGADO' else 'ANULADO' end as estado")
+    ->select("caja.fecha_pago as f_transa")
      ->join("usuarios", "caja.id_usuario = usuarios.id")
      ->join("forma_pago", "caja.id_forma_pago = forma_pago.id")
      ->where("caja.id_socio", $id_socio)
@@ -582,6 +583,7 @@ class Ctrl_informe_historico_socio extends BaseController {
 		                        <th style="border: 1px solid; background-color: #17057F; color: white;">Usuario Recibe Pago</th>
 		                        <th style="border: 1px solid; background-color: #17057F; color: white;">Fecha</th>
                                 <th style="border: 1px solid; background-color: #17057F; color: white;">Estado</th>
+                                <th style="border: 1px solid; background-color: #17057F; color: white;">F.Transferencia</th>
 		                    </tr>
 		                </thead>
 		                <tbody>
@@ -598,6 +600,7 @@ class Ctrl_informe_historico_socio extends BaseController {
 	                        <th style="border: 1px solid; font-weight: normal;">' . $key["usuario"] . '</th>
 	                        <th style="border: 1px solid; font-weight: normal;">' . $key["fecha"] . '</th>
                             <th style="border: 1px solid; font-weight: normal;">' . $key["estado"] . '</th>
+                            <th style="border: 1px solid; font-weight: normal;">' . $key["f_transa"] . '</th>
 	                    </tr>
 			    	');
       }
