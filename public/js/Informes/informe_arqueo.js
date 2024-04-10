@@ -46,7 +46,7 @@ $(document).ready(function() {
 	$("#txt_rut_socio").prop("disabled", true);
 	$("#txt_rol").prop("disabled", true);
 	$("#txt_nombre_socio").prop("disabled", true);
-	$("#dt_hasta").prop("disabled", true);
+	$("#dt_hasta").prop("disabled", false);
 
 	$("#btn_buscar_socio").on("click", function() {
         $("#divContenedorBuscarSocio").load(
@@ -75,7 +75,7 @@ $(document).ready(function() {
         } else {
         	$("#dt_hasta").rules("add", { required: false });
 	        $("#dt_hasta").data("DateTimePicker").clear();
-	        $("#dt_hasta").prop("disabled", true);
+	        $("#dt_hasta").prop("disabled", false);
         }
     });
 
@@ -96,7 +96,7 @@ $(document).ready(function() {
     	$("#form_histPagos")[0].reset();
     	$("#dt_desde").data("DateTimePicker").clear();
     	$("#dt_hasta").rules("add", { required: false });
-        $("#dt_hasta").prop("disabled", true);
+        $("#dt_hasta").prop("disabled", false);
     });
 
 	var grid_pagos = $("#grid_pagos").DataTable({

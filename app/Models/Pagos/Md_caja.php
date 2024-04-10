@@ -89,7 +89,7 @@ class Md_caja extends Model {
 						    c.total_pagar,
 						    c.entregado,
 						    c.vuelto,
-						    m.metros as consumo,
+						    sum(m.metros) as consumo,
 						    u.usuario as usu_reg,
                 fp.glosa as forma_pago,
                 c.fecha_pago as fecha_trans
@@ -103,7 +103,9 @@ class Md_caja extends Model {
 						where 
 							date_format(c.fecha, '%d-%m-%Y') = ? and
 						    c.id_apr = ? and
-						    c.estado = ?";
+						    c.estado = ?
+                GROUP BY
+    c.id, s.rol, s.nombres, s.ape_pat, s.ape_mat, c.total_pagar, c.entregado, c.vuelto, u.usuario, fp.glosa, c.fecha_pago";
 
                 // echo $fecha;
 
