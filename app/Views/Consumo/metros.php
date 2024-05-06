@@ -242,19 +242,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="row" id="row_iva">
-                          <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
-                            <div class="form-group">
-                              <label class="small mb-1" for="txt_iva">IVA</label>
-                              <div class="input-group mb-3">
-                                <div class="input-group-prepend">
-                                  <span class="input-group-text font-weight-bold" id="basic-addon1">$</span>
-                                </div>
-                                <input type='text' class="form-control" id='txt_iva' name="txt_iva"/>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        
                       </div>
                       <div class="col-xl-5 col-lg-6 col-md-12 col-sm-12">
                         <div class="row">

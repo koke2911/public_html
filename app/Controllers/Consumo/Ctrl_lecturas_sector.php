@@ -139,7 +139,7 @@ class Ctrl_lecturas_sector extends BaseController {
      ->select("ifnull(mt.consumo_actual, '') as lectura_actual")
      ->join("arranques a", "a.id_socio = socios.id")
      ->join("medidores m", "a.id_medidor = m.id")
-     ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro=m.id_diametro")
+     ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro=m.id_diametro and cf.tarifa=a.tarifa")
      ->join("metros mt", "mt.id_socio = socios.id and date_format(mt.fecha_ingreso, '%m-%Y') = '$mes_consumo'", "left")
      ->where("a.id_sector", $id_sector)
      ->findAll();
@@ -181,15 +181,25 @@ class Ctrl_lecturas_sector extends BaseController {
         return json_encode($respuesta);
       }
 
-      $datosApr                  = $this->apr->select("tope_subsidio")
-                                             ->where("id", $id_apr)
-                                             ->first();
+     
 
       $datosSubsidio             = $this->subsidios
        ->select("p.glosa as porcentaje")
        ->join("porcentajes p", "subsidios.id_porcentaje = p.id")
        ->where("id_socio", $id_socio)
        ->first();
+
+      if ($datosSubsidio["porcentaje"]=='50%') {
+         $datosApr = $this->apr->select("tope_subsidio50 as tope_subsidio")
+                  ->where("id", $id_apr)
+                  ->first();
+        
+      }else{
+         $datosApr = $this->apr->select("tope_subsidio")
+                  ->where("id", $id_apr)
+                  ->first();
+      }
+
 
       $datosCargoFijo            = $this->arranques
        ->select("cf.cargo_fijo")
@@ -453,7 +463,8 @@ class Ctrl_lecturas_sector extends BaseController {
              ->select("d.glosa as diametro")
              ->select("sec.nombre as sector")
              ->select("case when sub.estado = 1 then p.glosa else '0%' end as subsidio")
-             ->select("(select tope_subsidio from apr where id = s.id_apr) as tope_subsidio")
+             ->select("case when  p.glosa = '50%' then ap.tope_subsidio50 else ap.tope_subsidio end as tope_subsidio")
+             //->select("(select tope_subsidio from apr where id = s.id_apr) as tope_subsidio")
              ->select("ifnull((select consumo_actual from metros m where m.id = (select max(m2.id) from metros m2 where m2.id_socio = arranques.id_socio and estado <> 0)), 0) as consumo_anterior")
              ->select("cf.cargo_fijo")
              ->select("s.abono")
@@ -472,6 +483,7 @@ class Ctrl_lecturas_sector extends BaseController {
              ->join("subsidios sub", "sub.id_socio = s.id", "left")
              ->join("porcentajes p", "sub.id_porcentaje = p.id", "left")
              ->join("apr_cargo_fijo cf", "cf.id_apr = s.id_apr and cf.id_diametro = m.id_diametro and cf.tarifa=arranques.tarifa")
+             ->join("apr ap", "ap.id = s.id_apr")
              ->where("s.id_apr", $id_apr)
              ->where("m.id_apr", $id_apr)
              ->where("m.numero", $medidor)
@@ -500,6 +512,10 @@ class Ctrl_lecturas_sector extends BaseController {
                   $tarifa = $datosSocios['tarifa'];
                   $cargo_fijo_sc = $datosSocios['sin_consumo'];
 
+                  $subsidio = explode("%",$subsidio);
+                  $subsidio = intval($subsidio[0]);
+                  $monto_subsidio=0;
+             
                   // echo $cargo_fijo_sc;exit();
                   $existe_consumo_mes = $this->metros->select("count(*) as filas")
                                        ->where("id_socio", $id_socio)
@@ -514,35 +530,53 @@ class Ctrl_lecturas_sector extends BaseController {
 
                     $datosCostoMetros = json_decode($this->costo_metros->datatable_costo_metros_consumo($this->db, $this->sesión->id_apr_ses, $id_diametro, 0,$tarifa));
 
+                    
                     // print_r($datosCostoMetros);
                     // exit();
+                    $subtotal=0;
+                    $base=0;
+                    $total_subsidio=0;
 
                         for ($i = 0; $i <= $metros_consumidos; $i ++) {
+
                         foreach ($datosCostoMetros as $key => $value) {
                           foreach ($value as $k => $v) {
+                            
                             if ($i >= intval($v->desde) and $i <= intval($v->hasta)) {
-                              if (intval($v->id_costo_metros) == 0) {
+                              
+                              if (intval($v->id_costo_metros) == 0 and $subtotal==0) {
                                 $subtotal = intval($v->costo);
-                              } else {
+                                $base     = intval($v->costo);
+                              } else if(intval($v->id_costo_metros) != 0){
                                 $subtotal = $subtotal + intval($v->costo);
                               }
 
                               if ($i <= intval($tope_subsidio)) {
-                                $total_subsidio = $subtotal-$cargo_fijo;
+                                $total_subsidio = $subtotal-$base;
+                              }
+
+                              if($subsidio>0){
+                                $cargo_fijoSub=$base*$subsidio/100;
+                              }else{
+                                $cargo_fijoSub=0;
                               }
                             }
                           }
+
+
                         }
                       }
 
+                      
+
                       if($metros_consumidos==0 && $cargo_fijo_sc>0){
                         $cargo_fijo=$cargo_fijo_sc;
-                        $subtotal=$cargo_fijo_sc;
+                        $subtotal= $cargo_fijo_sc * $subsidio / 100;
+                      }else{
+                        $subtotal= $subtotal - $cargo_fijoSub;
                       }
 
-                      $subsidio = explode("%",$subsidio);
-                      $subsidio = intval($subsidio[0]);
-                      $monto_subsidio=0;
+                     
 
                       if($subsidio>0){
                          $monto_subsidio = $total_subsidio * $subsidio / 100;
@@ -685,7 +719,7 @@ class Ctrl_lecturas_sector extends BaseController {
              ->join("sectores sec", "arranques.id_sector = sec.id")
              ->join("subsidios sub", "sub.id_socio = s.id", "left")
              ->join("porcentajes p", "sub.id_porcentaje = p.id", "left")
-             ->join("apr_cargo_fijo cf", "cf.id_apr = s.id_apr and cf.id_diametro = m.id_diametro")
+            // ->join("apr_cargo_fijo cf", "cf.id_apr = s.id_apr and cf.id_diametro = m.id_diametro")
              ->where("s.id_apr", $id_apr)
              ->where("m.id_apr", $id_apr)             
              ->findAll();

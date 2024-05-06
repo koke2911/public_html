@@ -151,8 +151,14 @@
                     <div class="row">
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
-                          <label class="small mb-1" for="txt_tope_subsidio">Tope Subsidio m<sup>3</sup></label>
+                          <label class="small mb-1" for="txt_tope_subsidio">Tope Subsidio 100% m<sup>3</sup></label>
                           <input type='text' class="form-control" id='txt_tope_subsidio' name="txt_tope_subsidio"/>
+                        </div>
+                      </div>
+                      <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_tope_subsidio50">Tope Subsidio 50 % m<sup>3</sup></label>
+                          <input type='text' class="form-control" id='txt_tope_subsidio50' name="txt_tope_subsidio50"/>
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
@@ -216,7 +222,8 @@
                           <th>Nombre APR</th>
                           <th>hash_sii</th>
                           <th>codigo_comercio</th>
-                          <th>tope_subsidio</th>
+                          <th>tope_subsidio 100%</th>
+                          <th>tope_subsidio 50%</th>
                           <th>id_region</th>
                           <th>id_provincia</th>
                           <th>id_comuna</th>

@@ -18,6 +18,7 @@ function des_habilitar (a, b) {
   $("#cmb_comuna").prop("disabled", a);
   $("#txt_resto_direccion").prop("disabled", a);
   $("#txt_tope_subsidio").prop("disabled", a);
+  $("#txt_tope_subsidio50").prop("disabled", a);
   $("#txt_fono").prop("disabled", a);
   $("#txt_ultimo").prop("disabled", a);
   $("#txt_octava").prop("disabled", a);
@@ -36,6 +37,7 @@ function mostrar_datos_apr (data) {
   $("#cmb_comuna").val(data["id_comuna"]);
   $("#txt_resto_direccion").val(data["resto_direccion"]);
   $("#txt_tope_subsidio").val(data["tope_subsidio"]);
+  $("#txt_tope_subsidio50").val(data["tope_subsidio50"]);
   $("#txt_fono").val(data["fono"]);
   $("#cmb_email").val(data['email']);
   $("#cmb_email_dte").val(data['email_dte']);
@@ -174,6 +176,7 @@ function guardar_apr () {
       id_comuna: $("#cmb_comuna").val(),
       resto_direccion: $("#txt_resto_direccion").val(),
       tope_subsidio: $("#txt_tope_subsidio").val(),
+      tope_subsidio50: $("#txt_tope_subsidio50").val(),
       fono: $("#txt_fono").val(),
       email: $("#cmb_email").val(),
       email_dte: $("#cmb_email_dte").val(),
@@ -398,6 +401,11 @@ $(document).ready(function () {
         maxlength: 3,
         maxnumero: true
       },
+      txt_tope_subsidio50: {
+        digits: true,
+        maxlength: 3,
+        maxnumero: true
+      },
       txt_fono: {
         digits: true,
         maxlength: 11
@@ -446,6 +454,11 @@ $(document).ready(function () {
         maxlength: "Máximo 3 números",
         maxnumero: "Máximo hasta 100"
       },
+      txt_tope_subsidio50: {
+        digits: "Solo números",
+        maxlength: "Máximo 3 números",
+        maxnumero: "Máximo hasta 100"
+      },
       txt_fono: {
         digits: "Solo números",
         maxlength: "Máximo 11 números"
@@ -478,6 +491,7 @@ $(document).ready(function () {
       {"data": "hash_sii"},
       {"data": "codigo_comercio"},
       {"data": "tope_subsidio"},
+      { "data": "tope_subsidio50" },
       {"data": "id_region"},
       {"data": "id_provincia"},
       {"data": "id_comuna"},

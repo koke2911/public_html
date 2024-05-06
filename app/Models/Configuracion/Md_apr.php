@@ -35,7 +35,8 @@ class Md_apr extends Model {
    'ultimo_folio',
    'clave_dete',
    'clave_appoct',
-   'horas_extras'
+   'horas_extras',
+   'tope_subsidio50'
   ];
 
   public function datatable_apr($db) {
@@ -46,6 +47,7 @@ class Md_apr extends Model {
 						    apr.hash_sii,
 						    apr.codigo_comercio,
 						    apr.tope_subsidio,
+                apr.tope_subsidio50,
 						    p.id_region,
 						    c.id_provincia,
 						    apr.id_comuna,
@@ -80,6 +82,7 @@ class Md_apr extends Model {
        "hash_sii"        => $key["hash_sii"],
        "codigo_comercio" => $key["codigo_comercio"],
        "tope_subsidio"   => $key["tope_subsidio"],
+       "tope_subsidio50"   => $key["tope_subsidio50"],
        "id_region"       => $key["id_region"],
        "id_provincia"    => $key["id_provincia"],
        "id_comuna"       => $key["id_comuna"],
