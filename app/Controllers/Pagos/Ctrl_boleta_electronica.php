@@ -132,6 +132,22 @@ public function ObtieneToken(){
     } 
 }
 
+public function enviar_punto_blue($arr_boletas){
+   $this->validar_sesion(); 
+   $folios = $this->request->getPost("arr_boletas");
+   $folios = explode(",", $arr_boletas);
+   
+
+  foreach ($folios as $folio) {
+              $datosMetros = [
+								"id" => $folio,
+								"punto_blue"=>'SI'
+							];
+              
+							$this->metros->save($datosMetros);
+  }
+
+}
 public function envia_mail($arr_boletas){
 
    $this->validar_sesion(); 

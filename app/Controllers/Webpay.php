@@ -191,6 +191,7 @@
 					->where("socios.rut", $rut)
 					->where("socios.estado", ACTIVO)
 					->where("m.estado", ACTIVO)
+					->where("m.punto_blue", 'SI')
 					->findAll();
 
 					$salida = array('data' => $datosSocios);

@@ -119,6 +119,54 @@ function emitir_dte () {
   }
 }
 
+function enviar_punto_blue(){
+    var data = $("#grid_boletas").DataTable().rows('.selected').data();
+    var arr_boletas = [];
+
+    $(data).each(function (i, fila) {
+      if (fila.punto_blue == 'NO') {
+        arr_boletas.push(fila.id_metros);
+      }
+    });
+
+    if (arr_boletas.length > 0) {
+
+      $.ajax({
+        url: base_url + "/Pagos/Ctrl_boleta_electronica/enviar_punto_blue/" + arr_boletas,
+        type: "POST",
+        success: function (respuesta) {
+          buscar_boletas();
+          $(".div_sample").JQLoader({
+            theme: "standard",
+            mask: true,
+            background: "#fff",
+            color: "#fff",
+            action: "close"
+          });
+        },
+        error: function (error) {
+          $(".div_sample").JQLoader({
+            theme: "standard",
+            mask: true,
+            background: "#fff",
+            color: "#fff",
+            action: "close"
+          });
+          alerta.error("alerta", "Ha ocurrido un error");
+        }
+      });
+
+    } else {
+      alerta.error("alerta", "Seleccionar al menos una deuda que no sea visible en punto blue")
+      $(".div_sample").JQLoader({
+        theme: "standard",
+        mask: true,
+        background: "#fff",
+        color: "#fff",
+        action: "close"
+      });
+    }
+}
 function enviarMail(){
  
   var data = $("#grid_boletas").DataTable().rows('.selected').data();
@@ -258,6 +306,19 @@ $(document).ready(function () {
     enviarMail();    
   });
 
+
+  $("#btn_punto_blue").on("click", function () {
+
+    $(".div_sample").JQLoader({
+      theme: "standard",
+      mask: true,
+      background: "#fff",
+      color: "#fff"
+    });
+
+    enviar_punto_blue();
+  });
+
   $("#btn_imprimir").on("click", function () {
     imprimir_dte();
   });
@@ -280,7 +341,16 @@ $(document).ready(function () {
     },
     orderClasses: true,
     columns: [
-      {
+      { "data": "punto_blue",
+          "render": function (data, type, row) {
+            if (data != 'SI') {
+              return 'No Visible';
+            } else {
+              return 'Visible';
+            }
+          }
+       },
+      {        
         "data": "estado_mail",
         "render": function ( data, type, row ) {
           if (data!='OK'){
@@ -352,7 +422,8 @@ $(document).ready(function () {
     ],
     order: [[2, "asc"]],
     "columnDefs": [
-      {"targets": [4,5,9,10,11,12,13,14,16,17,19,20,21,22], "visible": false, "searchable": false}
+      {
+        "targets": [5, 6, 10, 11, 12, 13, 14, 15, 17, 18, 20, 21, 22, 23], "visible": false, "searchable": false}
     ],
     dom: 'Bfrtip',
     buttons: [

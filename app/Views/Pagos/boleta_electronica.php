@@ -12,6 +12,7 @@
               <button type="button" name="btn_imprimir" id="btn_imprimir" class="btn btn-primary"><i class="fas fa-print"></i> Imprimir DTE</button>
               <button type="button" name="btn_aviso_cobranza" id="btn_aviso_cobranza" class="btn btn-info"><i class="fas fa-print"></i> Imprimir Aviso de Cobranza</button>
               <button type="button" name="btn_enviar_mail" id="btn_enviar_mail" class="btn btn-info"><i class="fas fa-print"></i> Enviar Email</button>
+              <button type="button" name="btn_punto_blue" id="btn_punto_blue" class="btn btn-info"><i class="fas fa-paper-plane"></i> PuntoBlue</button>
             </center>
           </div>
         </div>
@@ -107,6 +108,7 @@
                     <table id="grid_boletas" class="table table-bordered" width="100%">
                       <thead class="thead-dark">
                         <tr>
+                          <th>P.Blue</th>
                           <th>E.</th>
                           <th>Id.</th>
                           <th>Folio SII</th>
