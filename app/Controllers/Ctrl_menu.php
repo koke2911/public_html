@@ -431,6 +431,16 @@ class Ctrl_menu extends BaseController {
     echo view('Informes/caja_vecina');
   }
 
+   public function correos() {
+    $this->validar_sesion();
+    echo view('Comunicaciones/correo');
+  }
+
+  public function lecturas_sector_mobile() {
+    $this->validar_sesion();
+    echo view('Consumo/lecturas_sector_mobil');
+  }
+
 
   
 }

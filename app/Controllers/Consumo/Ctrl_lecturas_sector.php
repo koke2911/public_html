@@ -410,6 +410,55 @@ class Ctrl_lecturas_sector extends BaseController {
     }
   }
 
+  public function promedio3_meses($mes,$lectura,$id_socio,$lectura_anterior) {
+    
+    $this->validar_sesion();
+    $db=$this->db;
+
+    $consumo=$lectura-$lectura_anterior;
+    // echo $consumo;
+
+    $mes=explode('-',$mes);
+    $mes=$mes[1].'-'.$mes[0].'-01';
+
+    $consulta="SELECT CAST(AVG(metros) as SIGNED) as promedio
+                FROM metros 
+                WHERE id_socio = $id_socio 
+                AND fecha_ingreso >= DATE_SUB('$mes', INTERVAL 3 MONTH) 
+                AND fecha_ingreso < '$mes'";
+
+    // echo $consulta;
+    $query2 = $db->query($consulta);
+    $result2  = $query2->getResultArray();
+    $promedio=$result2[0]['promedio'];
+
+    // echo $consumo;
+
+    if($consumo<$promedio){
+      $mensaje='<span style="color:red">El consumo actual '.$consumo.' m3 es menor al consumo promedio de los ultimos 3 meses ('.$promedio.' m3)</span>';
+    }
+
+    if($consumo>$promedio){
+      $mensaje='<span style="color:orange">El consumo actual '.$consumo.' m3 es mayor al consumo promedio de los ultimos 3 meses ('.$promedio.' m3)';
+    }
+
+    if($consumo==$promedio){
+      $mensaje='<span style="color:green">El consumo actual '.$consumo.' m3 es igual al consumo promedio de los ultimos 3 meses ('.$promedio.' m3)';
+    } 
+    
+    if($consumo==0){
+      $mensaje='<span style="color:red">El consumo actual fue 0';
+    }
+      $respuesta   = [
+       "estado"  => "OK",
+       "mensaje" => $mensaje
+      ];
+
+      return json_encode($respuesta);
+   
+  }
+
+
   public function importar_planilla(){
       $this->validar_sesion();
       $id_apr=$this->sesión->id_apr_ses;

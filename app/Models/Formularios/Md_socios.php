@@ -106,6 +106,78 @@ class Md_socios extends Model {
     }
   }
 
+   public function datatable_socios_correo($db, $id_apr) {
+    $consulta = "SELECT 
+							s.id as id_socio,
+							concat(s.rut, '-', s.dv) as rut,
+						    s.rol,
+							s.nombres,
+							s.ape_pat,
+							s.ape_mat,
+						    concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre_completo,
+						    date_format(s.fecha_entrada, '%d-%m-%Y') as fecha_entrada,
+						    date_format(s.fecha_nacimiento, '%d-%m-%Y') as fecha_nacimiento,
+							s.email,
+							p.id_region,
+							c.id_provincia,
+							s.id_comuna,
+							c.nombre as comuna,
+							s.calle,
+							s.numero,
+							s.resto_direccion,
+							s.ruta,
+							u.usuario,
+							date_format(s.fecha, '%d-%m-%Y %H:%i:%s') as fecha,
+              s.email
+						from 
+							socios s
+							inner join usuarios u on u.id = s.id_usuario
+							left join comunas c on c.id = s.id_comuna
+							left join provincias p on p.id = c.id_provincia
+						where
+							s.id_apr = $id_apr and
+							s.estado = 1 and s.email!=''";
+
+    $query  = $db->query($consulta);
+    $socios = $query->getResultArray();
+
+    foreach ($socios as $key) {
+      $row = [
+       "id_socio"         => $key["id_socio"],
+       "rut"              => $key["rut"],
+       "rol"              => $key["rol"],
+       "nombres"          => $key["nombres"],
+       "ape_pat"          => $key["ape_pat"],
+       "ape_mat"          => $key["ape_mat"],
+       "nombre_completo"  => $key["nombre_completo"],
+       "fecha_entrada"    => $key["fecha_entrada"],
+       "fecha_nacimiento" => $key["fecha_nacimiento"],
+       "email"            => $key["email"],
+       "id_region"        => $key["id_region"],
+       "id_provincia"     => $key["id_provincia"],
+       "id_comuna"        => $key["id_comuna"],
+       "comuna"           => $key["comuna"],
+       "calle"            => $key["calle"],
+       "numero"           => $key["numero"],
+       "resto_direccion"  => $key["resto_direccion"],
+       "ruta"             => $key["ruta"],
+       "usuario"          => $key["usuario"],
+       "fecha"            => $key["fecha"],
+       "email"            => $key["email"]
+      ];
+
+      $data[] = $row;
+    }
+
+    if (isset($data)) {
+      $salida = ["data" => $data];
+
+      return json_encode($salida);
+    } else {
+      return "{ \"data\": [] }";
+    }
+  }
+
   public function existe_socio($rut, $rol, $id_apr) {
     $this->select("count(*) as filas");
     $this->where("rut", $rut);

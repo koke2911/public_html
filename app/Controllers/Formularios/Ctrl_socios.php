@@ -32,6 +32,11 @@ class Ctrl_socios extends BaseController {
     echo $this->socios->datatable_socios($this->db, $this->sesión->id_apr_ses);
   }
 
+  public function datatable_socios_correo() {
+    $this->validar_sesion();
+    echo $this->socios->datatable_socios_correo($this->db, $this->sesión->id_apr_ses);
+  }
+
   public function guardar_socio() {
     $this->validar_sesion();
     define("CREAR_SOCIO", 1);

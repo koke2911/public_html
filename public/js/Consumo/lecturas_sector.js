@@ -37,6 +37,28 @@ function obtener_consumo_mes() {
     $("#grid_lecturas_sector").dataTable().fnReloadAjax(base_url + "/Consumo/Ctrl_lecturas_sector/datatable_lecturas_sector/" + datosBusqueda);
 }
 
+function promedio3meses(mes_consumo, lectura_actual, id_socio, lectura_anterior) {
+    $.ajax({
+        url: base_url + "/Consumo/Ctrl_lecturas_sector/promedio3_meses/"+mes_consumo+"/"+lectura_actual+"/"+id_socio+"/"+lectura_anterior,
+        type: "POST",
+        async: false,
+        dataType: "json",
+        data: {          
+            lectura_actual: lectura_actual,
+            mes_consumo: mes_consumo ,
+            id_socio: id_socio,
+            lectura_anterior: lectura_anterior        
+        },
+        success: function (respuesta) {
+            alerta.ok("alerta", 'Lectura Ingresada Correctamente <br><strong>' + respuesta.mensaje + '</strong>');
+            
+        },
+        error: function (error) {
+            respuesta = JSON.parse(error["responseText"]);
+            alerta.error("alerta", respuesta.message);
+        }
+    });
+}
 function ingresar_lectura(data, tipo_facturacion) {
     var id_socio = data.id_socio;
     var id_metros = data.id_metros;
@@ -62,10 +84,11 @@ function ingresar_lectura(data, tipo_facturacion) {
         success: function(respuesta) {
             if (respuesta.estado == "OK") {
                 const table = $("#grid_lecturas_sector").DataTable()
-                alerta.ok("alerta", respuesta.mensaje);
+               
                 if(tipo_facturacion==2){
                      table.ajax.reload(null, false);
                 }
+                promedio3meses(mes_consumo, lectura_actual, id_socio, lectura_anterior);
             } else {
                 alerta.error("alerta", respuesta.mensaje);
             }

@@ -280,6 +280,7 @@
                           <th>Monto Alcantarillado</th>
                           <th>Monto Cuota Socio</th>
                           <th>Monto Otros</th>
+                          <th>Cert.</th>
                         </tr>
                       </thead>
                     </table>

@@ -636,7 +636,13 @@ $(document).ready(function() {
             { "data": "otros" },
             { "data": "monto_alcantarillado" },
             { "data": "monto_cuota_socio" },
-            { "data": "monto_otros" }
+            { "data": "monto_otros" },
+            {
+                "data": "id_arranque",
+                "render": function (data, type, row) {
+                    return "<button type='button' class='btn_certificado btn btn-primary' title='Imprimir'><i class='fas fa-print'></i></button>"
+                }
+            }
         ],
         "columnDefs": [
             { "targets": [1, 2, 5, 7, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 24, 25, 26, 27, 28, 29], "visible": false, "searchable": false }
@@ -691,6 +697,21 @@ $(document).ready(function() {
             }
         }
 	});
+
+    $("#grid_arranques tbody").on("click", "button.btn_certificado", function () {
+
+        var tr = $(this).closest('tr');
+        if ($(tr).hasClass('child')) {
+            tr = $(tr).prev();
+        }
+        var data = grid_arranques.row(tr).data();
+        var id_arranque = data.id_arranque;
+        var id_socio = data.id_socio;
+        var n_medidor = data.n_medidor;
+        
+        window.open(base_url + "/Formularios/Ctrl_arranques/imprime_certificado/" + id_arranque + "/" + id_socio + "/" + n_medidor);
+    });
+    
 
     $("#grid_arranques tbody").on("click", "tr", function () {
         var tr = $(this).closest('tr');
