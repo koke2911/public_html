@@ -369,11 +369,10 @@ class Ctrl_arranques extends BaseController {
             // print_r($data);
             // exit();
 
-      // return $mpdf->Output("Certificado Dotacion " . $id_socio . ".pdf","D");
+      // header("Content-type:application/pdf");   
+      return $mpdf->Output("Certificado de arranque.pdf","D");
 
-       header("Content-type:application/pdf");
-   
-         return redirect()->to($mpdf->Output());
+        //  return redirect()->to($mpdf->Output());
 
 
     }
