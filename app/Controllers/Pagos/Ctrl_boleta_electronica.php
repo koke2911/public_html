@@ -148,6 +148,38 @@ public function enviar_punto_blue($arr_boletas){
   }
 
 }
+
+public function anular_boleta(){
+   $this->validar_sesion(); 
+   $idSii = $this->request->getPost("idSii");
+   $id_metros = $this->request->getPost("id_metros");
+
+  
+  $datosMetros = [
+    "id" => $id_metros,
+    "folio_bolect"=>0,
+    "url_boleta"=>null
+  ];
+
+  $this->metros->save($datosMetros);
+
+}
+
+public function ver_estado_SII(){ 
+  ini_set("soap.wsdl_cache_enabled", "0"); 
+  $idSii = $this->request->getPost("idSii");
+  $token=$this->ObtieneToken();
+
+  $parametros = array("TIPODTE" => "41","FOLIODTE" => $idSii,"AMBIENTE" => "1","TOKEN" => $token); 
+
+  $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl"); 
+
+  $resultado = $client->call("ConsultaEstadoDte", $parametros); 
+
+  echo json_encode($resultado);
+
+}
+
 public function envia_mail($arr_boletas){
 
    $this->validar_sesion(); 

@@ -1,5 +1,73 @@
 var base_url = $("#txt_base_url").val();
 
+function opciones_anular(idSii, id_metros){
+  Swal.fire({
+    title: 'Opciones de la boleta',
+    showDenyButton: true,
+    showCancelButton: true,
+    confirmButtonText: 'Anular',
+    denyButtonText: 'Estado SII',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      anular_boleta(idSii, id_metros);
+    } else if (result.isDenied) {
+      ver_estado_sii(idSii);
+    }
+  });
+}
+
+function ver_estado_sii(idSii){
+  $.ajax({
+    url: base_url + "/Pagos/Ctrl_boleta_electronica/ver_estado_SII",
+    type: "POST",
+    data: { idSii: idSii },
+    success: function (respuesta) {
+
+      var data = JSON.parse(respuesta);
+      var tableHtml = "<table border='1'>";
+      for (var key in data.item) {
+          tableHtml += "<tr><td>" + key + "</td><td>" + data.item[key] + "</td></tr>";
+      }
+
+      if (data.item.GlosaEstadoSII == "Documento Recibido por el SII. Datos Coinciden con los Registrados") {
+        tableHtml += "<tr><td style='background-color:green;' colspan='2'>" + data.item.GlosaEstadoSII + "</td></tr>";
+      }
+      tableHtml += "</table>";
+      Swal.fire({
+        title: 'Estado SII',
+        html: tableHtml,
+      });
+      // Display the tableHtml to the user
+
+      
+      }
+  });
+}
+
+function anular_boleta(idSii, id_metros) {
+  // alert(idSii +"--" +id_metros);
+  Swal.fire({
+    title: '¿Está seguro de anular la boleta?',
+    text: "No podrá revertir esta acción, debe realizar la regularización correspondiente en el sitio de SII",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Si, anular'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      $.ajax({
+        url: base_url + "/Pagos/Ctrl_boleta_electronica/anular_boleta",
+        type: "POST",
+        data: {idSii: idSii, id_metros: id_metros},
+        success: function (respuesta) {
+          buscar_boletas();
+        }
+      });
+    }
+  });
+}
+
 function llenar_cmb_sector () {
   $.ajax({
     type: "GET",
@@ -332,6 +400,8 @@ $(document).ready(function () {
     emitir_dte();
   });
 
+  
+
   var grid_boletas = $("#grid_boletas").DataTable({
     responsive: true,
     paging: true,
@@ -361,7 +431,16 @@ $(document).ready(function () {
         }
       },
       {"data": "id_metros"},
-      {"data": "folio_bolect"},
+      {
+        "data": "folio_bolect",
+        "render": function(data, type, row) {
+          if (data != 0) {
+            return "<a href='#' title='Anular boleta' onclick='opciones_anular("+ data + "," + row.id_metros + ")'>"+ data + "</a>";
+          } else {
+            return data;
+          }
+        }
+      },
       {
         "data": "url_boleta",
         "render": function ( data, type, row ) {
