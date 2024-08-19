@@ -149,6 +149,29 @@ class Ctrl_apr extends BaseController {
     }
   }
 
+
+   public function habilita_apr() {
+    $this->validar_sesion();
+    
+
+    $id_apr = $this->request->getPost("id_apr");
+    $estado = $this->request->getPost("estado");
+        
+    $datosAPR = [
+     "id"  => $id_apr,
+     "estado"  => $estado
+    ];   
+
+  // print_r($datosAPR);
+
+    if ($this->apr->save($datosAPR)) {
+       echo 1;
+    }else{
+       echo 'falló';
+    }
+  }
+
+
   public function guardar_traza($id_apr, $estado, $observacion) {
     $this->validar_sesion();
 

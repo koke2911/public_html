@@ -234,7 +234,8 @@
                           <th>Usuarios Reg</th>
                           <th>Fecha</th>
                           <th>Traza</th>
-                          <th>Fono</th>
+                          <th>Estado</th>
+                          
                         </tr>
                       </thead>
                     </table>

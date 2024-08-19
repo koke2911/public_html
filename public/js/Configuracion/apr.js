@@ -26,6 +26,43 @@ function des_habilitar (a, b) {
   $("#txt_horas_extras").prop("disabled", a);
 }
 
+function habilitaApr(id_apr,modo) {
+
+  if(modo==false){
+    estado=0;
+  }else{
+    estado=1;
+  }
+  
+
+  $.ajax({
+    url: base_url + "/Configuracion/Ctrl_apr/habilita_apr",
+    type: "POST",
+    async: false,
+    data: {
+      id_apr: id_apr,
+      estado: estado
+    },
+    success: function (respuesta) {
+      const OK = 1;
+      if (respuesta == OK) {
+        $("#grid_apr").dataTable().fnReloadAjax(base_url + "/Configuracion/Ctrl_apr/datatable_apr");
+        $("#form_APR")[0].reset();
+        des_habilitar(true, false);
+        alerta.ok("alerta", "APR guardada con éxito");
+        $("#datosAPR").collapse("hide");
+        datatable_enabled = true;
+      } else {
+        alerta.error("alerta", respuesta);
+      }
+    },
+    error: function (error) {
+      respuesta = JSON.parse(error["responseText"]);
+      alerta.error("alerta", respuesta.message);
+    }
+  });
+}
+
 function mostrar_datos_apr (data) {
   $("#txt_id_apr").val(data["id_apr"]);
   $("#txt_rut_apr").val(data["rut_apr"]);
@@ -473,6 +510,7 @@ $(document).ready(function () {
     }
   });
 
+  
   var grid_apr = $("#grid_apr").DataTable({
     responsive: true,
     paging: true,
@@ -500,14 +538,25 @@ $(document).ready(function () {
       {"data": "numero"},
       {"data": "resto_direccion"},
       {"data": "usuario"},
-      {"data": "fecha"},
+      {"data": "fecha","visible":false},
       {
         "data": "id_apr",
         "render": function (data, type, row) {
           return "<button type='button' class='traza_apr btn btn-warning' title='Traza APR'><i class='fas fa-shoe-prints'></i></button>";
         }
       },
-      {"data": "fono"}
+      {
+        "data": "estado",
+        "render": function (data, type, row) {
+          // console.log(row);
+          if (data == 1) {
+          return "<button type='button' class='btn_activo btn-success' style='width:100%;' onclick='habilitaApr(" + row.id_apr+",false)'>Activo</button>";
+          } else {
+            return "<button type='button' class='btn_desactivo btn-danger' style='width:100%;' onclick='habilitaApr(" + row.id_apr+",true)'>Desactivado</button>";
+          }
+        }
+      }
+     
     ],
     "columnDefs": [
       {"targets": [0, 3, 4, 5, 6, 7, 8, 12, 16], "visible": false, "searchable": false}
@@ -564,3 +613,5 @@ $(document).ready(function () {
     }
   });
 });
+
+

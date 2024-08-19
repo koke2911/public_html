@@ -93,6 +93,7 @@ class Ctrl_usuarios extends BaseController {
     if($es_admin!=0){
       $datos_apr = $this->apr->select("id")
                            ->select("nombre as apr")
+                           ->where("estado",1)
                            ->findAll();
     }else{
       $datos_apr = $this->apr->select("id")

@@ -36,7 +36,8 @@ class Md_apr extends Model {
    'clave_dete',
    'clave_appoct',
    'horas_extras',
-   'tope_subsidio50'
+   'tope_subsidio50',
+   'estado'
   ];
 
   public function datatable_apr($db) {
@@ -60,7 +61,7 @@ class Md_apr extends Model {
 						    apr.resto_direccion,
 						    u.usuario,
 						    date_format(apr.fecha, '%d-%m-%Y %H:%i:%s') as fecha,
-						    apr.fono,
+						    apr.estado,
                 clave_dete,
                 ultimo_folio,
                 clave_appoct,
@@ -92,7 +93,7 @@ class Md_apr extends Model {
        "resto_direccion" => $key["resto_direccion"],
        "usuario"         => $key["usuario"],
        "fecha"           => $key["fecha"],
-       "fono"            => $key["fono"],
+       "estado"            => $key["estado"],
        "email"           => $key['email'],
        "email_dte"       => $key['email_dte'],
        'website'         => $key['website'],
