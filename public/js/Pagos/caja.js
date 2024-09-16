@@ -1,5 +1,6 @@
 var base_url = $("#txt_base_url").val();
 var total_deuda=0;
+var totalRes;
 
 function buscar_deuda() {
 	var id_socio = $("#txt_id_socio").val();
@@ -52,6 +53,7 @@ function sumar_deudas() {
     $("#txt_vuelto").val(0);
     $("#txt_descuento").val(0);
     $("#txt_total_pagar").val(peso.formateaNumero(total));
+    totalRes = $("#txt_total_pagar").val();
 
     var abono = peso.quitar_formato($("#txt_abono").val());
 
@@ -61,6 +63,8 @@ function sumar_deudas() {
         $("#txt_descuento").val(abono);
         calcular_descuento();
     }
+
+    $("#cmb_forma_pago").val("");
 }
 
 function calcular_vuelto() {
@@ -103,6 +107,7 @@ function calcular_descuento() {
                 } else {
                     var total = parseInt(total_pagar) - parseInt(descuento);
                     $("#txt_total_pagar").val(peso.formateaNumero(total));
+                    totalRes = $("#txt_total_pagar").val();
                     $("#txt_descuento").val(peso.formateaNumero(descuento));
 
                     $("#txt_vuelto").val(0);
@@ -272,6 +277,9 @@ $(document).ready(function() {
     });
 
     $("#cmb_forma_pago").on("change", function() {
+
+       
+
         if ($(this).val() != 1) {
             $("#txt_n_transaccion").prop("disabled", false);
         } else {
@@ -283,6 +291,28 @@ $(document).ready(function() {
         }else{
             $("#dt_f_transa").prop("disabled", true);
             $("#dt_f_transa").val("");
+        }
+
+        if($(this).val() == "1"){ 
+
+          
+            var total = $("#txt_total_pagar").val().replace(/\./g, ''); 
+            total = parseInt(total, 10); // Convertir a número entero.
+
+            // Redondear el total hacia el múltiplo de 10 más cercano
+            let remainder = total % 10;
+
+            if (remainder <= 5) {
+                total = total - remainder; // Redondear hacia abajo
+            } else {
+                total = total + (10 - remainder); // Redondear hacia arriba
+            }
+
+            total = total.toLocaleString('de-DE');
+            $("#txt_total_pagar").val(total);
+            
+        }else{
+           $("#txt_total_pagar").val(totalRes);
         }
     });
 

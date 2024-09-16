@@ -214,7 +214,7 @@ public function envia_mail($arr_boletas){
         $email_socio=$datosSocios['email'];
 
 
-        if($email_socio!="--" && $email!=""){
+        if($email_socio!="--" && $email_socio!=""){
 
               $this->email = \Config\Services::email();
               $url_qr=base_url()."/QR_punto_blue.png";
