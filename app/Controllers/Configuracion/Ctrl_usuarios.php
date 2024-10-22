@@ -147,6 +147,33 @@ class Ctrl_usuarios extends BaseController {
     echo json_encode($data);
   }
 
+
+  public function llenar_cmb_tipoIntegra() {
+
+    $this->validar_sesion();
+    $id_apr=$this->sesión->id_apr_ses;
+    $es_admin=$this->sesión->es_admin;
+    $db=$this->db;
+
+
+    $sql="SELECT id, tipo FROM tipo_integracion";
+    $query = $db->query($sql);
+    $result  = $query->getResultArray();
+
+    $data = [];
+
+    foreach ($result as $key) {
+      $row = [
+       "id"  => $key["id"],
+       "tipo" => $key["tipo"]
+      ];
+
+      $data[] = $row;
+    }
+
+    echo json_encode($data);
+  }
+
   public function llenar_cmb_provincia($id_region) {
     $this->validar_sesion();
 

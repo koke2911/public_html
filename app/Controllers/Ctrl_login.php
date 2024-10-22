@@ -78,7 +78,8 @@ class Ctrl_login extends BaseController {
                "hash_apr_ses"   => $datosApr["hash_sii"],
                "rut_apr_ses"    => $datosApr["rut"],
                "dv_apr_ses"     => $datosApr["dv"],
-               "es_admin"       => $datosUsuario["es_admin"]
+               "es_admin"       => $datosUsuario["es_admin"],
+               "tipo_integracion_ses" => $datosApr["tipo_integracion"]
               ];
 
               $session = session();

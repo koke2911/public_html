@@ -7,6 +7,7 @@ use App\Models\Pagos\Md_caja;
 use App\Models\Consumo\Md_metros;
 use App\Controllers\BaseController;
 use App\Models\Configuracion\Md_apr;
+use App\Models\Configuracion\Md_folios_timbrados;
 use App\Models\Formularios\Md_socios;
 use App\Models\Consumo\Md_metros_traza;
 use App\Models\Formularios\Md_arranques;
@@ -23,6 +24,7 @@ class Ctrl_boleta_electronica extends BaseController {
   protected $socios;
   protected $comunas;
   protected $apr;
+  protected $folios_timbrados;
   protected $arranques;
   protected $medidores;
   protected $repactaciones;
@@ -38,6 +40,7 @@ class Ctrl_boleta_electronica extends BaseController {
     $this->socios            = new Md_socios();
     $this->comunas           = new Md_comunas();
     $this->apr               = new Md_apr();
+    $this->folios_timbrados  = new Md_folios_timbrados();
     $this->arranques         = new Md_arranques();
     $this->medidores         = new Md_medidores();
     $this->repactaciones     = new Md_repactaciones();
@@ -289,7 +292,811 @@ public function valida_token($TokenObtenido){
 
 }
 
+public function procesa_dtePablo($folio,$f_sii){
 
+
+
+          define("BOLETA_EXENTA", 41);
+          define("FACTURA_EXENTA", 34);
+          define("ASIGNA_FOLIO_BOLECT", 7);
+          define("PENDIENTE", 1);
+          define("ACTIVO", 1);
+
+        $this->validar_sesion();
+
+        $apr_ses       = $this->sesión->apr_ses;
+        $rut_apr_ses   = $this->sesión->rut_apr_ses;
+        $dv_apr_ses    = $this->sesión->dv_apr_ses;
+        $id_apr     = $this->sesión->id_apr_ses;
+        $db=$this->db;
+
+
+        $consulta="SELECT f.folio_hasta-(a.ultimo_folio) as disponibles
+        FROM folios_timbrados f
+        inner join apr a on a.id=f.id_apr
+        where f.id_apr=$id_apr and f.estado=1";
+        $query = $db->query($consulta);
+        $result  = $query->getResultArray();
+
+        if(!$result[0]['disponibles']>0){
+          echo 'No quedan folios disponibles';
+          exit();
+        }
+
+  
+
+       $datosMetros = $this->metros
+       ->select("id_socio")
+       ->select("monto_facturable")
+       ->select("total_mes")
+       ->select("total_servicios")
+       ->select("ifnull(multa,0) as multa")
+       ->select("cuota_repactacion")
+       ->select("consumo_anterior")
+       ->select("consumo_actual")
+       ->select("metros")
+       ->select("monto_subsidio")
+       ->select("subtotal")
+       ->select("ifnull(alcantarillado,0) as alcantarillado")
+       ->select("cuota_socio")
+       ->select("otros")
+       ->select("iva")
+       ->select("cargo_fijo")
+       ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
+       ->select("date_format(fecha_vencimiento, '%Y-%m-%d') as fecha_vencimiento")
+       ->select("ifnull(elt(field(tipo_facturacion, 1, 2), 'NORMAL', 'TÉRMINO MEDIO'), 'NO REGISTRADO') as tipo_facturacion")
+       ->where("id", $folio)
+       ->first();
+
+      //  print_r($datosMetros);
+       
+       
+      $consumo_anterior  = $datosMetros["consumo_anterior"];
+      $consumo_actual    = $datosMetros["consumo_actual"];
+      $metros_           = $datosMetros["metros"];
+      $total_mes         = $datosMetros["total_mes"];
+      $monto_facturable  = $datosMetros["monto_facturable"];
+      $cuota_repactacion = $datosMetros["cuota_repactacion"];
+      $total_servicios   = $datosMetros["total_servicios"];
+      $multa             = $datosMetros["multa"];
+      $monto_subsidio    = $datosMetros["monto_subsidio"];
+      $subtotal          = $datosMetros["subtotal"];
+      $alcantarillado    = $datosMetros["alcantarillado"];
+      $cuota_socio       = $datosMetros["cuota_socio"];
+      $otros             = $datosMetros["otros"];
+      $iva               = $datosMetros["iva"];
+      $mes_consumo       = $datosMetros["mes_consumo"];
+      $periodo_desde     = $this->periodo_desde($mes_consumo);
+      $periodo_hasta     = $this->periodo_hasta($mes_consumo);
+      $fecha_vencimiento = $datosMetros["fecha_vencimiento"];
+      $id_socio          = $datosMetros["id_socio"];
+      $cargo_fijo        = $datosMetros["cargo_fijo"];
+      
+// echo $consumo_anterior;
+     
+
+    if (intval($total_mes) > 0) {
+            $datosSocios = $this->socios
+             ->select("concat(socios.rut, '-', socios.dv) as rut_socio")
+             ->select("concat(socios.nombres, ' ', socios.ape_pat, ' ', socios.ape_mat) as nombre_socio")
+             ->select("concat(socios.calle, ', ', socios.numero, ', ', socios.resto_direccion) as direccion")
+             ->select("socios.rol")
+             ->select("socios.id_comuna")
+             ->select("a.id_tipo_documento as tipo_documento")
+             ->select("m.numero as num_medidor")
+             ->select("cf.cargo_fijo")
+             ->select("socios.id")
+             ->select("s.nombre as sector")
+             ->select("t.tipo as tarifa")
+             ->select("socios.email")
+             ->select("ifnull(afecto_corte(socios.id,socios.id_apr),0) as meses_deuda")
+             ->join("arranques a", "a.id_socio = socios.id")
+             ->join("sectores s", "a.id_sector = s.id")
+             ->join("medidores m", "a.id_medidor = m.id")
+             ->join("tarifas t", "a.tarifa = t.id_tarifa")
+             ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro = m.id_diametro")
+             ->where("socios.id", $id_socio)
+             ->first();
+
+
+             if ($datosSocios["rut_socio"] != "") {
+              $rut_socio = $datosSocios["rut_socio"];
+            } else {
+              $rut_socio = "66666666-6";
+            }
+
+            if ($datosSocios["nombre_socio"] != "") {
+              $nombre_socio = $datosSocios["nombre_socio"];
+            } else {
+              $nombre_socio = "Sin RUT";
+            }
+
+            if ($datosSocios["direccion"] != ", , ") {
+              $direccion = $datosSocios["direccion"];
+            } else {
+              $direccion = "Sin Dirección";
+            }
+
+            if ($datosSocios["id_comuna"] != "") {
+              $datosComuna = $this->comunas->select("nombre")
+                                           ->where("id", $datosSocios["id_comuna"])
+                                           ->first();
+              $comuna      = $datosComuna["nombre"];
+            } else {
+              $comuna = "Sin Comuna";
+            }
+
+            helper('tipo_dte');
+            $tipo_dte = tipo_dte($datosSocios["tipo_documento"]);
+
+            $num_medidor = $datosSocios["num_medidor"];
+            // $cargo_fijo  = $datosSocios["cargo_fijo"];
+            $sector      = $datosSocios["sector"];
+
+            $datosParaGrafico = $this->metros->select("date_format(fecha_ingreso, '%m-%Y') as fecha")
+                                             ->select("consumo_actual")
+                                             ->where("id_socio", $id_socio)
+                                             ->whereNotIn("estado", [0])
+                                             ->findAll();
+            $datos_graf       = [];
+
+            foreach ($datosParaGrafico as $key) {
+              $datos_graf[$key["fecha"]] = $key["consumo_actual"];
+            }
+
+              $datosDeuda            = $this->metros->select("total_mes")
+                                      ->where("id_socio", $id_socio)
+                                      ->where("estado", PENDIENTE)
+                                      ->where("id<", $folio)
+                                      ->findAll();
+
+              
+
+              $datosObservacionesDte = $this->observaciones_dte
+              ->select("titulo")
+              ->select("observacion")
+              ->where("id_apr", $this->sesión->id_apr_ses)
+              ->where("estado", ACTIVO)
+              ->findAll();
+
+
+              $datosUltPagoId = $this->caja
+              ->selectMax("id")
+              ->where("id_socio", $id_socio)
+              ->where("estado", ACTIVO)
+              ->first();
+
+              $datosUltPago = $this->caja
+              ->select("total_pagar")
+              ->select("date_format(fecha, '%d-%m-%Y') as fecha")
+              ->where("id", $datosUltPagoId["id"])
+              ->first();
+
+              $consumo_anterior_nf = 0;
+
+              if ($datosDeuda != NULL) {
+                  foreach ($datosDeuda as $key) {
+                    $consumo_anterior_nf = $consumo_anterior_nf + intval($key["total_mes"]);
+                  }
+              }
+
+              $observaciones = "TIPO FACTURACION, " . $datosMetros["tipo_facturacion"] . "\n";
+
+              if ($datosUltPago != NULL) {
+                $observaciones .= "ULTIMO PAGO REALIZADO: " . $datosUltPago["fecha"] . ", POR $" . number_format($datosUltPago["total_pagar"], 0, ",", ".") . "\n";
+              }
+
+              if ($datosObservacionesDte != NULL) {
+                foreach ($datosObservacionesDte as $key) {
+                  $observaciones .= $key["titulo"] . ", " . $key["observacion"] . "\n";
+                }
+              }
+
+              // $datosSocios["meses_deuda"]=2;
+
+              if($datosSocios["meses_deuda"]>=2){
+                  $observaciones .='CORTE DE SUMINISTRO  EN TRAMITE POR : '.$datosSocios["meses_deuda"].' MESES VENCIDOS';
+              }
+
+              $monto_metros = intval($subtotal) - intval($cargo_fijo);
+              $exento       = $tipo_dte === BOLETA_EXENTA || $tipo_dte === FACTURA_EXENTA;
+              $rut_apr = $this->sesión->rut_apr_ses . "-" . $this->sesión->dv_apr_ses;
+              $id_apr = $this->sesión->id_apr_ses;
+
+              $datosApr = $this->apr->select("*")
+                                          ->where("id", $id_apr)
+                                          ->first();
+
+              $datosComuna = $this->comunas->select("comunas.nombre")
+                                          ->select("r.nombre as region")
+                                          ->join("provincias p", "p.id = comunas.id_provincia")
+                                          ->join("regiones r", "r.id = p.id_region")
+                                          ->where("comunas.id", $datosApr["id_comuna"])
+                                          ->first();
+
+                                  
+              $fecha = date('Y-m-d');         
+              $fecha3 = date('d-m-Y');      
+              $fecha_venc = date("Y-m-d", strtotime($fecha . "+1 month"));
+
+              $dia = date('d', strtotime($fecha_venc));
+              $mes_numero = date('m', strtotime($fecha_venc));
+              $anio = date('Y', strtotime($fecha_venc));
+
+              // Inicializar la variable $mes
+              $mes = '';
+
+              // Uso de if para establecer el mes en español
+              if ($mes_numero == '01') {
+                  $mes = 'Enero';
+              } elseif ($mes_numero == '02') {
+                  $mes = 'Febrero';
+              } elseif ($mes_numero == '03') {
+                  $mes = 'Marzo';
+              } elseif ($mes_numero == '04') {
+                  $mes = 'Abril';
+              } elseif ($mes_numero == '05') {
+                  $mes = 'Mayo';
+              } elseif ($mes_numero == '06') {
+                  $mes = 'Junio';
+              } elseif ($mes_numero == '07') {
+                  $mes = 'Julio';
+              } elseif ($mes_numero == '08') {
+                  $mes = 'Agosto';
+              } elseif ($mes_numero == '09') {
+                  $mes = 'Septiembre';
+              } elseif ($mes_numero == '10') {
+                  $mes = 'Octubre';
+              } elseif ($mes_numero == '11') {
+                  $mes = 'Noviembre';
+              } elseif ($mes_numero == '12') {
+                  $mes = 'Diciembre';
+              }
+
+              // Construcción de la fecha completa
+              $fecha_completa = "$dia de $mes de $anio";
+
+              $total1=intval($cargo_fijo)+intval($monto_metros)-intval($monto_subsidio);
+              $total2=intval($cargo_fijo)+intval($monto_metros);
+              $facturable=$total1+$alcantarillado+$multa;
+
+                $fecha_comp=explode('-', $mes_consumo);
+                $monthNumber = $fecha_comp[0];
+                if($monthNumber=='01'){$mes='Enero';}
+                if($monthNumber=='02'){$mes='Febrero';}
+                if($monthNumber=='03'){$mes='Marzo';}
+                if($monthNumber=='04'){$mes='Abril';}
+                if($monthNumber=='05'){$mes='Mayo';}
+                if($monthNumber=='06'){$mes='Junio';}
+                if($monthNumber=='07'){$mes='Julio';}
+                if($monthNumber=='08'){$mes='Agosto';}
+                if($monthNumber=='09'){$mes='Septiembre';}
+                if($monthNumber=='10'){$mes='Octubre';}
+                if($monthNumber=='11'){$mes='Noviembre';}
+                if($monthNumber=='12'){$mes='Diciembre';}
+
+                $subsidiario='NO';
+                if(intval($monto_subsidio) > 0){$subsidiario='SI';}
+
+                $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf);
+                $adicionales=$total_mes-$facturable;
+
+                if($multa>0){
+                  $multas='Multas : $'.$multa;
+                }
+
+                if(intval($cuota_repactacion)>0){
+                  $cuotas='Cuota Repactacion : $'.$cuota_repactacion;
+                }
+
+                if(intval($total_servicios)>0 || intval($otros)>0){
+                  $otr=$total_servicios+$otros;
+                  $total_servicio='Otros servicios : $'.$otr;
+                }
+
+                if(intval($cuota_socio)>0){
+                  $cuotas_socios='Cuota Socio : $'.$cuota_socio;
+                }
+
+                $trece=$fecha_vencimiento;               
+                
+          if($tipo_dte==41){  
+            
+            
+            $rut_apr=$rut_apr_ses.'-'.$dv_apr_ses;
+
+              //COMENTAR AL FINAL***************
+
+              // $f_sii=1211;
+              // $rut_apr_ses=77026646;
+
+              
+
+              //+++++++++++++++++++++++
+              $apr_nombre= $datosApr['nombre'];
+              $apr_direccion=$datosApr['calle'].' '.$datosApr['numero'].' '.$datosApr['resto_direccion'];
+              $apr_comuna=$datosComuna['nombre'];
+              $apr_ciudad=$datosComuna['nombre'];
+              $apr_giro=$datosApr['activity'];
+
+              $apr_fono=$datosApr['fono'];
+              $apr_mail=$datosApr['email'];
+
+              $socio_email=$datosSocios['email'];
+              $socio_rol=$datosSocios['rol'];
+              $mes_lectura=$mes.' '.$fecha_comp[1];
+
+                $consulta="SELECT *
+                      FROM folios_timbrados 
+                      where id_apr=$id_apr and estado=1";
+                $query = $db->query($consulta);
+                $result  = $query->getResultArray();
+               
+                $rut_emisor=$result[0]['rut_emisor'];
+                $razonsocial_emisor=$result[0]['razonsocial_emisor'];
+                $folio_timbraje=$result[0]['folio_timbraje'];
+                $tipo_documento=$result[0]['tipo_documento'];
+                $folio_desde=$result[0]['folio_desde'];
+                $folio_hasta=$result[0]['folio_hasta'];
+                $total_folios=$result[0]['total_folios'];
+                $folios_disponibles=$result[0]['folios_disponibles'];
+                $fecha_autorizacion=$result[0]['fecha_autorizacion'];
+                $modulo_folios=$result[0]['modulo_folios'];
+                $exponente=$result[0]['exponente'];
+                $indice=$result[0]['indice'];
+                $firma_folios=$result[0]['firma_folios'];
+                $llave_privadafolios=$result[0]['llave_privadafolios'];
+                $llave_publicafolios=$result[0]['llave_publicafolios'];
+
+
+                $x509=0;
+                $modulo=0;
+                $llave_privada=0;
+                $exponente=0;
+                $fecha_caducidad=0;
+                $llave_sin_clave=0;
+
+                $consulta="SELECT x509,modulo,llave_privada,exponente,fecha_caducidad,llave_sin_clave
+                      FROM certificadosii 
+                      where id_apr=$id_apr and estado=1";
+                $query = $db->query($consulta);
+                $result  = $query->getResultArray();
+
+                if(isset($result[0])){
+                  $x509=$result[0]['x509'];
+                  $modulo=$result[0]['modulo'];
+                  $llave_privada=$result[0]['llave_privada'];
+                  $llave_sin_clave=$result[0]['llave_sin_clave'];
+                  $exponente=$result[0]['exponente'];
+                  $fecha_caducidad=$result[0]['fecha_caducidad'];
+                }else{
+                  echo "No posee Certificado de timbrado";
+                  exit();
+                }
+
+                
+                $fecha_actual = date("Y-m-d"); 
+                if (strtotime($fecha_caducidad) < strtotime($fecha_actual)) {
+                    echo "El certificado de timbrado ha caducado";
+                  exit();
+                }
+              
+
+              $fp = fopen(dirname(__FILE__,4)."/public/".$f_sii.".txt", "w");
+
+              $content = <<<EOD
+                            <?php
+                            ##############################################################
+                            #######	PARAMETROS DE CONFIGURACIÓN
+                            ##############################################################
+                            #
+                            # ENVIAR XML AL SII 0=NOENVIAR 1=CERTIFICACION 2=PRODUCCION
+                            \$sw_produccion="2";
+                            #
+                            # ENVIAR MAIL CON XML Y PDF AL CORREO DE INTERCAMBIO REGISTRADO EN EL SII 1=SI 0=NO
+                            \$sw_enviar_intercambio="0";
+                            #
+                            # ENVIAR XML AL SII 0=NO 1=SI
+                            \$sw_enviar_sii="0";
+                            #
+                            # ENVIAR MAIL CON XML AL EMISOR 1=SI 0=NO
+                            \$sw_enviar_emisor="0";
+                            #
+                            # ENVIAR MAIL CON XML AL RECEPTOR 1=SI 0=NO
+                            \$sw_enviar_receptor="0";
+                            #
+                            # SISTEMA OPERATIVO DEL SERVIDOR LINUX - WINDOWS
+                            \$separador_carpetas="LINUX";
+                            #
+                            # URL DEL LOGO A INSERTAR EN EL PDF POR EJ. HTTP://www.domain.cl/logo.png
+                            \$FACTRONICA["logo"]="../../logos/65086630.png";
+                            #
+                            ##############################################################
+                            #######	CARATULA
+                            ##############################################################
+                            #
+                            # RUT DEL CONTRIBUYENTE EMISOR
+                            \$caratula["RutEmisor"]="$rut_apr";
+                            #
+                            # RUT AUTORIZADO A ENVIAR DTES AL SII SIEMPRE ES RUT DE PERSONA NO DE EMPRESA
+                            \$caratula["RutEnvia"]="16522003-K"; //PREGUNTAR
+                            #
+                            # EN MODO CERTIFICACION RUT=75581600-0 //PREGUNTAR
+                            \$caratula["RutReceptor"]="60803000-K";
+                            #
+                            # FECHA DE RESOLUCION DE INICIO EN FACTURA ELECTRONICA //PREGUNTAR
+                            \$caratula["FchResol"]="2014-10-21";
+                            #
+                            # CERTIFICACION NUM=CERO   //PREGUNTAR
+                            \$caratula["NroResol"]="99";
+                            #
+                            # NOMBRE SUCURSAL SII  //PREGUNTAR
+                            \$caratula["SucSii"]="SANTA CRUZ";
+                            #
+                            ##############################################################
+                            #######	ENCABEZADO
+                            ##############################################################
+                            #
+                            # FECHA DE EMISION
+                            \$IdDoc["FchEmis"]="$fecha";
+                            \$DatosAdicionales["FechaEmision"]="$fecha3";
+                            #
+                            # FECHA DE VENCIMIENTO AAAA-MM-DD
+                            \$IdDoc["FchVenc"]="$fecha_venc";
+                            #
+                            \$DatosAdicionales["FechaVencimiento"]="$fecha_completa";
+                            #
+                            # TEXTO FORMA DE PAGO
+                            \$IdDoc["TermPagoGlosa"]="0";
+                            #
+                            # TIPO DE DOCUMENTO FV=33, ND=56, NC=61
+                            \$IdDoc["TipoDTE"]="41";
+                            #
+                            # FOLIO DEL DOCUMENTO
+                            \$IdDoc["Folio"]="$f_sii";
+                            #
+                            # entre caso y num hay 2 espacios blancos
+                            \$IdDoc["RazonRef"]="";
+                            #
+                            # PARA USO EN GUIA DESPACHO
+                            \$IdDoc["TipoDespacho"]="";
+                            #
+                            # PARA USO EN GUIA DESPACHO
+                            \$IdDoc["IndTraslado"]="";
+                            #
+                            # VALORES DETALLE EN BRUTO
+                            \$IdDoc["MntBruto"]="1";
+                            \$IdDoc["Observaciones"]="";
+                            \$IdDoc["Proyecto"]="1";
+                            ##############################################################
+                            #######	EMISOR
+                            ##############################################################
+                            #
+                            # RUT EMISOR
+                            \$Emisor["RUTEmisor"]="$rut_apr";
+                            #
+                            # RAZON SOCIAL EMISOR
+                            \$Emisor["RznSoc"]="$apr_nombre";
+                            #
+                            # GIRO EMISOR
+                            \$Emisor["GiroEmis"]="Captación, tratamiento y distribución de agua";
+                            #
+                            # CODIGO PRINCIPAL DE ACTIVIDAD COMERCIAL
+                            \$Emisor["Acteco"]="360000";
+                            #
+                            # CODIGO DE LA SUCURSAL DEL SII
+                            \$Emisor["CdgSIISucur"]="06205";
+                            #
+                            # DIRECCION EMISOR
+                            \$Emisor["DirOrigen"]="$apr_direccion";
+                            #
+                            # COMUNA EMISOR
+                            \$Emisor["CmnaOrigen"]="$apr_comuna";
+                            #
+                            # CIUDAD EMISOR
+                            \$Emisor["CiudadOrigen"]="$apr_ciudad";
+                            #
+                            # CODIGO DEl VENDEDOR
+                            \$Emisor["CdgVendedor"]="";
+                            #
+                            # EMAIL EMISOR
+                            \$Emisor["CorreoEmisor"]="$apr_mail";
+                            #
+                            # WEB EMISOR
+                            \$Emisor["Web"]="";
+                            #
+                            # FONO EMISOR
+                            \$Emisor["Telefono"]="$apr_fono";
+                            #
+                            # FAX EMISOR
+                            \$Emisor["Fax"]="";
+                            #
+                            ##############################################################
+                            #######	RECEPTOR
+                            ##############################################################
+                            #
+                            # RUT RECEPTOR
+                            \$Receptor["RUTRecep"]="$rut_socio";
+                            #
+                            # RUT RECEPTOR
+                            \$Receptor["CdgIntRecep"]="$socio_rol";
+                            #
+                            # RAZON SOCIAL RECEPTOR
+                            \$Receptor["RznSocRecep"]="$nombre_socio";
+                            #
+                            # GIRO RECEPTOR
+                            \$Receptor["GiroRecep"]="";
+                            #
+                            # DIRECCION RECEPTOR
+                            \$Receptor["DirRecep"]="$direccion";
+                            #
+                            # CIUDAD RECEPTOR
+                            \$Receptor["CiudadRecep"]="$comuna";
+                            #
+                            #
+                            # COMUNA RECEPTOR
+                            \$Receptor["CmnaRecep"]="$comuna";
+                            #
+                            # CONTACTO RECEPTOR
+                            \$Receptor["Contacto"]="";
+                            #
+                            # CORREO RECEPTOR
+                            \$Receptor["CorreoRecep"]="$socio_email";
+                            #
+                            ##############################################################
+                            #######	TOTALES
+                            ##############################################################
+                            #
+                            # TASA DE IMPUESTO
+                            \$Totales["TasaIVA"]="19";
+                            #
+                            # NETO AFECTO
+                            \$Totales["MntNeto"]="0";
+                            #
+                            # NETO EXENTO
+                            \$Totales["MntExe"]="$facturable";
+                            #
+                            \$DatosAdicionales["MntNetoExe"]="$facturable";
+                            #
+                            # MONTO IVA
+                            \$Totales["IVA"]="0";
+                            #
+                            # MONTO NF
+                            \$Totales["MontoNF"]="$adicionales";
+                            #
+                            # MONTO TOTAL BRUTO
+                            \$Totales["MntTotal"]="$facturable";
+                            \$DatosAdicionales["TipoDocumento"]="BOLETA NO AFECTA O EXENTA ELECTRONICA";
+                            \$DatosAdicionales["GlosaDTE"]="EXENTO";
+                            #
+                            # % DESCUENTO GLOBAL AFECTO
+                            \$Totales["porcdescuento_afecto"]="0";
+                            #
+                            # % DESCUENTO GLOBAL EXENTO
+                            \$Totales["porcdescuento_exento"]="0";
+                            #
+                            ##############################################################
+                            #######	DETALLE
+                            ##############################################################
+                            #
+                            #
+                            # LINEA 1 DEL DOCUMENTO
+                            \$detalle["1"]["NroLinDet"]="1";
+                            \$detalle["1"]["NmbItem"]="Consumo(M3)";
+                            \$detalle["1"]["TpoCodigo"]="INT1";
+                            \$detalle["1"]["UnmdItem"]="UND";
+                            \$detalle["1"]["QtyItem"]="1";
+                            \$detalle["1"]["VlrCodigo"]="INT";
+                            \$detalle["1"]["PrcItem"]="$monto_metros";
+                            \$detalle["1"]["MontoItem"]="$monto_metros";
+                            \$detalle["1"]["DscItemPesos"]="0";
+                            \$detalle["1"]["IndExe"]="1";
+                            \$detalle["1"]["DescuentoPct"]="0.00";
+                            \$detalle["1"]["TpoCodigo2"]="0";
+                            \$detalle["1"]["VlrCodigo2"]="0";
+                            \$detalle["1"]["DecimalesUnitario"]="0";
+                            \$detalle["1"]["DecimalesCantidad"]="0";
+                            #
+                            # LINEA 2 DEL DOCUMENTO
+                            \$detalle["2"]["NroLinDet"]="2";
+                            \$detalle["2"]["NmbItem"]="MULTA";
+                            \$detalle["2"]["TpoCodigo"]="INT2";
+                            \$detalle["2"]["UnmdItem"]="UND";
+                            \$detalle["2"]["QtyItem"]="1";
+                            \$detalle["2"]["VlrCodigo"]="INT";
+                            \$detalle["2"]["PrcItem"]="$multa";
+                            \$detalle["2"]["DscItem"]="";
+                            \$detalle["2"]["MontoItem"]="$multa";
+                            \$detalle["2"]["DscItemPesos"]="0";
+                            \$detalle["2"]["IndExe"]="1";
+                            \$detalle["2"]["DescuentoPct"]="0.00";
+                            \$detalle["2"]["TpoCodigo2"]="0";
+                            \$detalle["2"]["VlrCodigo2"]="0";
+                            \$detalle["2"]["DecimalesUnitario"]="0";
+                            \$detalle["2"]["DecimalesCantidad"]="0";
+                            #
+                            # LINEA 3 DEL DOCUMENTO
+                            \$detalle["3"]["NroLinDet"]="3";
+                            \$detalle["3"]["NmbItem"]="ALCANTARILLADO";
+                            \$detalle["3"]["TpoCodigo"]="INT3";
+                            \$detalle["3"]["UnmdItem"]="UND";
+                            \$detalle["3"]["QtyItem"]="1";
+                            \$detalle["3"]["VlrCodigo"]="INT";
+                            \$detalle["3"]["PrcItem"]="$alcantarillado";
+                            \$detalle["3"]["DscItem"]="";
+                            \$detalle["3"]["MontoItem"]="$alcantarillado";
+                            \$detalle["3"]["DscItemPesos"]="0";
+                            \$detalle["3"]["IndExe"]="1";
+                            \$detalle["3"]["DescuentoPct"]="0.00";
+                            \$detalle["3"]["TpoCodigo2"]="0";
+                            \$detalle["3"]["VlrCodigo2"]="0";
+                            \$detalle["3"]["DecimalesUnitario"]="0";
+                            \$detalle["3"]["DecimalesCantidad"]="0";
+                            #
+                            ##############################################################
+                            ##############################################################
+                            #######	DATOS CERTIFICADO DE PERSONA QUE FIRMA Y ENVIA
+                            ##############################################################
+                            #
+                            #
+                            # MODULO DEL CERTIFICADO
+                            \$certificado["Modulus"]="$modulo";
+                            #
+                            # EXPONENTE DEL CERTIFICADO
+                            \$certificado["Exponent"]="$exponente";
+                            #
+                            # CERTIFICADO X509
+                            \$certificado["X509Certificate"]="$x509";
+                            #
+                            # LLAVE PRIVADA SIN CLAVE
+                            \$certificado["PrivKey"]="$llave_sin_clave";
+                            #
+                            ##############################################################
+                            #######	CARGAR DATOS DE TIMBRAJE DE FOLIOS
+                            ##############################################################
+                            #
+                            #
+                            # RUT EMISOR
+                            \$CAF["RE"]="$rut_emisor";
+                            #
+                            # RAZON SOCIAL EMISOR
+                            \$CAF["RS"]="$razonsocial_emisor";
+                            #
+                            # TIPO DE DOCUMENTO
+                            \$CAF["TD"]="$tipo_documento";
+                            #
+                            # FOLIO DESDE
+                            \$CAF["RNG_D"]="$folio_desde";
+                            #
+                            # FOLIO HASTA
+                            \$CAF["RNG_H"]="$folio_hasta";
+                            #
+                            # FECHA AUTORIZACION TIMBRAJE
+                            \$CAF["FA"]="$fecha_autorizacion";
+                            #
+                            # MODULO LLAVE PRIVADA TIMBRAJE
+                            \$CAF["RSAPK_M"]="$modulo_folios";
+                            #
+                            # MODULO EXPONENTE TIMBRAJE
+                            \$CAF["RSAPK_E"]="$firma_folios";
+                            #
+                            # INDICE DEL TIMBRAJE
+                            \$CAF["RSAPK_IDK"]="$indice";
+                            #
+                            # FIRMA DEL TIMBRAJE
+                            \$CAF["FRMA"]=="$firma_folios";
+                            #
+                            # LLAVE PRIVADA DEL TIMBRAJE
+                            \$CAF["RSASK"]="$llave_privadafolios";
+                            #
+                            # LLAVE PUBLICA DEL TIMBRAJE
+                            \$CAF["RSAPUBK"]="$llave_publicafolios";
+                            #
+                            # ALMACEN DE ARCHIVOS XML PNG Y PDF
+                            \$FACTRONICA["FOLDERPDF"]="../../home/{$rut_apr_ses}/boletas";
+                            \$FACTRONICA["FOLDERFILES"]="../../home/{$rut_apr_ses}/boletas";
+                            \$FACTRONICA["ALMACENREMOTO"]="../../home/{$rut_apr_ses}/boletas";
+                            #
+                            # NOMBRE DEL ARCHIVO PDF
+                            \$FACTRONICA["FILEPDF"]="BOLETA_FOLIO{$f_sii}_TIPO39.pdf";
+                            \$FACTRONICA["FILEPDFCLIENTE"]="BOLETA_FOLIO{$f_sii}_TIPO39.pdf";
+                            #
+                            # NOMBRE DEL ARCHIVO TXT
+                            \$FACTRONICA["FILETXT"]="BOLETA_FOLIO{$f_sii}_TIPO39.txt";
+                            #
+                            # NOMBRE DE LOS ARCHIVOS DE SALIDA
+                            \$FACTRONICA["DTEPORFIRMAR"]="BOLETA_FOLIO{$f_sii}_TIPO39_DTEPORFIRMAR.xml";
+                            \$FACTRONICA["DTEFIRMADO"]="BOLETA_FOLIO{$f_sii}_TIPO39_DTEFIRMADO.xml";
+                            \$FACTRONICA["SETDTEPORFIRMAR"]="BOLETA_FOLIO{$f_sii}_TIPO39_SETPORFIRMAR.xml";
+                            \$FACTRONICA["SETDTEFIRMADO_CLIENTE"]="BOLETA_FOLIO{$f_sii}_TIPO39_SETFIRMADO_CLI.xml";
+                            \$FACTRONICA["SETDTEFIRMADO_SII"]="BOLETA_FOLIO{$f_sii}_TIPO39_SETFIRMADO_SII.xml";
+                            \$FACTRONICA["TRACKID"]="BOLETA_FOLIO{$f_sii}_TIPO39_FIRMADO_TRACKID.xml";
+                            \$FACTRONICA["FILEPNG"]="BOLETA_FOLIO{$f_sii}_TIPO39_TIMBRE.png";
+                            #
+                            # URL DEL SERVIDOR DE BOLETAS
+                            \$FACTRONICA["URLSERVIDOR"]="http://www.facturalibre.cl/sdk_factronica/factronica_servidor_boletas";
+                            \$FACTRONICA["SCRIPTSERVIDOR"]="recibe_txt_boleta.php";
+                            #
+                            # TICKET O CARTA
+                            \$FACTRONICA["FORMATO_PDF"]="TICKET";
+                            \$DatosAdicionales["LecturaAnterior"]="$consumo_anterior m3";
+                            \$DatosAdicionales["LecturaActual"]="$consumo_actual m3";
+                            \$DatosAdicionales["Consumo"]="$metros_ m3";
+                            \$DatosAdicionales["MesConsumo"]="$mes_lectura";
+                            \$DatosAdicionales["NumeroFolio"]="$f_sii";
+                            \$DatosAdicionales["CargoFijo"]="$cargo_fijo";
+                            \$DatosAdicionales["Subsidio"]="$monto_subsidio";
+                            \$DatosAdicionales["Bono"]="0";
+                            \$DatosAdicionales["SaldoAnterior"]="$consumo_anterior_nf";
+                            \$Totales["VlrPagar"]="$vlr_pagar";
+                            \$DatosAdicionales["Subtotal"]="0";
+                            \$DatosAdicionales["Sector"]="$sector";
+                            \$DatosAdicionales["observaciones"]="$observaciones";
+                          EOD;
+
+                // echo $content;
+                // echo 'aqui';
+                file_put_contents($f_sii.".txt", $content);
+                // exit();
+
+
+              $command = "curl --form \"archivito=@".realpath(dirname(__FILE__,4))."/public/".$f_sii.".txt\"  http://38.7.199.132/api/factronica_creadte_boletas/index.php";
+              exec($command, $resultado);
+              $resultado=json_decode($resultado[1],true);             
+              $estado=$resultado['estado'];
+
+
+              if($estado=='DTE RECIBIDO'){
+                  $resultado_estado='DTE procesado correctamente.';
+                  $url_pdf='http://38.7.199.132/home/'.$rut_apr_ses.'/boletas/BOLETA_FOLIO'.$f_sii.'_TIPO39.pdf';
+
+              }
+             
+              if($resultado_estado=='DTE procesado correctamente.'){
+              unlink(realpath(dirname(__FILE__,4))."/public/".$f_sii.".txt");
+                $datosMetrosSave = [
+                     "folio_bolect"      => $f_sii,
+                     "id_tipo_documento" => $datosSocios["tipo_documento"],
+                     "id"                => $folio,
+                     "url_boleta"        => $url_pdf
+                    ];
+
+
+                  if ($this->metros->save($datosMetrosSave)) {
+                    $fecha      = date("Y-m-d H:i:s");
+                    $id_usuario = $this->sesión->id_usuario_ses;
+                    $estado     = ASIGNA_FOLIO_BOLECT;
+
+                    $datosTraza = [
+                     "id_metros"  => $folio,
+                     "estado"     => $estado,
+                     "id_usuario" => $id_usuario,
+                     "fecha"      => $fecha
+                    ];
+
+                    if (!$this->metros_traza->save($datosTraza)) {
+                      $this->error .= "Id Metros: $folio, <br>";
+                      $this->error .= "Error: Falló al ingresar traza. <br><br>";
+                    }
+                  } else {
+                    $this->error .= "Id Metros: $folio, <br>";
+                    $this->error .= "Error: Falló al actualizar el folio SII. <br><br>";
+                  }
+                    
+
+
+              }else{
+                  $this->error .= "ERROR AL PROCESAR DTE $folio <br><br>";
+              }
+          }else{
+                $this->error .= "BOLETA NO EXENTA $folio <br><br>";
+          }
+
+
+    } 
+
+
+}
 public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
   ini_set("soap.wsdl_cache_enabled", "0"); 
@@ -745,6 +1552,8 @@ public function emitir_dte_new(){
   $this->validar_sesion();
   $id_apr = $this->sesión->id_apr_ses;
 
+  $tipo_integracion = $this->sesión->tipo_integracion_ses;
+
   $datosAprs = $this->apr->select("*")
                       ->where("id", $id_apr)
                       ->first();
@@ -753,20 +1562,25 @@ public function emitir_dte_new(){
 
   $folios = $this->request->getPost("arr_boletas");
 
-  foreach ($folios as $folio) {
+  foreach ($folios as $folio) {    
       $f_sii++;
-      // echo $ultimo_foliosii;
-      $token=$this->ObtieneToken();      
-      if($token!=""){
-         $valido=$this->valida_token($token);
-         if($valido!='NO'){
-            $generado=$this->procesa_dte($token,$folio,$f_sii);
-         }else{
-          $this->error .= "Token invalido $token <br><br>";
-         }
-      }else{
-        $this->error .= "No se pudo generar token de acceso <br><br>";
-       
+
+      if($tipo_integracion==2){ // APPOCTABA         
+        $token=$this->ObtieneToken();      
+        if($token!=""){
+          $valido=$this->valida_token($token);
+          if($valido!='NO'){
+              $generado=$this->procesa_dte($token,$folio,$f_sii);
+          }else{
+            $this->error .= "Token invalido $token <br><br>";
+          }
+        }else{
+          $this->error .= "No se pudo generar token de acceso <br><br>";
+        
+        }
+      }else{ // PABLO SALAS
+         $generado=$this->procesa_dtePablo($folio,$f_sii);
+        
       }
   }
 

@@ -68,6 +68,12 @@
                                 <textarea style="height: 200px;" class="form-control" name="txt_cuerpo" id="txt_cuerpo"></textarea>
                             </div>
                         </div>
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                            <div class="form-group">
+                                <label class="small mb-1" for="txt_adjunto">Adjuntar Archivo</label>
+                                <input type="file" class="form-control" name="txt_adjunto" id="txt_adjunto"/>
+                            </div>
+                        </div>
                     </div>
                   </form>
                 </div>

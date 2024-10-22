@@ -2,6 +2,8 @@ var base_url = $("#txt_base_url").val();
 
 $(document).ready(function () {
 
+
+
     function enviarCorreo(){
         var asunto = $("#txt_asunto").val();
         var cuerpo = $("#txt_cuerpo").val();
@@ -14,14 +16,20 @@ $(document).ready(function () {
         });
 
         if (arr_socios.length > 0) {
+
+            var file_data = $('#txt_adjunto').prop('files')[0];  // Captura el archivo
+            var form_data = new FormData();
+
+            form_data.append('archivo', file_data);  // 'archivo' es el nombre del campo
+            form_data.append('asunto', asunto);  // Otros datos
+            form_data.append('cuerpo', cuerpo);  // Otros datos
             
             $.ajax({
                 url: base_url + "/Comunicaciones/Ctrl_correo/envia_mail/" + arr_socios,
                 type: "POST",
-                data: {
-                    asunto: asunto,
-                    cuerpo: cuerpo
-                },
+                data: form_data,
+                contentType: false,  
+                processData: false,                 
                 success: function (respuesta) {
                     $("#grid_socios").DataTable().rows().deselect();
                     $("#txt_asunto").val('');

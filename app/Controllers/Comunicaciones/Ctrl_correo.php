@@ -50,6 +50,8 @@ class Ctrl_correo extends BaseController {
         $this->validar_sesion(); 
         $asunto = $this->request->getPost("asunto");
         $cuerpo = $this->request->getPost("cuerpo");
+        $archivo = $this->request->getPost("archivo");
+
         $socios = explode(",", $arr_socios);
         $id_apr = $this->sesión->id_apr_ses;
         $nombreAPR = $this->sesión->apr_ses;
@@ -102,6 +104,13 @@ class Ctrl_correo extends BaseController {
 
                   $this->email->setSubject($subject);
                   $this->email->setMessage($message);
+
+                  if (isset($_FILES['archivo']) && $_FILES['archivo']['error'] === UPLOAD_ERR_OK) {
+                      $archivoTemporal = $_FILES['archivo']['tmp_name']; 
+                      $nombreArchivo = $_FILES['archivo']['name']; 
+                      
+                      $this->email->attach($archivoTemporal, 'attachment', $nombreArchivo);
+                  }
 
                   $detalle_correo=['id_correo'=>$id_correo,'id_socio'=>$id_socio];
                   

@@ -35,6 +35,7 @@ class Ctrl_informe_deudores extends BaseController {
      ->select("s.rol")
      ->select("ifnull(concat(s.rut, '-', s.dv), 'No Registrado') as rut")
      ->select("concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre")
+     ->select("s.abono")
      ->join("socios s", "metros.id_socio = s.id")
      ->where("metros.id_apr", $this->sesión->id_apr_ses)
      ->where("metros.fecha_vencimiento <", $fecha)
@@ -63,11 +64,16 @@ class Ctrl_informe_deudores extends BaseController {
        "nombre"   => $socios["nombre"]
       ];
 
+      
+      $total=0;
+
       foreach ($data_fecha as $fecha) {
         foreach ($data as $metros) {
           if ($metros["id_socio"] == $socios["id_socio"]) {
             if ($fecha["mes_consumo"] == $metros["mes_consumo"]) {
               $row[$fecha["mes_consumo"]] = $metros["total_mes"];
+              $total += $metros["total_mes"];
+              $row["total"] = $total;
             } else {
               if (empty($row[$fecha["mes_consumo"]])) {
                 $row[$fecha["mes_consumo"]] = 0;
@@ -76,6 +82,8 @@ class Ctrl_informe_deudores extends BaseController {
           }
         }
       }
+
+      $row['abono']=$socios["abono"];
       array_push($body, $row);
     }
 
@@ -115,6 +123,14 @@ class Ctrl_informe_deudores extends BaseController {
       array_push($header, $fecha["mes_consumo"]);
       array_push($column, $fecha["mes_consumo"]);
     }
+
+
+    
+    array_push($column, "total");
+    array_push($header, "total");
+
+     array_push($column, "abono");
+    array_push($header, "abono");
 
     $respuesta = [
      "header" => $header,

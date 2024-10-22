@@ -182,11 +182,13 @@ class Ctrl_lecturas_sector extends BaseController {
       }
 
      
-
+      $estado_subsidio=1;
+      
       $datosSubsidio             = $this->subsidios
        ->select("p.glosa as porcentaje")
        ->join("porcentajes p", "subsidios.id_porcentaje = p.id")
        ->where("id_socio", $id_socio)
+       ->where("estado",$estado_subsidio)
        ->first();
 
       if ($datosSubsidio["porcentaje"]=='50%') {

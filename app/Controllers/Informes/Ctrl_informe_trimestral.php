@@ -607,7 +607,150 @@ class Ctrl_informe_trimestral extends BaseController {
 
     $info->setCellValue('H28', $datosSub[0]['cantidad']);
     $info->setCellValue('H29', $datosSub[1]['cantidad']);
+
+
+    //DEUDORES MONTO
+
+    $sql="SELECT sum(m.total_mes) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (1,2)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m1')
+          union
+          select sum(m.total_mes) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (3.4)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m1')";
+
+    $query = $db->query($sql);
+    $datosSub  = $query->getResultArray();
+
+    $info->setCellValue('H7', $datosSub[0]['total']);
+    $info->setCellValue('H8', $datosSub[1]['total']);
+
+    $sql="SELECT sum(m.total_mes) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (1,2)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m2')
+          union
+          select sum(m.total_mes) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (3.4)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m2')";
+
+    $query = $db->query($sql);
+    $datosSub  = $query->getResultArray();
+
+    $info->setCellValue('I7', $datosSub[0]['total']);
+    $info->setCellValue('I8', $datosSub[1]['total']);
+
+     $sql="SELECT sum(m.total_mes) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (1,2)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m3')
+          union
+          select sum(m.total_mes) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (3.4)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m3')";
+
+    $query = $db->query($sql);
+    $datosSub  = $query->getResultArray();
+
+    $info->setCellValue('J7', $datosSub[0]['total']);
+    $info->setCellValue('J8', $datosSub[1]['total']);
     
+
+    // DEUDORES CANTIDAD
+
+    $sql="SELECT count(distinct(m.id_socio)) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (1,2)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m1')
+          union
+          select count(distinct(m.id_socio)) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (3.4)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m1')";
+
+    $query = $db->query($sql);
+    $datosSub  = $query->getResultArray();
+
+    $info->setCellValue('H10', $datosSub[0]['total']);
+    $info->setCellValue('H11', $datosSub[1]['total']);
+
+
+    $sql="SELECT count(distinct(m.id_socio)) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (1,2)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m2')
+          union
+          select count(distinct(m.id_socio)) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (3.4)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m2')";
+
+    $query = $db->query($sql);
+    $datosSub  = $query->getResultArray();
+
+    $info->setCellValue('I10', $datosSub[0]['total']);
+    $info->setCellValue('I11', $datosSub[1]['total']);
+
+
+    $sql="SELECT count(distinct(m.id_socio)) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (1,2)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m3')
+          union
+          select count(distinct(m.id_socio)) as total
+          from metros m 
+          inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+          where m.id_apr=$id_apr and m.estado=1 and a.id_tipo_documento in (3.4)
+          and  date_format(m.fecha_ingreso,'%Y-%m') in ('$m3')";
+
+    $query = $db->query($sql);
+    $datosSub  = $query->getResultArray();
+
+    $info->setCellValue('J10', $datosSub[0]['total']);
+    $info->setCellValue('J11', $datosSub[1]['total']);
+    
+    // CONSUMO AP
+
+    $HojaconsumoAP = '3.- Consumo m3 AP';
+    $spreadsheet->setActiveSheetIndexByName($HojaconsumoAP);
+    $consumo = $spreadsheet->getActiveSheet();
+
+    $sql="SELECT case when a.id_tipo_documento in (1,2) then 'SOCIO' else 'USUARIO' end as tipo,
+        s.id, concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombre,
+
+        (select sum(metros) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m1') and m2.id_socio=s.id and m2.estado!=0) as m2,
+        (select sum(subtotal) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m1') and m2.id_socio=s.id and m2.estado!=0) as sub2,
+        (select sum(metros) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m2') and m2.id_socio=s.id and m2.estado!=0) as m3,
+        (select sum(subtotal) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m2') and m2.id_socio=s.id and m2.estado!=0) as sub3,
+        (select sum(metros) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m3') and m2.id_socio=s.id and m2.estado!=0) as m4,
+        (select sum(subtotal) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m3') and m2.id_socio=s.id and m2.estado!=0) as sub4
+
+        from socios s 
+        inner join arranques a on a.id_socio=s.id and a.id_apr=s.id_apr
+        where s.id_apr=$id_apr";
+
+    $query = $db->query($sql);
+    $datosSub  = $query->getResultArray();
+
+    $consumo->fromArray($datosSub, null, 'A6');
+
+
+
     // echo $consulta;
     // exit;
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

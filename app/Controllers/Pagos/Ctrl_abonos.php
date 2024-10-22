@@ -188,6 +188,52 @@ class Ctrl_abonos extends BaseController {
     echo view("Pagos/abono_traza");
   }
 
+  
+  public function generar_pdf_abono($id_abono, $id_socio, $nombre, $total, $usuario, $fecha) {
+
+    // 633/8980874-K/ OSCAR MANUEL MERCADO NAVARRETE/2445/15064649-9/24-06-2024 10:51:48
+    $this->validar_sesion();
+
+    $apr_ses       = $this->sesión->apr_ses;
+    $rut_apr_ses   = $this->sesión->rut_apr_ses;
+    $dv_apr_ses    = $this->sesión->dv_apr_ses;
+    $id_apr     = $this->sesión->id_apr_ses;
+    
+    
+    $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+    $pdf->AddPage();
+    
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('helvetica', '', 12);
+    $pdf->Cell(0, 10, 'RECIBO DE ABONO N° ' . $id_abono . '', 0, 1, 'C');
+
+    
+    $ruta_archivo = FCPATH .  $id_apr . '.png';
+
+    if (file_exists($ruta_archivo)) {
+      $pdf->Image($ruta_archivo, 180, 10, 30, 30, '', '', '', false, 300, '', false, false, 0, 'C');
+    }
+
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Cell(0, 10, 'APR: ' . $apr_ses, 0, 1, 'L');
+    $pdf->Cell(0, 10, 'Rut APR: ' . $rut_apr_ses . '-' . $dv_apr_ses, 0, 1, 'L');
+
+
+    
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Cell(0, 10, 'Socio: ' . $nombre, 0, 1, 'L');
+    $pdf->Cell(0, 10, 'Rut: ' . $id_socio, 0, 1, 'L');     
+    
+    $pdf->SetFont('helvetica', '', 12);
+    $pdf->Cell(0, 10, 'Total Abonado: $' . $total, 0, 1, 'L');
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Cell(0, 10, 'Personal APR: ' . $usuario, 0, 1, 'L');
+    $pdf->SetFont('helvetica', '', 10);
+    $pdf->Cell(0, 10, 'Fecha registro: ' . $fecha, 0, 1, 'L');
+    
+    $pdf->Output("abono_" . $id_abono . "_" . $id_socio . "_" . $rut . ".pdf", 'D');
+  }
+
   public function datatable_abono_traza($id_abono) {
     $this->validar_sesion();
     echo $this->abonos_traza->datatable_abono_traza($this->db, $id_abono);

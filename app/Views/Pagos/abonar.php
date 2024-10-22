@@ -101,6 +101,7 @@
                           <th>Usuario</th>
                           <th>Fecha</th>
                           <th>Traza</th>
+                          <th>Boucher</th>
                         </tr>
                       </thead>
                     </table>

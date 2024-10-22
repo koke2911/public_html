@@ -232,6 +232,12 @@ $(document).ready(function() {
                 "render": function(data, type, row) {
                     return "<button type='button' class='traza_abono btn btn-warning' title='Traza Abono'><i class='fas fa-shoe-prints'></i></button>";
                 }
+            },
+            {
+                "data": "id_abono",
+                "render": function (data, type, row) {
+                    return "<button type='button' class='boucher_abono btn btn-primary' title='Traza Abono'><i class='fas fa-print'></i></button>";
+                }
             }
         ],
         language: {
@@ -278,5 +284,25 @@ $(document).ready(function() {
         ); 
 
         $('#dlg_traza').modal('show');
+    });
+
+
+    $("#grid_abonos tbody").on("click", "button.boucher_abono", function () {
+        
+        var tr = $(this).closest('tr');
+        if ($(tr).hasClass('child')) {
+            tr = $(tr).prev();
+        }
+
+        var data = grid_abonos.row(tr).data();
+        var id_abono = data.id_abono;
+        var rut_socio = data.rut_socio;
+        var nombre_socio = data.nombre_socio;
+        var abono = data.abono;
+        var usuario = data.usuario;
+        var fecha = data.fecha;
+
+        window.open(base_url + "/Pagos/Ctrl_abonos/generar_pdf_abono/" + id_abono + "/" + rut_socio + "/" + nombre_socio + "/" + abono + "/" + usuario + "/" + fecha);
+        
     });
 });

@@ -167,10 +167,16 @@
                           <input type='text' class="form-control" id='txt_fono' name="txt_fono"/>
                         </div>
                       </div>
-                      <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_resto_direccion">Información</label>
                           <textarea class="form-control" id="txt_resto_direccion" name="txt_resto_direccion"></textarea>
+                        </div>
+                      </div>
+                      <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                        <div class="form-group">
+                         <label class="small mb-1" for="cmb_tipo_integracion">Tipo Integración</label>
+                          <select id="cmb_tipo_integracion" name="cmb_tipo_integracion" class="form-control"></select>
                         </div>
                       </div>
                        <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
@@ -281,7 +287,7 @@
         <div class="modal-dialog modal-xl">
           <div class="modal-content">
             <div class="modal-header">
-              <h4 class="modal-title">Importar certificado</h4>
+              <h4 class="modal-title">Importar Archivos</h4>
             </div>
             <div class="modal-body">
               <div id="divContenedorImportar2"></div>

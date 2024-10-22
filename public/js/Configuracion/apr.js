@@ -14,6 +14,7 @@ function des_habilitar (a, b) {
   $("#txt_hash_sii").prop("disabled", a);
   $("#txt_codigo_comercio").prop("disabled", a);
   $("#cmb_region").prop("disabled", a);
+  $("#cmb_tipo_integracion").prop("disabled", a);
   $("#cmb_provincia").prop("disabled", a);
   $("#cmb_comuna").prop("disabled", a);
   $("#txt_resto_direccion").prop("disabled", a);
@@ -70,6 +71,7 @@ function mostrar_datos_apr (data) {
   $("#txt_hash_sii").val(data["hash_sii"]);
   $("#txt_codigo_comercio").val(data["codigo_comercio"]);
   $("#cmb_region").val(data["id_region"]);
+  $("#cmb_tipo_integracion").val(data["tipo_integracion"]);
   $("#cmb_provincia").val(data["id_provincia"]);
   $("#cmb_comuna").val(data["id_comuna"]);
   $("#txt_resto_direccion").val(data["resto_direccion"]);
@@ -125,6 +127,27 @@ function llenar_cmb_region () {
     }
 
     $("#cmb_region").append(opciones_region);
+  }).fail(function (error) {
+    respuesta = JSON.parse(error["responseText"]);
+    alerta.error("alerta", respuesta.message);
+  });
+}
+
+function llenar_cmb_tipoIntegra() {
+  $.ajax({
+    type: "GET",
+    dataType: "json",
+    url: base_url + "/Configuracion/Ctrl_usuarios/llenar_cmb_tipoIntegra",
+  }).done(function (data) {
+    $("#cmb_tipo_integracion").html('');
+
+    opciones_tipo = "<option value=\"\">Seleccione un tipo de integración</option>";
+
+    for (var i = 0; i < data.length; i++) {
+      opciones_tipo += "<option value=\"" + data[i].id + "\">" + data[i].tipo + "</option>";
+    }
+
+    $("#cmb_tipo_integracion").append(opciones_tipo);
   }).fail(function (error) {
     respuesta = JSON.parse(error["responseText"]);
     alerta.error("alerta", respuesta.message);
@@ -228,6 +251,7 @@ function guardar_apr () {
       clave_dete:$("#txt_octava").val(),
       clave_appoct:$("#txt_octava_web").val()   ,
       horas_extras:$("#txt_horas_extras").val()   ,
+      tipo_integracion:$("#cmb_tipo_integracion").val()   ,
 
     },
     success: function (respuesta) {
@@ -298,6 +322,8 @@ $(document).ready(function () {
   llenar_cmb_comuna();
   llenar_cmb_economic_activity();
 
+  llenar_cmb_tipoIntegra();
+
   $("#btn_nuevo").on("click", function () {
     des_habilitar(false, true);
     $("#form_APR")[0].reset();
@@ -362,6 +388,20 @@ $(document).ready(function () {
     llenar_cmb_provincia();
   });
 
+  $("#cmb_tipo_integracion").on("change", function () {
+    
+
+    if($("#cmb_tipo_integracion").val() == 1){
+      $('#txt_octava').prop('disabled', true);
+      $('#txt_octava_web').prop('disabled', true);
+    }else{
+      $('#txt_octava').prop('disabled', false);
+      $('#txt_octava_web').prop('disabled', false);
+    }
+    
+
+  });
+
   $("#cmb_provincia").on("change", function () {
     llenar_cmb_comuna();
   });
@@ -423,6 +463,9 @@ $(document).ready(function () {
       cmb_region: {
         required: true
       },
+      cmb_tipo_integracion:{
+        required: true
+      },
       cmb_provincia: {
         required: true
       },
@@ -475,6 +518,9 @@ $(document).ready(function () {
       },
       cmb_region: {
         required: "La región es obligatoria"
+      },
+      cmb_tipo_integracion: {
+        required: "El tipo de integracion es obligatorio"
       },
       cmb_provincia: {
         required: "La provincia es obligatoria"
