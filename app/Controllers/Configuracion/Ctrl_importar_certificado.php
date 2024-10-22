@@ -305,8 +305,8 @@ if ($this->request->getMethod() == "post") {
                 'rut_autorizado' => $rut_apr,
                 'x509' => trim( $x509Cert),
                 'modulo' => $modulusBase64,
-                'llave_privada' => $privateKey,
-                'llave_sin_clave'=> $private_key_unprotected,
+                'llave_privada' => trim($privateKey),
+                'llave_sin_clave'=> trim($private_key_unprotected),
                 'id_apr' => $id_apr,
                 'estado' => 1,
                 'exponente' => $exponentBase64,
@@ -318,7 +318,7 @@ if ($this->request->getMethod() == "post") {
             if ($this->certificados->save($datos_certificado)) {
                 echo 0; // Éxito
             } else {
-                echo 'Imposible cargar el certificado';
+                echo 'Imposible cargar el certificado: ' . $this->certificados->errors();
             }
         } else {
             echo 'Error al leer el archivo PFX. Asegúrate de que la contraseña es correcta: ' . openssl_error_string();
