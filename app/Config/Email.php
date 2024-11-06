@@ -47,14 +47,14 @@ class Email extends BaseConfig {
    *
    * @var string
    */
-  public $SMTPHost ='mail.softwareapr.cl';
+  public $SMTPHost ='mail.gestionapr.cl';
 
   /**
    * SMTP Username
    *
    * @var string
    */
-  public $SMTPUser='boletas@softwareapr.cl';
+  public $SMTPUser='boletas@gestionapr.cl';
 
   /**
    * SMTP Password

@@ -22,7 +22,7 @@ class Home extends BaseController {
       echo view("content");
       echo view("footer");
     } else {
-      return redirect()->to("https://gestionapr.cl/public/");
+      return redirect()->to("https://gestionapr.cl");
     }
   }
 }
