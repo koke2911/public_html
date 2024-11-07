@@ -5,3 +5,4 @@ vendor/*
 .htaccess
 public/boletas/*
 .vscode/*
+public/js/all.min.js
