@@ -343,6 +343,7 @@ class Ctrl_importar extends BaseController {
                    "monto_cuota_socio"    => $monto_cuota_socio,
                    "monto_otros"          => $monto_otros,
                    "descuento"            => $descuento,
+                   "tarifa"               => 1
                   ];             
 
                   // print_r($datosArranque);
