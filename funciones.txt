@@ -1,0 +1,29 @@
+
+CREATE FUNCTION `afecto_corte`(id int , apr_id int) RETURNS int(11)
+BEGIN
+ 
+    declare meses_d integer;
+ 
+     set meses_d=(select  meses from  (
+                 select count(*) as meses,sum(total_mes),id_socio,id_apr from metros
+                 where estado=1 and fecha_vencimiento<sysdate() and id_apr=apr_id and id_socio=id
+                 group by id_socio,id_apr) r );
+ 
+ 
+ 
+ RETURN meses_d;
+ END ;;
+     
+     
+     
+ CREATE FUNCTION `total_deuda`(id int , apr_id int) RETURNS int(11)
+ BEGIN
+         declare total_d integer;
+ 
+     set total_d=(select  total from  (
+                 select count(*) as meses,sum(total_mes) as total,id_socio,id_apr from metros
+                 where estado=1 and fecha_vencimiento<sysdate() and id_apr=apr_id and id_socio=id
+                 group by id_socio,id_apr) r );
+ 
+ RETURN total_d;
+ END ;;
