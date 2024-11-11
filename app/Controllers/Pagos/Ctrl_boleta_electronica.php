@@ -1231,12 +1231,12 @@ $Totales["porcdescuento_exento"]="0";
                   $url_pdf='http://38.7.199.132/home/'.$rut_apr_ses.'/boletas/BOLETA_FOLIO'.$f_sii.'_TIPO39.pdf';
 
                   $nombre_grafico = $f_sii.'.jpg';
-                  $this->generarGrafico($nombre_grafico);
+                  // $this->generarGrafico($nombre_grafico);
 
               }
              
               if($resultado_estado=='DTE procesado correctamente.'){
-              // unlink(realpath(dirname(__FILE__,4))."/public/".$f_sii.".txt");
+              unlink(realpath(dirname(__FILE__,4))."/public/".$f_sii.".txt");
                 $datosMetrosSave = [
                      "folio_bolect"      => $f_sii,
                      "id_tipo_documento" => $datosSocios["tipo_documento"],
