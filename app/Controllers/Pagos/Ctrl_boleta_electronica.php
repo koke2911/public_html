@@ -1178,20 +1178,20 @@ $Totales["porcdescuento_exento"]="0";
                             \$FACTRONICA["ALMACENREMOTO"]="../../home/{$rut_apr_ses}/boletas";
                             #
                             # NOMBRE DEL ARCHIVO PDF
-                            \$FACTRONICA["FILEPDF"]="BOLETA_FOLIO{$f_sii}_TIPO39.pdf";
-                            \$FACTRONICA["FILEPDFCLIENTE"]="BOLETA_FOLIO{$f_sii}_TIPO39.pdf";
+                            \$FACTRONICA["FILEPDF"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}.pdf";
+                            \$FACTRONICA["FILEPDFCLIENTE"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}.pdf";
                             #
                             # NOMBRE DEL ARCHIVO TXT
-                            \$FACTRONICA["FILETXT"]="BOLETA_FOLIO{$f_sii}_TIPO39.txt";
+                            \$FACTRONICA["FILETXT"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}.txt";
                             #
                             # NOMBRE DE LOS ARCHIVOS DE SALIDA
-                            \$FACTRONICA["DTEPORFIRMAR"]="BOLETA_FOLIO{$f_sii}_TIPO39_DTEPORFIRMAR.xml";
-                            \$FACTRONICA["DTEFIRMADO"]="BOLETA_FOLIO{$f_sii}_TIPO39_DTEFIRMADO.xml";
-                            \$FACTRONICA["SETDTEPORFIRMAR"]="BOLETA_FOLIO{$f_sii}_TIPO39_SETPORFIRMAR.xml";
-                            \$FACTRONICA["SETDTEFIRMADO_CLIENTE"]="BOLETA_FOLIO{$f_sii}_TIPO39_SETFIRMADO_CLI.xml";
-                            \$FACTRONICA["SETDTEFIRMADO_SII"]="BOLETA_FOLIO{$f_sii}_TIPO39_SETFIRMADO_SII.xml";
-                            \$FACTRONICA["TRACKID"]="BOLETA_FOLIO{$f_sii}_TIPO39_FIRMADO_TRACKID.xml";
-                            \$FACTRONICA["FILEPNG"]="BOLETA_FOLIO{$f_sii}_TIPO39_TIMBRE.png";
+                            \$FACTRONICA["DTEPORFIRMAR"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}_DTEPORFIRMAR.xml";
+                            \$FACTRONICA["DTEFIRMADO"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}_DTEFIRMADO.xml";
+                            \$FACTRONICA["SETDTEPORFIRMAR"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}_SETPORFIRMAR.xml";
+                            \$FACTRONICA["SETDTEFIRMADO_CLIENTE"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}_SETFIRMADO_CLI.xml";
+                            \$FACTRONICA["SETDTEFIRMADO_SII"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}_SETFIRMADO_SII.xml";
+                            \$FACTRONICA["TRACKID"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}_FIRMADO_TRACKID.xml";
+                            \$FACTRONICA["FILEPNG"]="BOLETA_FOLIO{$f_sii}_TIPO{$tipo_dte}_TIMBRE.png";
                             #
                             # URL DEL SERVIDOR DE BOLETAS
                             \$FACTRONICA["URLSERVIDOR"]="http://www.facturalibre.cl/sdk_factronica/factronica_servidor_boletas";
@@ -1228,7 +1228,7 @@ $Totales["porcdescuento_exento"]="0";
 
               if($estado=='DTE RECIBIDO'){
                   $resultado_estado='DTE procesado correctamente.';
-                  $url_pdf='http://38.7.199.132/home/'.$rut_apr_ses.'/boletas/BOLETA_FOLIO'.$f_sii.'_TIPO39.pdf';
+                  $url_pdf='http://38.7.199.132/home/'.$rut_apr_ses.'/boletas/BOLETA_FOLIO'.$f_sii.'_TIPO'.$tipo_dte.'.pdf';
 
                   $nombre_grafico = $f_sii.'.jpg';
                   // $this->generarGrafico($nombre_grafico);
