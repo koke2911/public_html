@@ -22,11 +22,9 @@ $(document).ready(function () {
   $("#btn_importar_folios").on("click", function () {
 
     if ($("#folios")[0].files.length === 0) {
-      alert("alerta", "Debe seleccionar un archivo de folios");
+      alert( "Debe seleccionar un archivo de folios");
       return false;
     }
-    
-      
        let form = $("#formFolios");
        let data = new FormData(form[0]);
      
@@ -158,6 +156,16 @@ $(document).ready(function () {
           if(row.estado == 1){
             return "<span style='color:green'>Activo</span>";
           }else{
+            return "<span style='color:red'>Inactivo</span>";
+          }
+        }
+      },
+      {
+        "data": "tipo",
+        "render": function (data, type, row) {
+          if (row.tipo == 1) {
+            return "<span style='color:green'>Activo</span>";
+          } else {
             return "<span style='color:red'>Inactivo</span>";
           }
         }

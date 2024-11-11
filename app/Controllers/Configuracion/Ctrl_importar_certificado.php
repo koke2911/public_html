@@ -47,7 +47,13 @@ class Ctrl_importar_certificado extends BaseController {
                   f.fecha_autorizacion,
                   f.total_folios,
                   f.estado,
-                  f.folio_hasta-(a.ultimo_folio) as disponibles
+                  f.folio_hasta-(a.ultimo_folio) as disponibles,
+                 CASE 
+                    WHEN tipo_documento = '41' THEN 'BOLETA EXENTA'
+                    WHEN tipo_documento = '39' THEN 'BOLETA AFECTA'
+                    ELSE 'OTRO TIPO' -- Opcional, por si hay otros valores para 'tipo_documento'
+                END AS tipo
+
 
     FROM folios_timbrados f
               inner join apr a on a.id=f.id_apr
@@ -58,14 +64,15 @@ class Ctrl_importar_certificado extends BaseController {
      foreach ($result as $key) {
       // $disponibles= $key["folio_hasta"] - $key["ultimo_folio"];
       $row = [
-       "id"      => $key["id"],
+       "id"      => $key["id"].'-'. $key["tipo"],
        "archivo" => $key["nombre_documento"],
        "desde"   => $key["folio_desde"],
        "hasta"   => $key["folio_hasta"],
        "total"   => $key["total_folios"],
        "fecha"   => $key["fecha_autorizacion"],
        "disponibles"   => $key["disponibles"],
-       "estado"        => $key["estado"]       
+       "estado"        => $key["estado"],
+       "tipo"          => $key["tipo"]    
       ];
 
       $data[] = $row;
@@ -89,7 +96,7 @@ class Ctrl_importar_certificado extends BaseController {
 
     if ($this->request->getMethod() == "post") {
       $file     = $this->request->getFile("folios");
-      $password = $this->request->getPost('password');
+      $cmb_tipo_dte = $this->request->getPost('cmb_tipo_dte');
 
       if (!$file->isValid()) {
         throw new RuntimeException($file->getErrorString() . "(" . $file->getError() . ")");
@@ -143,7 +150,7 @@ class Ctrl_importar_certificado extends BaseController {
         "id_apr" => $id_apr
       ];
 
-      $ultimo_folio = $this->folios_timbrados->where('id_apr', $id_apr)->where('estado', 1)->orderBy('folio_hasta', 'DESC')->first();
+      $ultimo_folio = $this->folios_timbrados->where('id_apr', $id_apr)->where('estado', 1)->where('tipo_documento', (int)$td)->orderBy('folio_hasta', 'DESC')->first();
       $id_ultimo=$ultimo_folio['id'];
      
       
@@ -157,10 +164,18 @@ class Ctrl_importar_certificado extends BaseController {
 
           if($this->folios_timbrados->save($datos_folios)){
            
-            $datos_apr=[
-              "id" => $id_apr,
-              "ultimo_folio"=> (int)$rng_d - 1,
-            ];
+
+            if ((int)$td==41){
+              $datos_apr=[
+                "id" => $id_apr,
+                "ultimo_folio"=> (int)$rng_d - 1,
+              ];
+          }else if((int)$td == 39){
+              $datos_apr = [
+                "id" => $id_apr,
+                "ultimo_folio_afecta" => (int)$rng_d - 1,
+              ];
+          }
 
             if($this->apr->save($datos_apr)){
                 echo 0;

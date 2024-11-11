@@ -292,9 +292,115 @@ public function valida_token($TokenObtenido){
 
 }
 
+
+  public function generarGrafico($nombre_grafico)
+  {
+    // Realizar la consulta
+    $consulta = "SELECT DATE_FORMAT(fecha_ingreso, '%m') AS mes, metros 
+                 FROM metros 
+                 WHERE id_socio = 1923
+                 AND fecha_ingreso >= CURDATE() - INTERVAL 6 MONTH
+                 ORDER BY mes ASC";
+    $query = $this->db->query($consulta);
+    $result = $query->getResultArray();
+
+    // Crear un array para los meses y los metros
+    $meses = [];
+    $metros = [];
+
+    foreach ($result as $row) {
+      $meses[] = (int)$row['mes'];  // Obtener el mes (número)
+      $metros[] = (int)$row['metros'];  // Obtener los metros
+    }
+
+    // Crear una imagen en blanco
+    $width = 400;  // Ancho de la imagen
+    $height = 200;  // Alto de la imagen
+    $image = imagecreatetruecolor($width, $height);
+
+    // Colores
+    $white = imagecolorallocate($image, 255, 255, 255);  // Blanco (fondo)
+    $black = imagecolorallocate($image, 0, 0, 0);  // Negro (líneas)
+    $blue = imagecolorallocate($image, 0, 0, 255);  // Azul (barras)
+    $red = imagecolorallocate($image, 255, 0, 0);  // Rojo (texto de los metros)
+
+    // Rellenar fondo con color blanco
+    imagefill($image, 0, 0, $white);
+
+    // Obtener el valor máximo de metros para escalar la altura de las barras
+    $maxValue = max($metros);  // Valor máximo de los metros
+    $scaleFactor = ($height - 100) / $maxValue; // Factor de escala para la altura de las barras
+
+    // Dibujar las barras
+    $barWidth = 30;  // Ancho de las barras
+    $spacing = 70;  // Espacio entre las barras
+
+    for ($i = 0; $i < count($metros); $i++) {
+      $x1 = $spacing * $i + 100;  // Posición horizontal (empezar con un margen)
+      $y1 = $height - 50;  // Posición en el eje Y (parte inferior de la imagen)
+      $x2 = $x1 + $barWidth;  // Ancho de la barra
+      $y2 = $y1 - ($metros[$i] * $scaleFactor);  // Altura proporcional de la barra
+
+      // Dibujar la barra
+      imagefilledrectangle($image, $x1, $y1, $x2, $y2, $blue);
+
+      // Colocar el valor de los metros sobre la barra
+      $text = $metros[$i];
+      $textWidth = strlen($text) * 10;  // Ancho aproximado del texto
+      $textX = $x1 + ($barWidth / 2) - ($textWidth / 2);  // Centrar horizontalmente
+      $textY = $y2 - 15;  // Coloca el texto encima de la barra
+      imagestring($image, 5, $textX, $textY, $text, $red);  // Coloca el valor sobre la barra con color rojo
+    }
+
+    // Dibujar los ejes (X y Y)
+    imageline($image, 50, 30, 50, $height - 50, $black);  // Eje Y
+    imageline($image, 50, $height - 50, $width - 30, $height - 50, $black);  // Eje X
+
+    // Definir los meses abreviados
+    $mesAbreviado = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
+    // Dibujar las etiquetas de los meses abreviados en el eje X
+    for ($i = 0; $i < count($meses); $i++) {
+      $x = $spacing * $i + 100 + $barWidth / 2;  // Centrar la etiqueta debajo de la barra
+      $y = $height - 30;  // Colocar debajo del eje X
+      imagestring($image, 3, $x - 10, $y, $mesAbreviado[$meses[$i] - 1], $black);  // Dibujar el mes abreviado
+    }
+
+    // Dibujar las etiquetas del eje Y (m3)
+    $steps = 5;  // Número de marcas en el eje Y
+    $stepHeight = ($height - 100) / $steps;  // Altura entre las marcas en el eje Y
+
+    for ($i = 0; $i <= $steps; $i++) {
+      // Calcular la posición de la marca en el eje Y
+      $yPosition = $height - 50 - ($i * $stepHeight);
+      $value = $maxValue * ($i / $steps);  // Calcular el valor correspondiente en metros
+
+      // Colocar las etiquetas del eje Y (m³)
+      imagestring($image, 3, 10, $yPosition - 7, number_format($value, 0) . " m3", $black);
+      imageline($image, 45, $yPosition, 50, $yPosition, $black);  // Dibujar la línea de la marca en el eje Y
+    }
+
+    // Título del gráfico
+    imagestring($image, 5, $width / 3, 10, "Consumo ultimos 6 meses", $black);
+
+    // Definir la ruta donde se guardará la imagen
+    $ruta_imagen = $nombre_grafico;  // Puedes cambiar el nombre y la carpeta
+
+    // Guardar la imagen como un archivo JPEG
+    imagejpeg($image, $ruta_imagen, 100);  // El tercer parámetro es la calidad (0-100)
+
+    // Liberar recursos
+    imagedestroy($image);
+
+    // Opcional: Retornar la ruta del archivo guardado para mostrarla al usuario
+    return $ruta_imagen;
+  }
+
+
+
 public function procesa_dtePablo($folio,$f_sii){
 
-
+    
 
           define("BOLETA_EXENTA", 41);
           define("FACTURA_EXENTA", 34);
@@ -600,8 +706,7 @@ public function procesa_dtePablo($folio,$f_sii){
 
                 $trece=$fecha_vencimiento;               
                 
-          if($tipo_dte==41){  
-            
+          if($tipo_dte==41 || $tipo_dte==39){              
             
             $rut_apr=$rut_apr_ses.'-'.$dv_apr_ses;
 
@@ -689,10 +794,7 @@ public function procesa_dtePablo($folio,$f_sii){
                   echo "APR sin sucursal SII ingresada";
                   exit();
                 }
-
-
-
-                
+                                
                 $fecha_actual = date("Y-m-d"); 
                 if (strtotime($fecha_caducidad) < strtotime($fecha_actual)) {
                     echo "El certificado de timbrado ha caducado";
@@ -705,6 +807,95 @@ public function procesa_dtePablo($folio,$f_sii){
 
            $logo ="../../logos/" . $rut_apr_ses . "png";
            $logo = "../../logos/65086630.png";
+          
+           if($tipo_dte==41){
+
+              $dte_glosa='BOLETA NO AFECTA O EXENTA ELECTRONICA';
+              $dte_glosa2='EXENTO';
+
+              $afecto = '';
+              $iva = '';
+              $facturable = $facturable;
+
+          $totales = '##############################################################
+#######    TOTALES
+##############################################################
+#
+# TASA DE IMPUESTO
+$Totales["TasaIVA"]="19";
+#
+# NETO AFECTO
+$Totales["MntNeto"]="0";
+#
+# NETO EXENTO
+$Totales["MntExe"]="'.$facturable.'";
+#
+$DatosAdicionales["MntNetoExe"]="'.$facturable.'";
+#
+# MONTO IVA
+$Totales["IVA"]="0";
+#
+# MONTO NF
+$Totales["MontoNF"]="'.$adicionales.'";
+#
+# MONTO TOTAL BRUTO
+$Totales["MntTotal"]="'.$facturable.'";
+$DatosAdicionales["TipoDocumento"]="'.$dte_glosa.'";
+$DatosAdicionales["GlosaDTE"]="'.$dte_glosa2.'";
+#
+# % DESCUENTO GLOBAL AFECTO
+$Totales["porcdescuento_afecto"]="0";
+#
+# % DESCUENTO GLOBAL EXENTO
+$Totales["porcdescuento_exento"]="0";
+#';
+             
+             
+           }else if($tipo_dte==39){
+
+              $dte_glosa = 'BOLETA AFECTA O NO EXENTA ELECTRONICA';
+              $dte_glosa2 = 'AFECTO';
+
+              $afecto= $facturable;
+              $iva= intval($afecto * 0.19);
+              $facturable= $afecto+$iva;
+              $vlr_pagar= $vlr_pagar+$iva;
+
+
+              $totales='##############################################################
+  #######	TOTALES
+  ##############################################################
+  #
+  # TASA DE IMPUESTO
+  $Totales["TasaIVA"]="19";
+  #
+  # NETO AFECTO
+  $Totales["MntNeto"]="'.$afecto.'";
+  #
+  # NETO EXENTO
+  $Totales["MntExe"]="'.$facturable.'";
+  #
+  $DatosAdicionales["MntNetoExe"]="'.$afecto.'";
+  #
+  # MONTO IVA
+  $Totales["IVA"]="'.$iva.'";
+  #
+  # MONTO NF
+  $Totales["MontoNF"]="'.$adicionales.'";
+  #
+  # MONTO TOTAL BRUTO
+  $Totales["MntTotal"]="'.$facturable.'";
+  $DatosAdicionales["TipoDocumento"]="'.$dte_glosa.'";
+  $DatosAdicionales["GlosaDTE"]="'.$dte_glosa2.'";
+  #
+  # % DESCUENTO GLOBAL AFECTO
+  $Totales["porcdescuento_afecto"]="0";
+  #
+  # % DESCUENTO GLOBAL EXENTO
+  $Totales["porcdescuento_exento"]="0";
+  #';
+             
+           }
 
               $content = <<<EOD
                             <?php
@@ -772,7 +963,7 @@ public function procesa_dtePablo($folio,$f_sii){
                             \$IdDoc["TermPagoGlosa"]="0";
                             #
                             # TIPO DE DOCUMENTO FV=33, ND=56, NC=61
-                            \$IdDoc["TipoDTE"]="41";
+                            \$IdDoc["TipoDTE"]="$tipo_dte";
                             #
                             # FOLIO DEL DOCUMENTO
                             \$IdDoc["Folio"]="$f_sii";
@@ -865,38 +1056,7 @@ public function procesa_dtePablo($folio,$f_sii){
                             # CORREO RECEPTOR
                             \$Receptor["CorreoRecep"]="$socio_email";
                             #
-                            ##############################################################
-                            #######	TOTALES
-                            ##############################################################
-                            #
-                            # TASA DE IMPUESTO
-                            \$Totales["TasaIVA"]="19";
-                            #
-                            # NETO AFECTO
-                            \$Totales["MntNeto"]="0";
-                            #
-                            # NETO EXENTO
-                            \$Totales["MntExe"]="$facturable";
-                            #
-                            \$DatosAdicionales["MntNetoExe"]="$facturable";
-                            #
-                            # MONTO IVA
-                            \$Totales["IVA"]="0";
-                            #
-                            # MONTO NF
-                            \$Totales["MontoNF"]="$adicionales";
-                            #
-                            # MONTO TOTAL BRUTO
-                            \$Totales["MntTotal"]="$facturable";
-                            \$DatosAdicionales["TipoDocumento"]="BOLETA NO AFECTA O EXENTA ELECTRONICA";
-                            \$DatosAdicionales["GlosaDTE"]="EXENTO";
-                            #
-                            # % DESCUENTO GLOBAL AFECTO
-                            \$Totales["porcdescuento_afecto"]="0";
-                            #
-                            # % DESCUENTO GLOBAL EXENTO
-                            \$Totales["porcdescuento_exento"]="0";
-                            #
+                            $totales
                             ##############################################################
                             #######	DETALLE
                             ##############################################################
@@ -1072,10 +1232,13 @@ public function procesa_dtePablo($folio,$f_sii){
                   $resultado_estado='DTE procesado correctamente.';
                   $url_pdf='http://38.7.199.132/home/'.$rut_apr_ses.'/boletas/BOLETA_FOLIO'.$f_sii.'_TIPO39.pdf';
 
+                  $nombre_grafico = $f_sii.'.jpg';
+                  $this->generarGrafico($nombre_grafico);
+
               }
              
               if($resultado_estado=='DTE procesado correctamente.'){
-              unlink(realpath(dirname(__FILE__,4))."/public/".$f_sii.".txt");
+              // unlink(realpath(dirname(__FILE__,4))."/public/".$f_sii.".txt");
                 $datosMetrosSave = [
                      "folio_bolect"      => $f_sii,
                      "id_tipo_documento" => $datosSocios["tipo_documento"],
@@ -1111,7 +1274,7 @@ public function procesa_dtePablo($folio,$f_sii){
                   $this->error .= "ERROR AL PROCESAR DTE $folio <br><br>";
               }
           }else{
-                $this->error .= "BOLETA NO EXENTA $folio <br><br>";
+                $this->error .= "BOLETA NO EXENTA o AFECTA $folio <br><br>";
           }
 
 
@@ -1581,13 +1744,14 @@ public function emitir_dte_new(){
                       ->first();
 
   $f_sii=$datosAprs["ultimo_folio"];
+  $f_sii39 = $datosAprs["ultimo_folio_afecta"];
 
   $folios = $this->request->getPost("arr_boletas");
 
-  foreach ($folios as $folio) {    
-      $f_sii++;
+  foreach ($folios as $folio) { 
 
-      if($tipo_integracion==2){ // APPOCTABA         
+      if($tipo_integracion==2){ // APPOCTABA        
+        $f_sii++;
         $token=$this->ObtieneToken();      
         if($token!=""){
           $valido=$this->valida_token($token);
@@ -1600,21 +1764,50 @@ public function emitir_dte_new(){
           $this->error .= "No se pudo generar token de acceso <br><br>";
         
         }
-      }else{ // PABLO SALAS
-         $generado=$this->procesa_dtePablo($folio,$f_sii);
-        
+      }else{
+
+        $consulta = "SELECT 
+                CASE 
+                    WHEN td.id =1  THEN 41
+                    WHEN td.id = 3 THEN 39
+                    ELSE 'OTRO TIPO' 
+                END AS tipo
+
+                from metros m
+                inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+                inner join tipo_documento td on td.id=a.id_tipo_documento
+                where m.id=$folio and m.id_apr=$id_apr";
+        $query = $this->db->query($consulta);
+        $result  = $query->getResultArray();
+
+        $tipo_dte = (int)$result[0]['tipo'];
+
+        if ($tipo_dte == 41) {
+          $f_sii++;
+        } elseif ($tipo_dte == 39) {
+          $f_sii39++;
+        }
+
+        if ($tipo_dte == 41) {
+          $generado = $this->procesa_dtePablo($folio, $f_sii);
+        } elseif ($tipo_dte == 39) {
+          $generado = $this->procesa_dtePablo($folio, $f_sii39);
+        }
       }
   }
 
-    $datosMetros = $this->metros->select("max(folio_bolect) as maximo")
-                                ->where("id_apr", $id_apr)
-                                ->where("url_boleta is not null")
-                                ->first();                                
+    $datosMetros = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=1")->getRow();
+    $datosMetros39 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=3")->getRow();
+    
 
-    $ultimo=$datosMetros['maximo'];
+    // print_r($datosMetros->maximo);
 
+    $ultimo= $datosMetros->maximo;
+    $ultimo39 = $datosMetros39->maximo;
+   
     $datosAPR     = [
      'ultimo_folio'=>$ultimo,
+     'ultimo_folio_afecta'=>$ultimo39,
      'id'=>$id_apr
     ];
 

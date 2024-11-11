@@ -43,12 +43,12 @@
         <label for="rut_repre">Rut Representante Legal</label>
         <input id="rut_repre" name="rut_repre" type="text" class="form-control" value=''>
       </div>
-        <div class="form-group">
-         
-          <label for="password">Contraseña</label>
-          <input id="password" name="password" type="password" class="form-control">
-        </div>
-        <input type="button" value="Subir Certificado" class="btn btn-success" id="btn_importar_certificado">
+      <div class="form-group">
+
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" class="form-control">
+      </div>
+      <input type="button" value="Subir Certificado" class="btn btn-success" id="btn_importar_certificado">
     </form>
 
     <hr style="border-color: black; border-width: 3px;">
@@ -62,6 +62,7 @@
           <label for="folios">Folios</label>
           <input id="folios" name="folios" type="file" class="form-control" accept=".xml,.txt">
         </div>
+
       </div>
       <input type="button" value="Subir Folios" class="btn btn-success" id="btn_importar_folios">
 
@@ -84,6 +85,7 @@
                           <th>Fecha Timbraje</th>
                           <th>Disponibles</th>
                           <th>estado</th>
+                          <th>tipo</th>
                         </tr>
                       </thead>
                     </table>

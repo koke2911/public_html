@@ -181,8 +181,14 @@
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
-                          <label class="small mb-1" for="txt_ultimo">Utlimo Folio DTE</label>
+                          <label class="small mb-1" for="txt_ultimo">Utlimo Folio DTE (Exenta)</label>
                           <input type='text' class="form-control" id='txt_ultimo' name="txt_ultimo" />
+                        </div>
+                      </div>
+                      <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_ultimo">Utlimo Folio DTE (Afecta)</label>
+                          <input type='text' class="form-control" id='txt_ultimo39' name="txt_ultimo39" />
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
