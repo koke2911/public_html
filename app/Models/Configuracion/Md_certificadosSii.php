@@ -19,7 +19,8 @@ class Md_certificadosSii extends Model {
    'id_apr',
    'estado',
    'exponente',
-   'fecha_caducidad'
+   'fecha_caducidad',
+    'rut_repre'
 ];
 
 

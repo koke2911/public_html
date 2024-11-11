@@ -191,6 +191,10 @@ $db = $this->db;
 if ($this->request->getMethod() == "post") {
     $file = $this->request->getFile("certificate");
     $password = $this->request->getPost('password');
+    $rut_representante = $this->request->getPost('rut_repre');
+
+    // echo $rut_representante;
+    // exit();
 
     if (!$file->isValid()) {
         echo 'ERROR: Archivo no válido.';
@@ -310,7 +314,8 @@ if ($this->request->getMethod() == "post") {
                 'id_apr' => $id_apr,
                 'estado' => 1,
                 'exponente' => $exponentBase64,
-                'fecha_caducidad' => $expiryDate
+                'fecha_caducidad' => $expiryDate,
+                'rut_repre' => $rut_representante
             ];
 
           // print_r($datos_certificado);exit();

@@ -1,7 +1,23 @@
 var base_url = $("#txt_base_url").val();
 var id_apr = $("#txt_id_apr").val();
 
+
+
+
 $(document).ready(function () {
+
+  $("#rut_repre").on("blur", function () {
+    var rut = $(this).val().trim();    
+    var rutRegex = /^[0-9]{7,8}-[0-9K]{1}$/;
+
+    if (!rutRegex.test(rut)) {
+      $(this).val(''); 
+      alert("El RUT debe estar en el formato XXXXXXXX-X sin puntos y letra Mayuscula");
+      return;
+    }
+  });
+
+    
 
   $("#btn_importar_folios").on("click", function () {
 

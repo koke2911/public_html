@@ -38,7 +38,8 @@ class Md_apr extends Model {
    'horas_extras',
    'tope_subsidio50',
    'estado',
-   'tipo_integracion'
+   'tipo_integracion',
+   'sucursal_sii'
   ];
 
   public function datatable_apr($db) {
@@ -67,7 +68,8 @@ class Md_apr extends Model {
                 ultimo_folio,
                 clave_appoct,
                 horas_extras,
-                tipo_integracion
+                tipo_integracion,
+                sucursal_sii
 						from 
 							apr
 							inner join usuarios u on u.id = apr.id_usuario
@@ -103,7 +105,8 @@ class Md_apr extends Model {
        'ultimo_folio'    => $key['ultimo_folio'],
        'clave_appoct'    => $key['clave_appoct'],
        'horas_extras'    => $key['horas_extras'],
-       'tipo_integracion'    => $key['tipo_integracion']
+       'tipo_integracion'    => $key['tipo_integracion'],
+        'sucursal_sii'    => $key['sucursal_sii']
       ];
 
       $data[] = $row;

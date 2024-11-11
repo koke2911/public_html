@@ -656,7 +656,7 @@ public function procesa_dtePablo($folio,$f_sii){
                 $fecha_caducidad=0;
                 $llave_sin_clave=0;
 
-                $consulta="SELECT x509,modulo,llave_privada,exponente,fecha_caducidad,llave_sin_clave
+                $consulta="SELECT x509,modulo,llave_privada,exponente,fecha_caducidad,llave_sin_clave,rut_repre
                       FROM certificadosii 
                       where id_apr=$id_apr and estado=1";
                 $query = $db->query($consulta);
@@ -669,10 +669,28 @@ public function procesa_dtePablo($folio,$f_sii){
                   $llave_sin_clave=$result[0]['llave_sin_clave'];
                   $exponente=$result[0]['exponente'];
                   $fecha_caducidad=$result[0]['fecha_caducidad'];
+                  $rut_repre = $result[0]['rut_repre'];
                 }else{
                   echo "No posee Certificado de timbrado";
                   exit();
                 }
+
+
+                  $consulta2 = "SELECT conara_sii, nombre_comuna from comunas_sii where conara_sii in (select sucursal_sii from apr where id=$id_apr)";
+                  $query2 = $db->query($consulta2);
+                  $result2  = $query2->getResultArray();
+
+                if (isset($result2[0])) {
+
+                  $sucursal_id = $result2[0]['conara_sii'];
+                  $sucursal_glosa = $result2[0]['nombre_comuna'];                
+
+                } else {
+                  echo "APR sin sucursal SII ingresada";
+                  exit();
+                }
+
+
 
                 
                 $fecha_actual = date("Y-m-d"); 
@@ -683,6 +701,10 @@ public function procesa_dtePablo($folio,$f_sii){
               
 
               $fp = fopen(dirname(__FILE__,4)."/public/".$f_sii.".txt", "w");
+
+
+           $logo ="../../logos/" . $rut_apr_ses . "png";
+           $logo = "../../logos/65086630.png";
 
               $content = <<<EOD
                             <?php
@@ -709,7 +731,7 @@ public function procesa_dtePablo($folio,$f_sii){
                             \$separador_carpetas="LINUX";
                             #
                             # URL DEL LOGO A INSERTAR EN EL PDF POR EJ. HTTP://www.domain.cl/logo.png
-                            \$FACTRONICA["logo"]="../../logos/65086630.png";
+                            \$FACTRONICA["logo"]="$logo";
                             #
                             ##############################################################
                             #######	CARATULA
@@ -719,7 +741,7 @@ public function procesa_dtePablo($folio,$f_sii){
                             \$caratula["RutEmisor"]="$rut_apr";
                             #
                             # RUT AUTORIZADO A ENVIAR DTES AL SII SIEMPRE ES RUT DE PERSONA NO DE EMPRESA
-                            \$caratula["RutEnvia"]="16522003-K"; //PREGUNTAR
+                            \$caratula["RutEnvia"]="$rut_repre"; //PREGUNTAR
                             #
                             # EN MODO CERTIFICACION RUT=75581600-0 //PREGUNTAR
                             \$caratula["RutReceptor"]="60803000-K";
@@ -731,7 +753,7 @@ public function procesa_dtePablo($folio,$f_sii){
                             \$caratula["NroResol"]="99";
                             #
                             # NOMBRE SUCURSAL SII  //PREGUNTAR
-                            \$caratula["SucSii"]="SANTA CRUZ";
+                            \$caratula["SucSii"]="$sucursal_glosa";
                             #
                             ##############################################################
                             #######	ENCABEZADO
@@ -785,7 +807,7 @@ public function procesa_dtePablo($folio,$f_sii){
                             \$Emisor["Acteco"]="360000";
                             #
                             # CODIGO DE LA SUCURSAL DEL SII
-                            \$Emisor["CdgSIISucur"]="06205";
+                            \$Emisor["CdgSIISucur"]="$sucursal_id";
                             #
                             # DIRECCION EMISOR
                             \$Emisor["DirOrigen"]="$apr_direccion";

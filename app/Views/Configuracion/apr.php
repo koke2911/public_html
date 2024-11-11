@@ -35,19 +35,19 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_id_apr">Identificador</label>
-                          <input type="text" class="form-control" name="txt_id_apr" id="txt_id_apr"/>
+                          <input type="text" class="form-control" name="txt_id_apr" id="txt_id_apr" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_rut_apr">RUT APR</label>
-                          <input type='text' class="form-control" id='txt_rut_apr' name="txt_rut_apr"/>
+                          <input type='text' class="form-control" id='txt_rut_apr' name="txt_rut_apr" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_nombre_apr">Nombre APR</label>
-                          <input type='text' class="form-control" id='txt_nombre_apr' name="txt_nombre_apr"/>
+                          <input type='text' class="form-control" id='txt_nombre_apr' name="txt_nombre_apr" />
                         </div>
                       </div>
                     </div>
@@ -55,31 +55,31 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_hash_sii">Hash SII</label>
-                          <input type='text' class="form-control" id='txt_hash_sii' name="txt_hash_sii"/>
+                          <input type='text' class="form-control" id='txt_hash_sii' name="txt_hash_sii" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_codigo_comercio">Código Comercio</label>
-                          <input type='text' class="form-control" id='txt_codigo_comercio' name="txt_codigo_comercio"/>
+                          <input type='text' class="form-control" id='txt_codigo_comercio' name="txt_codigo_comercio" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="cmb_email">E-mail</label>
-                          <input type='email' class="form-control" id='cmb_email' name="cmb_email"/>
+                          <input type='email' class="form-control" id='cmb_email' name="cmb_email" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="cmb_email">E-mail DTE</label>
-                          <input type='email' class="form-control" id='cmb_email_dte' name="cmb_email_dte"/>
+                          <input type='email' class="form-control" id='cmb_email_dte' name="cmb_email_dte" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_website">Sitio web</label>
-                          <input type='text' class="form-control" id='txt_website' name="txt_website"/>
+                          <input type='text' class="form-control" id='txt_website' name="txt_website" />
                         </div>
                       </div>
                     </div>
@@ -87,13 +87,13 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="cmb_calle">Calle</label>
-                          <input type='text' class="form-control" id='cmb_calle' name="cmb_calle"/>
+                          <input type='text' class="form-control" id='cmb_calle' name="cmb_calle" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="cmb_numero">Número</label>
-                          <input type='number' class="form-control" id='cmb_numero' name="cmb_numero"/>
+                          <input type='number' class="form-control" id='cmb_numero' name="cmb_numero" />
                         </div>
                       </div>
                     </div>
@@ -122,7 +122,7 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="cmb_activity">Giro</label>
-                          <input type='text' class="form-control" id='cmb_activity' name="cmb_activity"/>
+                          <input type='text' class="form-control" id='cmb_activity' name="cmb_activity" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
@@ -137,13 +137,13 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="cmb_resolution_date">Fecha de resolución</label>
-                          <input type='date' class="form-control" id='cmb_resolution_date' name="cmb_resolution_date"/>
+                          <input type='date' class="form-control" id='cmb_resolution_date' name="cmb_resolution_date" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="cmb_resolution_number">Número de resolución</label>
-                          <input type='number' class="form-control" id='cmb_resolution_number' name="cmb_resolution_number"/>
+                          <input type='number' class="form-control" id='cmb_resolution_number' name="cmb_resolution_number" />
                         </div>
                       </div>
                     </div>
@@ -152,19 +152,19 @@
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_tope_subsidio">Tope Subsidio 100% m<sup>3</sup></label>
-                          <input type='text' class="form-control" id='txt_tope_subsidio' name="txt_tope_subsidio"/>
+                          <input type='text' class="form-control" id='txt_tope_subsidio' name="txt_tope_subsidio" />
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_tope_subsidio50">Tope Subsidio 50 % m<sup>3</sup></label>
-                          <input type='text' class="form-control" id='txt_tope_subsidio50' name="txt_tope_subsidio50"/>
+                          <input type='text' class="form-control" id='txt_tope_subsidio50' name="txt_tope_subsidio50" />
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_fono">Fono</label>
-                          <input type='text' class="form-control" id='txt_fono' name="txt_fono"/>
+                          <input type='text' class="form-control" id='txt_fono' name="txt_fono" />
                         </div>
                       </div>
                       <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
@@ -175,32 +175,38 @@
                       </div>
                       <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                         <div class="form-group">
-                         <label class="small mb-1" for="cmb_tipo_integracion">Tipo Integración</label>
+                          <label class="small mb-1" for="cmb_tipo_integracion">Tipo Integración</label>
                           <select id="cmb_tipo_integracion" name="cmb_tipo_integracion" class="form-control"></select>
                         </div>
                       </div>
-                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
+                      <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_ultimo">Utlimo Folio DTE</label>
-                          <input type='text' class="form-control" id='txt_ultimo' name="txt_ultimo"/>
+                          <input type='text' class="form-control" id='txt_ultimo' name="txt_ultimo" />
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_octava">Clave AppOctava</label>
-                          <input type='text' class="form-control" id='txt_octava' name="txt_octava"/>
+                          <input type='text' class="form-control" id='txt_octava' name="txt_octava" />
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_octava">Clave WebAppOctava</label>
-                          <input type='text' class="form-control" id='txt_octava_web' name="txt_octava_web"/>
+                          <input type='text' class="form-control" id='txt_octava_web' name="txt_octava_web" />
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_horas_extras">$ Valor Horas Extras</label>
-                          <input type='text' class="form-control" id='txt_horas_extras' name="txt_octava_web"/>
+                          <input type='text' class="form-control" id='txt_horas_extras' name="txt_octava_web" />
+                        </div>
+                      </div>
+                      <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="cmb_sucursal_sii">Sucursal SII</label>
+                          <select id="cmb_sucursal_sii" name="cmb_sucursal_sii" class="form-control"></select>
                         </div>
                       </div>
                     </div>
@@ -241,7 +247,7 @@
                           <th>Fecha</th>
                           <th>Traza</th>
                           <th>Estado</th>
-                          
+
                         </tr>
                       </thead>
                     </table>

@@ -28,9 +28,11 @@
       </div>
     </div>
 
-   
+
     <form enctype="multipart/form-data" id="form">
-       <center><h2>Importar Certificado</h2></center>
+      <center>
+        <h2>Importar Certificado</h2>
+      </center>
       <div class="form-group">
         <div class="form-group">
           <label for="certificate">Certificado</label>
@@ -38,22 +40,29 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input id="password" name="password" type="password" class="form-control">
+        <label for="rut_repre">Rut Representante Legal</label>
+        <input id="rut_repre" name="rut_repre" type="text" class="form-control" value=''>
       </div>
-      <input type="button" value="Subir Certificado" class="btn btn-success" id="btn_importar_certificado">
+        <div class="form-group">
+         
+          <label for="password">Contraseña</label>
+          <input id="password" name="password" type="password" class="form-control">
+        </div>
+        <input type="button" value="Subir Certificado" class="btn btn-success" id="btn_importar_certificado">
     </form>
 
-    <hr style="border-color: black; border-width: 3px;">    
-      
+    <hr style="border-color: black; border-width: 3px;">
+
     <form enctype="multipart/form-data" id="formFolios">
-    <center><h2>Importar Folios</h2></center>
+      <center>
+        <h2>Importar Folios</h2>
+      </center>
       <div class="form-group">
         <div class="form-group">
           <label for="folios">Folios</label>
           <input id="folios" name="folios" type="file" class="form-control" accept=".xml,.txt">
         </div>
-      </div>     
+      </div>
       <input type="button" value="Subir Folios" class="btn btn-success" id="btn_importar_folios">
 
       <div class="row">

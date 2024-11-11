@@ -148,6 +148,30 @@ class Ctrl_usuarios extends BaseController {
   }
 
 
+
+  public function llenar_cmb_sucursal()
+  {
+
+    $consulta = "SELECT conara_sii as id,nombre_comuna as sucursal from comunas_sii";
+    $query = $this->db->query($consulta);
+    $result  = $query->getResultArray();
+      
+      $data = [];
+
+      foreach ($result as $key) {
+        $row = [
+          "id"     => $key["id"],
+          "sucursal" => $key["sucursal"]
+        ];
+
+        $data[] = $row;
+      }
+
+      // $salida = array("data" => $data);
+      echo json_encode($data);
+  }
+
+
   public function llenar_cmb_tipoIntegra() {
 
     $this->validar_sesion();

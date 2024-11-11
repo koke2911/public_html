@@ -82,6 +82,7 @@ class Ctrl_apr extends BaseController {
     $clave_appoct            = $this->request->getPost('clave_appoct');
     $horas_extras            = $this->request->getPost('horas_extras');
     $tipo_integracion            = $this->request->getPost('tipo_integracion');
+    $sucursal_sii            = $this->request->getPost('sucursal_sii');
 
     $rut_completo = explode("-", $rut_apr);
     $rut          = $rut_completo[0];
@@ -112,7 +113,8 @@ class Ctrl_apr extends BaseController {
      'clave_appoct'         => $clave_appoct,
      'horas_extras'         => $horas_extras,
      "tope_subsidio50"      => $tope_subsidio50,
-     "tipo_integracion"      => $tipo_integracion
+     "tipo_integracion"      => $tipo_integracion,
+      "sucursal_sii"         => $sucursal_sii
     ];
 
     // print_r($datosAPR);

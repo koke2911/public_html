@@ -14,6 +14,7 @@ function des_habilitar (a, b) {
   $("#txt_hash_sii").prop("disabled", a);
   $("#txt_codigo_comercio").prop("disabled", a);
   $("#cmb_region").prop("disabled", a);
+  $("#cmb_sucursal_sii").prop("disabled", a);
   $("#cmb_tipo_integracion").prop("disabled", a);
   $("#cmb_provincia").prop("disabled", a);
   $("#cmb_comuna").prop("disabled", a);
@@ -71,6 +72,7 @@ function mostrar_datos_apr (data) {
   $("#txt_hash_sii").val(data["hash_sii"]);
   $("#txt_codigo_comercio").val(data["codigo_comercio"]);
   $("#cmb_region").val(data["id_region"]);
+  $("#cmb_sucursal_sii").val(data["sucursal_sii"]);
   $("#cmb_tipo_integracion").val(data["tipo_integracion"]);
   $("#cmb_provincia").val(data["id_provincia"]);
   $("#cmb_comuna").val(data["id_comuna"]);
@@ -132,6 +134,30 @@ function llenar_cmb_region () {
     alerta.error("alerta", respuesta.message);
   });
 }
+
+
+
+function llenar_cmb_sucursal() {
+  $.ajax({
+    type: "GET",
+    dataType: "json",
+    url: base_url + "/Configuracion/Ctrl_usuarios/llenar_cmb_sucursal",
+  }).done(function (data) {
+    $("#cmb_sucursal_sii").html('');
+
+    opciones_region = "<option value=\"\">Seleccione una sucursal</option>";
+
+    for (var i = 0; i < data.length; i++) {
+      opciones_region += "<option value=\"" + data[i].id + "\">" + data[i].sucursal + "</option>";
+    }
+
+    $("#cmb_sucursal_sii").append(opciones_region);
+  }).fail(function (error) {
+    respuesta = JSON.parse(error["responseText"]);
+    alerta.error("alerta", respuesta.message);
+  });
+}
+
 
 function llenar_cmb_tipoIntegra() {
   $.ajax({
@@ -252,6 +278,7 @@ function guardar_apr () {
       clave_appoct:$("#txt_octava_web").val()   ,
       horas_extras:$("#txt_horas_extras").val()   ,
       tipo_integracion:$("#cmb_tipo_integracion").val()   ,
+      sucursal_sii: $("#cmb_sucursal_sii").val()
 
     },
     success: function (respuesta) {
@@ -318,6 +345,7 @@ $(document).ready(function () {
   $("#txt_id_apr").prop("disabled", true);
   des_habilitar(true, false);
   llenar_cmb_region();
+  llenar_cmb_sucursal();
   llenar_cmb_provincia();
   llenar_cmb_comuna();
   llenar_cmb_economic_activity();
@@ -463,6 +491,9 @@ $(document).ready(function () {
       cmb_region: {
         required: true
       },
+      cmb_sucursal_sii: {
+        required: true
+      },
       cmb_tipo_integracion:{
         required: true
       },
@@ -518,6 +549,9 @@ $(document).ready(function () {
       },
       cmb_region: {
         required: "La región es obligatoria"
+      },
+      cmb_sucursal_sii: {
+        required: "La sucursal es obligatoria"
       },
       cmb_tipo_integracion: {
         required: "El tipo de integracion es obligatorio"
