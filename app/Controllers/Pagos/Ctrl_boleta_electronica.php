@@ -417,20 +417,18 @@ public function procesa_dtePablo($folio,$f_sii){
         $db=$this->db;
 
 
-        $consulta="SELECT f.folio_hasta-(a.ultimo_folio) as disponibles
+        $consulta="SELECT f.folio_hasta-(a.ultimo_folio) as disponibles, ifnull(ultimo_folio,0) as ultimo_folio, ifnull(ultimo_folio_afecta,0) as ultimo_folio_afecta
         FROM folios_timbrados f
         inner join apr a on a.id=f.id_apr
-        where f.id_apr=$id_apr and f.estado=1";
+        where f.id_apr=$id_apr and f.estado=1 ";
         $query = $db->query($consulta);
         $result  = $query->getResultArray();
 
-        if(!$result[0]['disponibles']>0){
+        if(!$result[0]['disponibles']>0 && $result[0]['ultimo_folio']!=0 && $result[0]['ultimo_folio_afecta'] != 0){
           echo 'No quedan folios disponibles';
           exit();
         }
-
   
-
        $datosMetros = $this->metros
        ->select("id_socio")
        ->select("monto_facturable")
