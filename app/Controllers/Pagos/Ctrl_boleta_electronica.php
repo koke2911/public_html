@@ -731,7 +731,7 @@ public function procesa_dtePablo($folio,$f_sii){
 
                 $consulta="SELECT *
                       FROM folios_timbrados 
-                      where id_apr=$id_apr and estado=1";
+                      where id_apr=$id_apr and estado=1 and tipo_documento=$tipo_dte";
                 $query = $db->query($consulta);
                 $result  = $query->getResultArray();
                

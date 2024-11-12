@@ -3,6 +3,7 @@
 
 alter table certificadosii add (rut_repre varchar(500));
 alter table apr add (sucursal_sii varchar(10));
+alter table apr add (ultimo_folio_afecta int);
 
 
 CREATE TABLE comunas_sii (
