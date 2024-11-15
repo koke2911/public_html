@@ -99,7 +99,7 @@ class Ctrl_correo extends BaseController {
 
                   $this->email->setTo($email_socio);
 
-                  $this->email->setFrom("boletas@softwareapr.cl", "Informaciones APR");
+                  $this->email->setFrom("boletas@gestionapr.cl", "Informaciones APR");
 
 
                   $this->email->setSubject($subject);
