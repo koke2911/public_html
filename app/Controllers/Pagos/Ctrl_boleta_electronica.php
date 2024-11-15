@@ -233,7 +233,7 @@ public function envia_mail($arr_boletas){
               $this->email->setTo($email_socio);
 
               // Email desde el que se envía (el que hemos configurarado en el apartado anterior)
-              $this->email->setFrom("boletas@softwareapr.cl", "Software APR");
+              $this->email->setFrom("boletas@gestionapr.cl", "Software APR");
 
 
               $this->email->setSubject($subject);
