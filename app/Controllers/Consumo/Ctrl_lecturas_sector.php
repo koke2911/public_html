@@ -188,7 +188,7 @@ class Ctrl_lecturas_sector extends BaseController {
        ->select("p.glosa as porcentaje")
        ->join("porcentajes p", "subsidios.id_porcentaje = p.id")
        ->where("id_socio", $id_socio)
-       ->where("estado",$estado_subsidio)
+       ->where("subsidios.estado",$estado_subsidio)
        ->first();
 
       if ($datosSubsidio["porcentaje"]=='50%') {
@@ -280,7 +280,7 @@ class Ctrl_lecturas_sector extends BaseController {
       // exit();
 
       
-      $alcantarillado = $datosCargoFijo["alcantarillado"];
+      $alcantarillado = ($datosCargoFijo["alcantarillado"]*$porcentaje)/100;
       $cuota_socio    = $datosCargoFijo["cuota_socio"];
       $otros          = $datosCargoFijo["otros"];
 
