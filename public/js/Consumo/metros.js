@@ -394,7 +394,7 @@ $(document).ready(function () {
   $("#dt_fecha_vencimiento").prop("readonly", true);
   $("#txt_txt_total_mes_fijo").prop("readonly", true);
   $("#txt_monto_facturable").prop("readonly", true);
-  $("#txt_alcantarillado").prop("readonly", true);
+  $("#txt_alcantarillado").prop("readonly", false);
   $("#txt_cuota_socio").prop("readonly", true);
   $("#txt_otros").prop("readonly", true);
   $("#txt_cargo_fijo_sc").prop("readonly", true);
@@ -510,6 +510,14 @@ $(document).ready(function () {
     this.value = peso.formateaNumero(numero);
     calcular_montos();
   });
+
+  $("#txt_alcantarillado").on("blur", function () {
+    var numero = peso.quitar_formato(this.value);
+    this.value = peso.formateaNumero(numero);
+    calcular_montos();
+  });
+
+
 
   $("#txt_multa").keypress(function (event) {
     if (event.keyCode == 13) {

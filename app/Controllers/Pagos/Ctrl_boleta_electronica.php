@@ -293,12 +293,12 @@ public function valida_token($TokenObtenido){
 }
 
 
-  public function generarGrafico($nombre_grafico)
+  public function generarGrafico($id_socio)
   {
     // Realizar la consulta
     $consulta = "SELECT DATE_FORMAT(fecha_ingreso, '%m') AS mes, metros 
                  FROM metros 
-                 WHERE id_socio = 1923
+                 WHERE id_socio = $id_socio
                  AND fecha_ingreso >= CURDATE() - INTERVAL 6 MONTH
                  ORDER BY mes ASC";
     $query = $this->db->query($consulta);
@@ -381,19 +381,30 @@ public function valida_token($TokenObtenido){
     }
 
     // Título del gráfico
-    imagestring($image, 5, $width / 3, 10, "Consumo ultimos 6 meses", $black);
+    imagestring($image, 5, $width / 3, 10, "Consumo ultimos meses", $black);
+
 
     // Definir la ruta donde se guardará la imagen
-    $ruta_imagen = $nombre_grafico;  // Puedes cambiar el nombre y la carpeta
+    $ruta_imagen ="grafico.jpg";  // Puedes cambiar el nombre y la carpeta
 
     // Guardar la imagen como un archivo JPEG
     imagejpeg($image, $ruta_imagen, 100);  // El tercer parámetro es la calidad (0-100)
 
-    // Liberar recursos
-    imagedestroy($image);
+  // Leer la imagen guardada
+    $imageData = file_get_contents($ruta_imagen);
+
+  // Codificar la imagen en base64
+    $base64Image = base64_encode($imageData);
+
+  // Retornar la imagen en base64
+
+  // Liberar recursos
+      imagedestroy($image);
+      
+      return $base64Image;
 
     // Opcional: Retornar la ruta del archivo guardado para mostrarla al usuario
-    return $ruta_imagen;
+    // return $ruta_imagen;
   }
 
 
@@ -798,6 +809,8 @@ public function procesa_dtePablo($folio,$f_sii){
                     echo "El certificado de timbrado ha caducado";
                   exit();
                 }
+
+                $grafico= $this->generarGrafico($id_socio);
               
 
               $fp = fopen(dirname(__FILE__,4)."/public/".$f_sii.".txt", "w");
@@ -1212,6 +1225,7 @@ $Totales["porcdescuento_exento"]="0";
                             \$DatosAdicionales["Subtotal"]="0";
                             \$DatosAdicionales["Sector"]="$sector";
                             \$DatosAdicionales["observaciones"]="$observaciones";
+                            \$ImagenAdicional01 ="$grafico";
                           EOD;
 
                 // echo $content;
@@ -1230,13 +1244,13 @@ $Totales["porcdescuento_exento"]="0";
                   $resultado_estado='DTE procesado correctamente.';
                   $url_pdf='http://38.7.199.132/home/'.$rut_apr_ses.'/boletas/BOLETA_FOLIO'.$f_sii.'_TIPO'.$tipo_dte.'.pdf';
 
-                  $nombre_grafico = $f_sii.'.jpg';
-                  // $this->generarGrafico($nombre_grafico);
-
+                  $nombre_grafico = 'grafico.jpg';
+                  unlink(realpath(dirname(__FILE__,4))."/public/".$nombre_grafico);
               }
              
               if($resultado_estado=='DTE procesado correctamente.'){
               unlink(realpath(dirname(__FILE__,4))."/public/".$f_sii.".txt");
+          
                 $datosMetrosSave = [
                      "folio_bolect"      => $f_sii,
                      "id_tipo_documento" => $datosSocios["tipo_documento"],
