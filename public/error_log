@@ -46,3 +46,4 @@
 [06-Nov-2024 15:15:13 America/Santiago] PHP Fatal error:  Namespace declaration statement has to be the very first statement or after any declare call in the script in /home/gestion1/public_html/app/Controllers/Webpay.php on line 3
 [06-Nov-2024 15:15:13 America/Santiago] PHP Fatal error:  Namespace declaration statement has to be the very first statement or after any declare call in the script in /home/gestion1/public_html/app/Controllers/Webpay.php on line 3
 [06-Nov-2024 20:18:45 America/Santiago] PHP Fatal error:  Namespace declaration statement has to be the very first statement or after any declare call in the script in /home/gestion1/public_html/app/Controllers/Webpay.php on line 3
+[07-Nov-2024 15:56:46 America/Santiago] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in /home/gestion1/public_html/vendor/phpoffice/phpspreadsheet/src/PhpSpreadsheet/Collection/Cells.php on line 395
