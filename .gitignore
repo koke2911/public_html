@@ -6,3 +6,4 @@ vendor/*
 public/boletas/*
 .vscode/*
 public/js/all.min.js
+control/*
