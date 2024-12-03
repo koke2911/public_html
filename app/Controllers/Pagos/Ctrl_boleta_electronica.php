@@ -1224,7 +1224,7 @@ $Totales["porcdescuento_exento"]="0";
                             \$Totales["VlrPagar"]="$vlr_pagar";
                             \$DatosAdicionales["Subtotal"]="0";
                             \$DatosAdicionales["Sector"]="$sector";
-                            \$DatosAdicionales["observaciones"]="$observaciones";
+                            \$DatosAdicionales["GlosaMensaje"]="$observaciones";
                             \$ImagenAdicional01 ="$grafico";
                           EOD;
 
