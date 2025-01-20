@@ -1387,7 +1387,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
             inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
             inner join medidores m on m.id=a.id_medidor
             where c.id_apr=$id_apr and c.estado=1
-            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=1 order by c.fecha desc";
+            AND c.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and c.id_forma_pago=1 order by c.fecha desc";
     $query = $db->query($sql);
     $pdf->SetX(10);
     
@@ -1436,7 +1436,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
             inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
             inner join medidores m on m.id=a.id_medidor
             where c.id_apr=$id_apr and c.estado=1
-            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=3 order by c.fecha desc";
+            AND c.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and c.id_forma_pago=3 order by c.fecha desc";
     $query = $db->query($sql);
     $pdf->SetX(10);
 
@@ -1499,7 +1499,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
             inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
             inner join medidores m on m.id=a.id_medidor
             where c.id_apr=$id_apr and c.estado=1
-            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=5 order by c.fecha desc";
+            AND c.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and c.id_forma_pago=5 order by c.fecha desc";
     $query = $db->query($sql);
     $pdf->SetX(10);
 
@@ -1564,7 +1564,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
             inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
             inner join medidores m on m.id=a.id_medidor
             where c.id_apr=$id_apr and c.estado=1
-            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=4 order by c.fecha desc";
+            AND c.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and c.id_forma_pago=4 order by c.fecha desc";
     $query = $db->query($sql);
     $pdf->SetX(10);
 
@@ -1616,7 +1616,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
             inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
             inner join medidores m on m.id=a.id_medidor
             where c.id_apr=$id_apr and c.estado=1
-            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=6 order by c.fecha desc";
+            AND c.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and c.id_forma_pago=6 order by c.fecha desc";
     $query = $db->query($sql);
     $pdf->SetX(10);
 
@@ -1680,7 +1680,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
                 left join proveedores pr on pr.id=cp.id_proveedor
                 where e.estado=1  and btc.id not in (5,6)
                 and  e.id_apr=$id_apr and 
-                es.fecha BETWEEN '$inicio' AND '$fin' and e.estado=1";
+                es.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and e.estado=1";
     $query = $db->query($sql);
     $pdf->SetX(10);
 
@@ -1731,7 +1731,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
                     inner join cuentas c on c.id=es.id_cuenta
                     left join banco_tipo_cuenta btc on c.id_tipo_cuenta = btc.id
                     where  e.id_apr=$id_apr                     and 
-                    es.fecha BETWEEN '$inicio' AND '$fin' and e.estado=1";
+                    es.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and e.estado=1";
     $query = $db->query($sql);
     $pdf->SetX(10);
 
@@ -1778,7 +1778,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
             inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
             inner join medidores m on m.id=a.id_medidor
             where c.id_apr=$id_apr and c.estado=0
-            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=1 order by c.fecha desc";
+            AND c.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and c.id_forma_pago=1 order by c.fecha desc";
     $query = $db->query($sql);
     $pdf->SetX(10);
 
@@ -1930,7 +1930,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
                           INNER JOIN tipo_gasto tg ON tg.id = es.tipo_gasto
                           INNER JOIN cuentas c ON c.id = es.id_cuenta
                           LEFT JOIN banco_tipo_cuenta btc ON c.id_tipo_cuenta = btc.id
-                          WHERE es.fecha BETWEEN '$inicio' AND '$fin'
+                          WHERE es.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59'
                           AND e.estado = 1 and e.id_apr=$id_apr  
                           GROUP BY btc.glosa");
     
