@@ -4,18 +4,25 @@ namespace App\Controllers\Informes;
 
 use App\Controllers\BaseController;
 use App\Models\Informes\Md_arqueo_caja;
+use App\Models\Configuracion\Md_apr;
+use App\Models\Configuracion\Md_comunas;
+use Mpdf\Tag\SetHtmlPageHeader;
 
 class Ctrl_libro_caja extends BaseController {
 
   protected $sesión;
   protected $db;
   protected $arqueo_caja;
+  protected $apr;
+  protected $comuna;
 
 
   public function __construct() {
     $this->sesión = session();
     $this->db     = \Config\Database::connect();
     $this->arqueo_caja = new Md_arqueo_caja();
+    $this->apr = new Md_apr();
+    $this->comuna = new Md_comunas();
   }
 
   public function validar_sesion() {
@@ -1282,6 +1289,717 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
       $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
       $writer->save('php://output');
 
+
+  }
+
+  public function reporte_simple($inicio,$fin){
+    // echo $inicio.' '.$fin;
+
+    $this->validar_sesion();
+
+    $apr_ses       = $this->sesión->apr_ses;
+    $rut_apr_ses   = $this->sesión->rut_apr_ses;
+    $dv_apr_ses    = $this->sesión->dv_apr_ses;
+    $id_apr     = $this->sesión->id_apr_ses;
+    $db = $this->db;
+    $nombre_usuario=    $this->sesión->nombres_ses.' '.$this->sesión->ape_pat_ses.' '.  $this->sesión->ape_mat_ses;
+
+    $datosApr = $this->apr->select("*")
+      ->where("id", $id_apr)
+      ->first();
+
+      // print_r(($datosApr));
+      // exit();
+
+      $direccion_apr = $datosApr["calle"].' '.$datosApr["numero"].' '.$datosApr["resto_direccion"];
+
+    $datosCopmuna = $this->comuna->select("*")
+    ->where("id", $datosApr["id_comuna"] )
+    ->first();
+
+    $comuna=$datosCopmuna["nombre"];
+
+
+    $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+    
+    $pdf->SetCreator(PDF_CREATOR);
+    
+    $pdf->SetAuthor('Sistema');
+    $pdf->SetTitle('Reporte Simple');
+    $pdf->SetSubject('Reporte Caja');
+    $pdf->setFooterFont(array('helvetica', '', 8));
+    $pdf->setFooterMargin(5);
+    $pdf->setAutoPageBreak(true, 30);
+    
+    $pdf->SetHeaderMargin(5);
+    $pdf->setHeaderFont(array('helvetica', '', 8));
+    $pdf->SetHeaderData('', 0, 'Reporte caja Simple Fecha y hora de impresión ' . date('d-m-Y H:i:s'), '', array(0, 0, 0), array(255, 255, 255), true);
+    
+    $pdf->AddPage();
+
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('helvetica', '', 12);
+    $pdf->SetFont('helvetica', 'B', 12);
+    $pdf->Cell(0, 10, 'REPORTE CAJA DESDE  ' . $inicio . ' A '.$fin, 0, 1, 'C');
+    $pdf->SetFont('helvetica', '', 12);
+    $ruta_archivo = FCPATH .  $id_apr . '.png';
+
+    if (file_exists($ruta_archivo)) {
+      $pdf->Image($ruta_archivo, 10, 10, 50, 50, '', '', '', false, 300, '', false, false, 0, 'L');
+    }
+
+    $pdf->SetFont('dejavusans', '', 8);
+    $pdf->SetXY(54, 20); // Adjust the position to be beside the logo
+    $pdf->Cell(0, 3, $apr_ses, 0, 1, 'L');
+    $pdf->SetX(54);
+    $pdf->Cell(0, 3, 'GIRO: CAPTACION, TRATAMIENTO Y DISTRIBUCION DE AGUA', 0, 1, 'L');
+    $pdf->SetX(54);
+    $pdf->Cell(0, 3, 'R.U.T: '.$rut_apr_ses.'-'.$dv_apr_ses, 0, 1, 'L');
+    $pdf->SetX(54);
+    $pdf->Cell(0, 3, 'DIRECCIÓN: '. $direccion_apr, 0, 1, 'L');
+    $pdf->SetX(54);
+    $pdf->Cell(0, 3, 'COMUNA: '. $comuna, 0, 1, 'L');
+    $pdf->Ln(10);
+    $pdf->SetX(10);
+    $pdf->SetFont('dejavusans', '', 10);
+    $pdf->Cell(0, 5, 'NOMBRE RECAUDADOR: '. $nombre_usuario, 0, 1, 'L');
+    $pdf->SetX(10);
+    $pdf->Cell(0, 5, 'CARGO RECAUDADOR: ADMINISTRATIVO(A)', 0, 1, 'L');
+    $pdf->Ln(5);
+
+    $pdf->SetFont('dejavusans', 'B', 12);
+    $pdf->Cell(0, 5, 'INGRESO POR EFECTIVO', 0, 1, 'C');
+
+    $pdf->SetFont('dejavusans', '', 8);
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+    $pdf->SetX(10);
+    $pdf->Cell(30, 5, 'N° comprobante', 1, 0, 'C', true);
+    $pdf->Cell(30, 5, 'Fecha emisión', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Servicio', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Medidor ', 1, 0, 'C', true);
+    $pdf->Cell(65, 5, 'Cliente', 1, 0, 'C', true);
+    $pdf->Cell(20, 5, 'Monto', 1, 1, 'C', true);
+
+    $sql= "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar FROM caja c 
+            inner join socios s on s.id=c.id_socio 
+            inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
+            inner join medidores m on m.id=a.id_medidor
+            where c.id_apr=$id_apr and c.estado=1
+            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=1 order by c.fecha desc";
+    $query = $db->query($sql);
+    $pdf->SetX(10);
+    
+      $count = 0;
+      $total_efectivo=0;
+      foreach ($query->getResult() as $row) {
+        $total_efectivo+=$row->total_pagar;
+        $pdf->Cell(30, 5, $row->id, 1, 0, 'C', true);
+        $pdf->Cell(30, 5, $row->fecha, 1, 0, 'C', true);
+        $pdf->Cell(25, 5, $row->rol, 1, 0, 'C', true);
+        $pdf->Cell(25, 5, $row->numero, 1, 0, 'C', true);
+        $pdf->Cell(65, 5, $row->nombres, 1, 0, 'C', true);
+        $pdf->Cell(20, 5, '$' . number_format($row->total_pagar, 0, ',', '.'), 1, 0, 'C', true);
+        $pdf->Ln(5);
+      }
+      $pdf->Cell(195, 5, 'TOTAL  $' . number_format($total_efectivo, 0, ',', '.'), 1, 0, 'R', true);
+
+    // $pdf->AddPage();
+    $pdf->ln(10);
+    $pdf->SetFont('dejavusans',
+      'B',
+      12
+    );
+    $pdf->Cell(0, 5, 'INGRESO POR TRANSFERENCIA', 0, 1, 'C');
+
+    $pdf->SetFont('dejavusans', '',
+      8
+    );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+    $pdf->SetX(10);
+    $pdf->Cell(30, 5, 'N° comprobante', 1, 0, 'C', true);
+    $pdf->Cell(30, 5, 'Fecha emisión', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Servicio', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Medidor ', 1, 0, 'C', true);
+    $pdf->Cell(65, 5, 'Cliente', 1,
+      0,
+      'C',
+      true
+    );
+    $pdf->Cell(20, 5, 'Monto', 1, 1, 'C', true);
+
+    $sql = "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar FROM caja c 
+            inner join socios s on s.id=c.id_socio 
+            inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
+            inner join medidores m on m.id=a.id_medidor
+            where c.id_apr=$id_apr and c.estado=1
+            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=3 order by c.fecha desc";
+    $query = $db->query($sql);
+    $pdf->SetX(10);
+
+    $count = 0;
+    $total_transf=0;
+    foreach ($query->getResult() as $row) {
+           $total_transf+=$row->total_pagar; 
+      $pdf->Cell(30, 5, $row->id,
+        1,
+        0,
+        'C',
+        true
+      );
+      $pdf->Cell(30, 5, $row->fecha, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->rol, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->numero, 1, 0, 'C', true);
+      $pdf->Cell(65, 5, $row->nombres, 1, 0, 'C', true);
+      $pdf->Cell(20, 5, '$' . number_format($row->total_pagar, 0, ',', '.'), 1, 0, 'C', true);
+      $pdf->Ln(5);
+    }
+
+    $pdf->Cell(195, 5, 'TOTAL  $' . number_format($total_transf, 0, ',', '.'), 1, 0, 'R', true);
+
+
+    // $pdf->AddPage();
+    $pdf->ln(10);
+    $pdf->SetFont(
+      'dejavusans',
+      'B',
+      12
+    );
+    $pdf->Cell(0, 5, 'INGRESO POR CHEQUE', 0, 1, 'C');
+
+    $pdf->SetFont(
+      'dejavusans',
+      '',
+      8
+    );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+    $pdf->SetX(10);
+    $pdf->Cell(30, 5, 'N° comprobante', 1, 0, 'C', true);
+    $pdf->Cell(30, 5, 'Fecha emisión', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Servicio', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Medidor ', 1, 0, 'C', true);
+    $pdf->Cell(
+      65,
+      5,
+      'Cliente',
+      1,
+      0,
+      'C',
+      true
+    );
+    $pdf->Cell(20, 5, 'Monto', 1, 1, 'C', true);
+
+    $sql = "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar FROM caja c 
+            inner join socios s on s.id=c.id_socio 
+            inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
+            inner join medidores m on m.id=a.id_medidor
+            where c.id_apr=$id_apr and c.estado=1
+            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=5 order by c.fecha desc";
+    $query = $db->query($sql);
+    $pdf->SetX(10);
+
+    $count = 0;
+      $total_cheque=0;
+    foreach ($query->getResult() as $row) {
+            $total_cheque+=$row->total_pagar;
+      $pdf->Cell(
+        30,
+        5,
+        $row->id,
+        1,
+        0,
+        'C',
+        true
+      );
+      $pdf->Cell(30, 5, $row->fecha, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->rol, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->numero, 1, 0, 'C', true);
+      $pdf->Cell(65, 5, $row->nombres, 1, 0, 'C', true);
+      $pdf->Cell(20, 5, '$' . number_format($row->total_pagar, 0, ',', '.'), 1, 0, 'C', true);
+      $pdf->Ln(5);
+    }
+
+    $pdf->Cell(195, 5, 'TOTAL   $' . number_format($total_cheque, 0, ',', '.'), 1, 0, 'R', true);
+    
+    // $pdf->AddPage();
+    $pdf->ln(10);
+    $pdf->SetFont(
+      'dejavusans',
+      'B',
+      12
+    );
+    $pdf->Cell(0, 5, 'INGRESO POR WEBPAY', 0, 1, 'C');
+
+    $pdf->SetFont(
+      'dejavusans',
+      '',
+      8
+    );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+    $pdf->SetX(10);
+    $pdf->Cell(30, 5, 'N° comprobante', 1, 0, 'C', true);
+    $pdf->Cell(30, 5, 'Fecha emisión', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Servicio', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Medidor ', 1, 0, 'C', true);
+    $pdf->Cell(
+      65,
+      5,
+      'Cliente',
+      1,
+      0,
+      'C',
+      true
+    );
+    $pdf->Cell(20, 5, 'Monto', 1, 1, 'C', true);
+
+    $sql = "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar FROM caja c 
+            inner join socios s on s.id=c.id_socio 
+            inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
+            inner join medidores m on m.id=a.id_medidor
+            where c.id_apr=$id_apr and c.estado=1
+            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=4 order by c.fecha desc";
+    $query = $db->query($sql);
+    $pdf->SetX(10);
+
+    $count = 0;
+      $total_web=0;
+    foreach ($query->getResult() as $row) {
+            $total_web+=$row->total_pagar;
+      $pdf->Cell(30, 5, $row->id,1, 0, 'C',true);
+      $pdf->Cell(30, 5, $row->fecha, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->rol, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->numero, 1, 0, 'C', true);
+      $pdf->Cell(65, 5, $row->nombres, 1, 0, 'C', true);
+      $pdf->Cell(20, 5, '$' . number_format($row->total_pagar, 0, ',', '.'), 1, 0, 'C', true);
+      $pdf->Ln(5);
+    }
+      $pdf->Cell(195, 5, 'TOTAL   $' . number_format($total_web, 0, ',', '.'), 1, 0, 'R', true);
+    
+      // $pdf->AddPage();
+      $pdf->ln(10);
+    $pdf->SetFont('dejavusans',  'B',      12    );
+    $pdf->Cell(0, 5, 'INGRESO POR DEPOSITO', 0, 1, 'C');
+
+    $pdf->SetFont(
+      'dejavusans',
+      '',
+      8
+    );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+    $pdf->SetX(10);
+    $pdf->Cell(30, 5, 'N° comprobante', 1, 0, 'C', true);
+    $pdf->Cell(30, 5, 'Fecha emisión', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Servicio', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Medidor ', 1, 0, 'C', true);
+    $pdf->Cell(
+      65,
+      5,
+      'Cliente',
+      1,
+      0,
+      'C',
+      true
+    );
+    $pdf->Cell(20, 5, 'Monto', 1, 1, 'C', true);
+
+    $sql = "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar FROM caja c 
+            inner join socios s on s.id=c.id_socio 
+            inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
+            inner join medidores m on m.id=a.id_medidor
+            where c.id_apr=$id_apr and c.estado=1
+            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=6 order by c.fecha desc";
+    $query = $db->query($sql);
+    $pdf->SetX(10);
+
+    $count = 0;
+    $total_depo = 0;
+    foreach ($query->getResult() as $row) {
+      $total_depo += $row->total_pagar;
+      $pdf->Cell(
+        30,
+        5,
+        $row->id,
+        1,
+        0,
+        'C',
+        true
+      );
+      $pdf->Cell(30, 5, $row->fecha, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->rol, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->numero, 1, 0, 'C', true);
+      $pdf->Cell(65, 5, $row->nombres, 1, 0, 'C', true);
+      $pdf->Cell(20, 5, '$' . number_format($row->total_pagar, 0, ',', '.'), 1, 0, 'C', true);
+      $pdf->Ln(5);
+    }
+    $pdf->Cell(195, 5, 'TOTAL   $' . number_format($total_depo, 0, ',', '.'), 1, 0, 'R', true);
+
+
+    // $pdf->AddPage();
+    $pdf->ln(10);
+    $pdf->SetFont('dejavusans',  'B',      12);
+    $pdf->Cell(0, 5, 'OTROS INGRESOS', 0, 1, 'C');
+
+    $pdf->SetFont('dejavusans','', 8 );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+    
+    $pdf->SetX(10);
+    $pdf->Cell(10, 5, 'N° fila', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'Fecha', 1, 0, 'C', true);
+    $pdf->Cell(10, 5, 'N° doc', 1, 0, 'C', true);
+    $pdf->Cell(65, 5, 'Categoria ', 1, 0, 'C', true);
+    $pdf->Cell(30, 5, 'Subcategoria', 1, 0, 'C', true);
+    $pdf->Cell(30, 5, 'proveedor', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'Monto', 1, 1, 'C', true);
+
+    $sql = "SELECT ROW_NUMBER() OVER () AS fila,date_format(es.fecha,'%Y-%m-%d') as dia,
+                   '' as Nro_doc,
+                   concat(te.tipo_egreso,' (Por Egresos Simple)') as glosa,
+                   'Otros ingresos' as subcat,pr.razon_social as proveedor,es.monto
+                                    
+                     from  
+              egresos_simples es
+              inner join tipo_gasto tg on tg.id=es.tipo_gasto
+                left join cuentas c on es.id_cuenta = c.id
+                left join bancos b on c.id_banco = b.id
+                left join banco_tipo_cuenta btc on c.id_tipo_cuenta = btc.id
+                inner join motivos m on es.id_motivo = m.id
+                inner join tipos_egreso te on es.id_tipo_egreso = te.id
+                inner join egresos e on es.id_egreso = e.id
+                left join compras cp on cp.id_egreso=e.id
+                left join proveedores pr on pr.id=cp.id_proveedor
+                where e.estado=1  and btc.id not in (5,6)
+                and  e.id_apr=$id_apr and 
+                es.fecha BETWEEN '$inicio' AND '$fin' and e.estado=1";
+    $query = $db->query($sql);
+    $pdf->SetX(10);
+
+    $count = 0;
+    $total_otros = 0;
+    foreach ($query->getResult() as $row) {
+      $total_otros += $row->monto;
+      $pdf->Cell(   10,        5,        $row->fila,        1,        0,      'C',        true      );
+      $pdf->Cell(25, 5, $row->dia, 1, 0, 'C', true);
+      $pdf->Cell(10, 5, $row->Nro_doc, 1, 0, 'C', true);
+      $pdf->Cell(65, 5, substr(($row->glosa), 0, 47) . '...', 1, 0, 'L', true);
+      $pdf->Cell(30, 5, $row->subcat, 1, 0, 'C', true);
+      $pdf->Cell(30, 5, $row->proveedor, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, '$' . number_format($row->monto, 0, ',', '.'), 1, 0, 'C', true);
+      $pdf->Ln(5);
+    }
+    $pdf->Cell(195, 5, 'TOTAL   $' . number_format($total_otros, 0, ',', '.'), 1, 0, 'R', true);
+
+
+
+
+    // $pdf->AddPage();
+    $pdf->ln(10);
+    $pdf->SetFont('dejavusans',  'B',      12);
+    $pdf->Cell(0, 5, 'EGRESOS', 0, 1, 'C');
+
+    $pdf->SetFont('dejavusans', '',
+      6
+    );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+
+    $pdf->SetX(10);
+    $pdf->Cell(20, 5, 'Desde', 1,  0,      'C',      true    );
+    $pdf->Cell(30, 5, 'Cateoria', 1, 0, 'C', true);
+    $pdf->Cell(50, 5, 'Subcategoria', 1, 0, 'C', true);
+    // $pdf->Cell(12, 5, 'N° Doc ',      1,      0,      'C',      true    );
+    $pdf->Cell(15, 5, 'Fecha', 1, 0, 'C', true);
+    $pdf->Cell(55, 5, 'Descripción', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'Monto', 1, 1, 'C', true);
+
+    $sql = "SELECT  btc.glosa as desde,tg.glosa as categoria ,te.tipo_egreso as subcat,'' as tipo_doc,es.fecha,es.observaciones,es.monto
+                    from egresos_simples es
+                    inner join egresos e on e.id=es.id_egreso
+                    inner join tipos_egreso te on te.id=es.id_tipo_egreso
+                    inner join tipo_gasto tg on tg.id=es.tipo_gasto
+                    inner join cuentas c on c.id=es.id_cuenta
+                    left join banco_tipo_cuenta btc on c.id_tipo_cuenta = btc.id
+                    where  e.id_apr=$id_apr                     and 
+                    es.fecha BETWEEN '$inicio' AND '$fin' and e.estado=1";
+    $query = $db->query($sql);
+    $pdf->SetX(10);
+
+    $count = 0;
+    $total_egresos = 0;
+    foreach ($query->getResult() as $row) {
+      $total_egresos += $row->monto;
+      $pdf->Cell(20, 5, strtolower($row->desde), 1, 0, 'L', true);
+      $pdf->Cell(30, 5, strtolower($row->categoria), 1, 0, 'L', true);
+      $pdf->Cell(50, 5, strtolower($row->subcat), 1, 0, 'L', true);
+      // $pdf->Cell(12, 5, strtolower($row->tipo_doc), 1, 0, 'C', true);
+      $pdf->Cell(15, 5, strtolower($row->fecha), 1, 0, 'L', true);
+      $pdf->Cell(55, 5, substr(strtolower($row->observaciones),0,47).'...', 1, 0, 'L', true);
+      $pdf->Cell(25, 5, '$' . number_format($row->monto, 0, ',', '.'), 1, 1, 'L', true);
+    }
+    $pdf->Cell(195, 5, 'TOTAL   $' . number_format($total_egresos, 0, ',', '.'), 1, 0, 'R', true);
+
+
+    // $pdf->AddPage();
+    $pdf->ln(10);
+    $pdf->SetFont('dejavusans',  'B',      12);
+    $pdf->Cell(0, 5, 'PAGOS ANULADOS', 0, 1, 'C');
+
+    $pdf->SetFont('dejavusans', '',
+      8
+    );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+    $pdf->SetX(10);
+    $pdf->Cell(30, 5, 'N° comprobante', 1, 0, 'C', true);
+    $pdf->Cell(30, 5, 'Fecha emisión', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Servicio', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Medidor ', 1, 0, 'C', true);
+    $pdf->Cell(65, 5, 'Cliente', 1,
+      0,
+      'C',
+      true
+    );
+    $pdf->Cell(20, 5, 'Monto', 1, 1, 'C', true);
+
+    $sql = "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar FROM caja c 
+            inner join socios s on s.id=c.id_socio 
+            inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
+            inner join medidores m on m.id=a.id_medidor
+            where c.id_apr=$id_apr and c.estado=0
+            AND c.fecha BETWEEN '$inicio' AND '$fin' and c.id_forma_pago=1 order by c.fecha desc";
+    $query = $db->query($sql);
+    $pdf->SetX(10);
+
+    $count = 0;
+    $total_anulados = 0;
+    foreach ($query->getResult() as $row) {
+      $total_anulados += $row->total_pagar;
+      $pdf->Cell(30, 5, $row->id,
+        1,
+        0,
+        'C',
+        true
+      );
+      $pdf->Cell(30, 5, $row->fecha, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->rol, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->numero, 1, 0, 'C', true);
+      $pdf->Cell(65, 5, $row->nombres, 1, 0, 'C', true);
+      $pdf->Cell(20, 5, '$' . number_format($row->total_pagar, 0, ',', '.'), 1, 0, 'C', true);
+      $pdf->Ln(5);
+    }
+    $pdf->Cell(195, 5, 'TOTAL  $' . number_format($total_anulados, 0, ',', '.'), 1, 0, 'R', true);
+
+
+    // $pdf->AddPage();
+    $pdf->ln(10);
+    $pdf->SetFont('dejavusans',  'B',      12);
+    $pdf->Cell(0, 5, 'INGRESOS DE MOVIMIENTOS ENTRE CUENTAS', 0, 1, 'C');
+
+    $pdf->SetFont(
+      'dejavusans',
+      '',
+      6
+    );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+
+    $pdf->SetX(10);
+    $pdf->Cell(20, 5, 'Desde', 1,  0,      'C',      true);
+    $pdf->Cell(30, 5, 'Cateoria', 1, 0, 'C', true);
+    $pdf->Cell(50, 5, 'Subcategoria', 1, 0, 'C', true);
+    // $pdf->Cell(12, 5, 'N° Doc ',      1,      0,      'C',      true    );
+    $pdf->Cell(15, 5, 'Fecha', 1, 0, 'C', true);
+    $pdf->Cell(55, 5, 'Descripción', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'Monto', 1, 1, 'C', true);
+
+
+
+    // $pdf->AddPage();
+    $pdf->ln(10);
+    $pdf->SetFont('dejavusans',  'B',      12);
+    $pdf->Cell(0, 5, 'EGRESOS DE MOVIMIENTOS ENTRE CUENTAS', 0, 1, 'C');
+
+    $pdf->SetFont(
+      'dejavusans',
+      '',
+      6
+    );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+
+    $pdf->SetX(10);
+    $pdf->Cell(20, 5, 'Desde', 1,  0,      'C',      true);
+    $pdf->Cell(30, 5, 'Cateoria', 1, 0, 'C', true);
+    $pdf->Cell(50, 5, 'Subcategoria', 1, 0, 'C', true);
+    // $pdf->Cell(12, 5, 'N° Doc ',      1,      0,      'C',      true    );
+    $pdf->Cell(15, 5, 'Fecha', 1, 0, 'C', true);
+    $pdf->Cell(55, 5, 'Descripción', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'Monto', 1, 1, 'C', true);
+
+    // $pdf->Output("abono_" . $id_abono . "_" . $id_socio . "_" . $rut . ".pdf", 'I');
+
+
+    $pdf->AddPage();
+    $pdf->ln(10);
+    $pdf->SetFont('dejavusans', 'B', 12);
+    
+    $pdf->Cell(150, 5, 'RESUMEN INGRESOS ' , 0, 1, 'C', true);
+    
+    $pdf->SetFont('dejavusans', '', 8);
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+
+
+
+    $pdf->SetX(10);
+    $pdf->SetFont('dejavusans',  'B',      8);
+    $pdf->Cell(50, 5, 'TIPO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, 'DOCUMENTO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, 'TOTAL', 1, 1,'L', true);
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'INGRESO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, 'SIN DOCUMENTO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($total_otros, 0, ',', '.'), 1, 1,'L', true);
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, 'EFECTIVO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($total_efectivo, 0, ',', '.'), 1, 1,'L', true);
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, 'TRANSFERENCIA', 1, 0,'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($total_transf, 0, ',', '.'), 1, 1,'L', true);
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, 'CHEQUE', 1, 0,'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($total_cheque, 0, ',', '.'), 1, 1,'L', true);
+
+     $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, 'CHEQUE', 1, 0,'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($total_cheque, 0, ',', '.'), 1, 1,'L', true);
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, 'WEBPAY', 1, 0,'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($total_web, 0, ',', '.'), 1, 1,'L', true);
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, 'DEPOSITO', 1, 0,'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($total_depo, 0, ',', '.'), 1, 1,'L', true);
+
+    $ingresos_total=$total_efectivo+$total_transf+$total_cheque+$total_web+$total_depo+$total_otros;
+    $pdf->Cell(150, 5, 'TOTAL INGRESOS $' . number_format($ingresos_total, 0, ',', '.'), 1, 1, 'R', true);
+
+
+
+     $pdf->SetFont('dejavusans', 'B', 12);
+    
+    $pdf->Cell(150, 5, 'RESUMEN EGRESOS ' , 0, 1, 'C', true);
+    
+    $pdf->SetFont('dejavusans', '', 8);
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+
+
+
+    $result = $db->query("SELECT sum(es.monto) as monto, btc.glosa as cuenta
+                          FROM egresos_simples es
+                          INNER JOIN egresos e ON e.id = es.id_egreso
+                          INNER JOIN tipos_egreso te ON te.id = es.id_tipo_egreso
+                          INNER JOIN tipo_gasto tg ON tg.id = es.tipo_gasto
+                          INNER JOIN cuentas c ON c.id = es.id_cuenta
+                          LEFT JOIN banco_tipo_cuenta btc ON c.id_tipo_cuenta = btc.id
+                          WHERE es.fecha BETWEEN '$inicio' AND '$fin'
+                          AND e.estado = 1 and e.id_apr=$id_apr  
+                          GROUP BY btc.glosa");
+    
+    $pdf->SetX(10);
+    $pdf->SetFont('dejavusans', 'B', 8);
+    $pdf->Cell(50, 5, 'TIPO', 1, 0, 'L', true);
+    $pdf->Cell(50, 5, 'CUENTA', 1, 0, 'L', true);
+    $pdf->Cell(50, 5, 'TOTAL', 1, 1, 'L', true);
+
+    $total_egresos = 0;
+    foreach ($result->getResult() as $row) {
+        $pdf->SetX(10);
+        $pdf->Cell(50, 5, 'EGRESOS', 1, 0, 'L', true);
+        $pdf->Cell(50, 5, $row->cuenta, 1, 0, 'L', true);
+        $pdf->Cell(50, 5, '$ ' . number_format($row->monto, 0, ',', '.'), 1, 1, 'L', true);
+        $total_egresos += $row->monto;
+    }
+
+    $pdf->SetX(10);
+    $pdf->Cell(150, 5, 'TOTAL EGRESOS $' . number_format($total_egresos, 0, ',', '.'), 1, 1, 'R', true);
+
+
+    $pdf->SetFont('dejavusans', 'B', 12);
+    $pdf->Cell(150, 5, 'RESUMEN DEL PERIODO', 0, 1, 'C', true);
+    $pdf->SetFont('dejavusans', '', 10);
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'INGRESOS $', 1, 0, 'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($ingresos_total, 0, ',', '.'), 1, 0, 'L', true);
+    $pdf->Cell(50, 5, '', 1, 1, 'L', true);
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'EGRESOS $', 1, 0, 'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($total_egresos, 0, ',', '.'), 1, 0, 'L', true);
+    $pdf->Cell(50, 5, '', 1, 1, 'L', true);
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'TOTAL PERIODO $', 1, 0, 'L', true);
+    $pdf->Cell(50, 5, '$ '.number_format($ingresos_total-$total_egresos, 0, ',', '.'), 1, 0, 'L', true);
+    $pdf->Cell(50, 5, '', 1, 1, 'L', true);
+
+    $pdf->Ln(30);
+
+    $pdf->SetFont('dejavusans', '', 10);
+    $pdf->SetX(10);
+    $pdf->SetLineStyle(array('width' => 0.5, 'cap' => 'round', 'join' => 'round', 'dash' => 4, 'color' => array(0, 0, 0)));
+
+
+    $pdf->Cell(120, 5, '_________________________', 0, 0, 'L', true  );
+    $pdf->Cell(120, 5, '_________________________', 0, 0, 'L', true);
+    $pdf->Ln(5);
+    $pdf->Cell(120, 5, 'Entregué conforme', 0, 0, 'L', true);
+    $pdf->Cell(120, 5, 'Recibí conforme', 0, 1, 'L', true);
+
+
+    $pdf->SetX(10);
+    $pdf->Cell(120, 5, strtolower($nombre_usuario), 0, 0, 'L', true);
+    $pdf->Cell(100, 5, 'Receptor Administrativo(a)', 0, 1, 'L', true);
+
+
+    $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'Sin cargo', 0, 0, 'L', true);
+
+
+    $pdf->Output("REPORTE DE CAJA SIMPLE.pdf", 'I');
+    exit;
 
   }
 
