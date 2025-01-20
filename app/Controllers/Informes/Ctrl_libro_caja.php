@@ -1680,7 +1680,13 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
                 left join proveedores pr on pr.id=cp.id_proveedor
                 where e.estado=1  and btc.id not in (5,6)
                 and  e.id_apr=$id_apr and 
-                es.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and e.estado=1";
+                es.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and e.estado=1
+                UNION
+                 select ROW_NUMBER() OVER () AS fila,date_format(a.fecha,'%Y-%m-%d') as dia,
+                 '' as Nro_doc,  concat('Abono socio :',s.nombres, ' ', s.ape_pat, ' ', s.ape_mat)  as glosa,'Otros ingresos','' as proveedor,a.abono 
+                 from abonos a 
+                 inner join socios s on s.id=a.id_socio where a.estado=1
+                 and a.id_apr=$id_apr and a.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59'";
     $query = $db->query($sql);
     $pdf->SetX(10);
 
