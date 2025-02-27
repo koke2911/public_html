@@ -1483,15 +1483,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
     $pdf->Cell(30, 5, 'Fecha emisión', 1, 0, 'C', true);
     $pdf->Cell(25, 5, 'N° Servicio', 1, 0, 'C', true);
     $pdf->Cell(25, 5, 'N° Medidor ', 1, 0, 'C', true);
-    $pdf->Cell(
-      65,
-      5,
-      'Cliente',
-      1,
-      0,
-      'C',
-      true
-    );
+    $pdf->Cell(65,5,'Cliente',1,0,'C',true);
     $pdf->Cell(20, 5, 'Monto', 1, 1, 'C', true);
 
     $sql = "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar FROM caja c 
@@ -1686,7 +1678,13 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
                  '' as Nro_doc,  concat('Abono socio :',s.nombres, ' ', s.ape_pat, ' ', s.ape_mat)  as glosa,'Otros ingresos','' as proveedor,a.abono 
                  from abonos a 
                  inner join socios s on s.id=a.id_socio where a.estado=1
-                 and a.id_apr=$id_apr and a.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59'";
+                 and a.id_apr=$id_apr and a.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59'
+                 UNION
+                 select ROW_NUMBER() OVER () AS fila,date_format(fecha_ingreso,'%Y-%m-%d') as dia,
+                  '' as Nro_doc,trim(observaciones),'Otros ingresos','' as proveedor,monto
+                  from ingresos
+                  where estado=1
+                  and id_apr=$id_apr and fecha_ingreso BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59'";
     $query = $db->query($sql);
     $pdf->SetX(10);
 
@@ -1898,10 +1896,10 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
     $pdf->Cell(50, 5, 'CHEQUE', 1, 0,'L', true);
     $pdf->Cell(50, 5, '$ '.number_format($total_cheque, 0, ',', '.'), 1, 1,'L', true);
 
-     $pdf->SetX(10);
-    $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
-    $pdf->Cell(50, 5, 'CHEQUE', 1, 0,'L', true);
-    $pdf->Cell(50, 5, '$ '.number_format($total_cheque, 0, ',', '.'), 1, 1,'L', true);
+    //  $pdf->SetX(10);
+    // $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
+    // $pdf->Cell(50, 5, 'CHEQUE', 1, 0,'L', true);
+    // $pdf->Cell(50, 5, '$ '.number_format($total_cheque, 0, ',', '.'), 1, 1,'L', true);
 
     $pdf->SetX(10);
     $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
