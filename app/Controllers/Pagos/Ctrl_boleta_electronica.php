@@ -2429,85 +2429,94 @@ public function emitir_dte_new(){
       $tplId     = $mpdf->ImportPage($pagecount);
       $mpdf->AddPage();
       $mpdf->UseTemplate($tplId);
-      $mpdf->WriteHTML('
-					<div style="height: 2%;"></div>
-					<div>
-						<div style="width: 20%; float: left;">
-							<img src="' . $this->sesión->id_apr_ses . '.png" width="200">
-						</div>
-			        </div>
-					<div>
-			        	<div style="font-size: 90%; width: 60%; float: left;">
-			        		<br>
-			        		<b>' . $nombre_apr . '</b><br>
-							RUT: ' . $rut_apr . '<br>
-							CAPTACIÓN, PURIFICACIÓN Y DIST. DE AGUA<br>
-							' . $direccion_apr . '<br>
-							FONOS: ' . $fono_apr . '
-			        	</div>
-			        	
-			        	<div style="width: 40%; float: left;">
-			        		<div style="font-size: 140%;">
-			        			<b>N° ' . $folio . '<br></b><br>
-			        		</div>
-			        		<div style="font-size: 90%;">
-				        		BOLETA DE VENTAS Y SERVICIOS<br>
-								NO AFECTAS O EXENTAS DE IVA<br>
-								OFICIO N° 2.413 DEL 30 - 08 - 96 DEL S.I.I.<br>
-								RESOLUCIÓN N° 78 03-04-1998
-							</div>
-			        	</div>
-			        </div>
-			        <br><br>
-					<div>
-			        	<div style="width: 60%; float: left; margin-left: 3%;">
-			        		' . $rut_socio . '<br>
-			        		' . $nombre_socio . '<br>
-							' . $direccion_socio . '<br>
-							' . $codigo_socio . '<br>
-							' . $numero_medidor . '
-			        	</div>
-			        </div>
-			        <br><br><br><br><br>
-					<div>
-			        	<div style="width: 28%; float: left; margin-left: 3%;">
-			        		' . $consumo_anterior . ' M<sup>3</sup><br>
-			        	</div>
-			        	<div style="width: 29%; float: left;">
-			        		' . $consumo_actual . ' M<sup>3</sup><br>
-			        	</div>
-			        	<div style="width: 40%; float: left;">
-			        		<b>' . $consumo_metros . ' M<sup>3</sup></b>
 
-                  CONSUMO AGUA POTABLE: Cargo fijo $'.$cargo_fijo.', '.$consumo_metros.' Mt3 $'.$monto_metros.'<br>
-			        	</div>
-			        </div>
-			        <div style="height: 6.5%;"></div>
-					<div>
-			        	<div style="width: 20%; float: left; margin-left: 50%;">
-			        		$ ' . number_format($subtotal, 0, ",", ".") . '<br><br><br>
-			        		$ ' . number_format($saldo_anterior, 0, ",", ".") . '<br><br><br>
-			        		$ ' . number_format($monto_subsidio, 0, ",", ".") . '
-			        	</div>
-			        	<div style="width: 20%; float: left; margin-left: 10%;">
-			        		<br><br><br>
-			        		$ ' . number_format($multa, 0, ",", ".") . '
-			        	</div>
-			        </div>
-			        <div style="height: 7%;"></div>
-					<div>
-			        	<div style="width: 35%; float: left; margin-left: 10%;">
-			        		' . $fecha_emision . '
-			        	</div>
-			        	<div style="width: 35%; float: left;">
-			        		' . $fecha_vencimiento . '
-			        	</div>
-			        	<div style="width: 15%; float: left;">
-			        		$ ' . number_format($total_pagar, 0, ",", ".") . '
-			        	</div>
-			        </div>
-				');
+      $mpdf->SetXY(5, 5);
+      $html = ' <img src="' . base_url() . '/' . $this->sesión->id_apr_ses . '.png" width="250">';
+      $mpdf->WriteHTML($html);
+
+      // echo $this->sesión->id_apr_ses;
+      $x = 120;
+      $y = 10;
+      $mpdf->SetXY($x, $y);
+
+      $mpdf->Cell(0, 0, $nombre_apr, 0, 1, 'L');
+      $mpdf->SetXY(120,15);
+      $mpdf->Cell(0, 0, 'RUT: '.$rut_apr, 0, 1, 'L');
+      $mpdf->SetXY(120, 20);
+      $mpdf->Cell(0, 0, 'CAPTACIÓN, PURIFICACIÓN Y DIST. DE AGUA ', 0, 1, 'L');
+      $mpdf->SetXY(120, 25);
+      $mpdf->Cell(0, 0, $direccion_apr, 0, 1, 'L');
+      $mpdf->SetXY(120, 30);
+      $mpdf->Cell(0, 0, 'FONO: '.$fono_apr, 0, 1, 'L');
+      $mpdf->SetXY(120, 35);
+      $mpdf->Cell(0, 0, 'N° ' . $folio, 0, 1, 'L');
+      $mpdf->SetXY(120, 40);
+      $mpdf->Cell(0, 0, 'BOLETA DE VENTAS Y SERVICIOS', 0, 1, 'L');
+      $mpdf->SetXY(120, 45);
+      $mpdf->Cell(0, 0, 'NO AFECTAS O EXENTAS DE IVA', 0, 1, 'L');
+      $mpdf->SetXY(120, 50);
+      $mpdf->Cell(0, 0, 'OFICIO N° 2.413 DEL 30 - 08 - 96 DEL S.I.I.', 0, 1, 'L');
+      $mpdf->SetXY(120, 55);
+      $mpdf->Cell(0, 0, 'RESOLUCIÓN N° 78 03-04-1998', 0, 1, 'L');
+
+
+
+      $x = 15;
+      $y = 90;
+      $mpdf->SetXY($x, $y);
+      $mpdf->Cell(0, 0, 'RUT SOCIO: '. $rut_socio, 0, 1, 'L');
+      $mpdf->SetXY($x, 95);
+      $mpdf->Cell(0, 0, 'NOMBRE SOCIO: '.$nombre_socio, 0, 1, 'L');
+      $mpdf->SetXY($x, 100);
+      $mpdf->Cell(0, 0, 'DIRECCION: ' . $direccion_socio, 0, 1, 'L');
+      $mpdf->SetXY($x, 105);
+      $mpdf->Cell(0, 0, 'N° SOCIO: ' . $codigo_socio, 0, 1, 'L');
+      $mpdf->SetXY($x, 110);
+      $mpdf->Cell(0, 0, 'N° MEDIDOR: ' . $numero_medidor, 0, 1, 'L');
+
+
+
+      $x = 15;
+      $y = 145;
+      $mpdf->SetXY($x, $y);
+      $mpdf->Cell(0, 0, $consumo_anterior.' M3', 0, 1, 'L');
+      $mpdf->SetXY(70, $y);
+      $mpdf->Cell(0, 0, $consumo_actual . ' M3', 0, 1, 'L');
+      $mpdf->SetXY(123, 142);
+      $mpdf->Cell(0, 0, $consumo_metros . ' M3', 0, 1, 'L');
+      $mpdf->SetXY(123, 147);
+      $mpdf->Cell(0, 0, 'Cargo fijo $'.$cargo_fijo.', '.$consumo_metros.' Mt3 $'.$monto_metros, 0, 1, 'L');
+
+
+      $x = 70;
+      $y = 167;
+      $mpdf->SetXY($x, $y);
+      $mpdf->Cell(0, 0, '$'.number_format($subtotal, 0, ",", "."), 0, 1, 'L');
+      $mpdf->SetXY(70, 182);
+      $mpdf->Cell(0, 0, '$'.number_format($saldo_anterior, 0, ",", ".") , 0, 1, 'L');
+      $mpdf->SetXY(70, 197);
+      $mpdf->Cell(0, 0, '$'.number_format($monto_subsidio, 0, ",", ".") , 0, 1, 'L');
+
+
+      $mpdf->SetXY(150, 181);
+      $mpdf->Cell(0, 0, '$'.number_format($multa, 0, ",", ".") , 0, 1, 'L');
+
+
+      $x = 33;
+      $y = 220;
+      $mpdf->SetXY($x, $y);
+      $mpdf->Cell(0, 0, $fecha_emision, 0, 1, 'L');
+
+
+      $mpdf->SetXY(93, $y);
+      $mpdf->Cell(0, 0, $fecha_vencimiento, 0, 1, 'L');
+
+      $mpdf->SetXY(163, $y);
+      $mpdf->Cell(0, 0, '$'.number_format($total_pagar, 0, ",", "."), 0, 1, 'L');     
     }
+
+    //       return redirect()->to($mpdf->Output());
+    // exit();
 
     $verificar_dispositivo = $this->verificar_dispositivo();
 
