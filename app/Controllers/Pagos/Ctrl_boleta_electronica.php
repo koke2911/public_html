@@ -1520,10 +1520,10 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                         <GiroEmisor>'.$datosApr['activity'].'</GiroEmisor>
                         <DirOrigen>'.$datosApr['calle'].' '.$datosApr['numero'].' '.$datosApr['resto_direccion'].'</DirOrigen>
                         <CmnaOrigen>'.$datosComuna['nombre'].'</CmnaOrigen>
-                        <CiudadOrigen>'.$datosComuna['nombre'].'</CiudadOrigen>
+                        <CiudadOrigen>'.$datosComuna['nombre']. '</CiudadOrigen>
                         </Emisor>
                         <Receptor>
-                        <RUTRecep>'.$rut_socio.'</RUTRecep>
+                        <RUTRecep>' . strtoupper($rut_socio) . '</RUTRecep>
                         <RznSocRecep>'.$nombre_socio.'</RznSocRecep>
                         <DirRecep>'.$direccion.'</DirRecep>
                         <CmnaRecep>'.$comuna.'</CmnaRecep>
