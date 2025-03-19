@@ -411,7 +411,7 @@ public function valida_token($TokenObtenido){
 
 public function procesa_dtePablo($folio,$f_sii){
 
-    
+     
 
           define("BOLETA_EXENTA", 41);
           define("FACTURA_EXENTA", 34);
@@ -1406,7 +1406,6 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
             $tipo_dte = tipo_dte($datosSocios["tipo_documento"]);
 
             $num_medidor = $datosSocios["num_medidor"];
-            // $cargo_fijo  = $datosSocios["cargo_fijo"];
             $sector      = $datosSocios["sector"];
 
             $datosParaGrafico = $this->metros->select("date_format(fecha_ingreso, '%m-%Y') as fecha")
@@ -1468,7 +1467,6 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                 }
               }
 
-              // $datosSocios["meses_deuda"]=2;
 
               if($datosSocios["meses_deuda"]>=2){
                   $observaciones .='CORTE DE SUMINISTRO  EN TRAMITE POR : '.$datosSocios["meses_deuda"].' MESES VENCIDOS';
@@ -1490,7 +1488,6 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                           ->where("comunas.id", $datosApr["id_comuna"])
                                           ->first();
 
-                                         // print_r($datosComuna);
 
               $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl"); 
 
@@ -1502,8 +1499,30 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
               $facturable=$total1+$alcantarillado;
 
 
-              // $rut_apr='44444444-4';
+              // $rut_apr='44444444-4'; // COMENTAAAAAAR
 
+              
+              
+              if($tipo_dte==41){ // BOLETA EXENTA
+                
+                $adicionales = $total_mes - $facturable;
+                $totales='<MntExe>'.$facturable.'</MntExe>
+                <MntTotal>'.$facturable.'</MntTotal>';
+                $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf);
+
+              }else if($tipo_dte == 39){  // BOLETA AFECTA
+
+                    $adicionales = $total_mes - $facturable;                    
+                    $total= $total1 + $alcantarillado;
+                    $iva = intval($total * 0.19);
+                    $neto= $total - $iva;
+
+                    $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf) + $iva;
+
+                    $totales = '<MntNeto>'. $neto.'</MntNeto>
+                                <IVA>'. $iva.'</IVA>
+                                <MntTotal>'. $total.'</MntTotal>';
+              }
               $cadena = '<DTE version="1.0">
                         <Documento ID="F437T33">
                         <Encabezado>
@@ -1530,8 +1549,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                         <CiudadRecep>'.$comuna.'</CiudadRecep>
                         </Receptor>
                         <Totales>
-                        <MntExe>'.$facturable.'</MntExe>
-                        <MntTotal>'.$facturable.'</MntTotal>
+                         '. $totales.'
                         </Totales>
                         </Encabezado>
                         <Detalle>
@@ -1555,10 +1573,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                         </Documento>
                         </DTE>';
 
-// echo $cadena;
 
-// // echo $monto_subsidio;
-// exit();
                          $cadena = str_replace(
                             array('á', 'à', 'ä', 'â', 'ª', 'Á', 'À', 'Â', 'Ä'),
                             array('a', 'a', 'a', 'a', 'a', 'A', 'A', 'A', 'A'),
@@ -1593,8 +1608,6 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
                         $xml_dte_limpio=$cadena;
 
-//echo $xml_dte;
-//exit();
                 $fecha_comp=explode('-', $mes_consumo);
                 $monthNumber = $fecha_comp[0];
                 if($monthNumber=='01'){$mes='Enero';}
@@ -1612,12 +1625,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
                 $subsidiario='NO';
                 if(intval($monto_subsidio) > 0){$subsidiario='SI';}
-
-
-               // $consumo_anterior_nf=1200;
-
-                $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf);
-                $adicionales=$total_mes-$facturable;
+               
 
                 if($multa>0){
                   $multas='Multas : $'.$multa;
@@ -1669,31 +1677,20 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 <Veintiseis>'.$datosApr['fono'].'/'.$datosApr['email'].'</Veintiseis>
                                 <Veintisiete></Veintisiete>
                                 </Adicional>';
+  
                    
+                // $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
+                $parametros = array("STRINGXML" => $xml_dte_limpio, "STRINGXMLADICIONAL" => $xml_adicional, "ASIGNAFOLIO" => "False", "TIPOIMPRESO" => "1", "AMBIENTE" => "1", "TOKEN" => $TokenObtenido);
 
-
-                   //$xml_adicional='';
-
-                  //  echo $xml_adicional;
-                  // exit();
-                   
-                $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "False","TIPOIMPRESO" => "1","AMBIENTE" => "1","TOKEN" => $TokenObtenido);
-                
-            if($tipo_dte==41){   
+      if($tipo_dte==41 or $tipo_dte == 39){   
             
               $resultado = $client->call("ProcesaDte", $parametros); 
+
+              // print_r($resultado);
 
               $resultado_estado=$resultado['item']['ResultadoFE'];
               $url_pdf=$resultado['item']['UrlPdf'];
               $folioSii=$resultado['item']['FolioAsignado'];
-
-             // if($f_sii!=$folioSii){
-             //    $this->error .= "FOLIOS DESFASADOS,F.local:".$f_sii." F.App:".$folioSiiss." <br>";
-             //    exit();
-             // }
-
-              // echo $folioSii;
-              // exit();
 
               if($resultado_estado=='DTE procesado correctamente.'){
                 $datosMetrosSave = [
@@ -1732,7 +1729,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                   $this->error .= "ERROR AL PROCESAR DTE $folio <br><br>";
               }
           }else{
-                $this->error .= "BOLETA NO EXENTA $folio <br><br>";
+                $this->error .= "BOLETA NO EXENTA O AFECTA $folio <br><br>";
           }
 
 
@@ -1760,46 +1757,52 @@ public function emitir_dte_new(){
 
   $folios = $this->request->getPost("arr_boletas");
 
-  foreach ($folios as $folio) { 
+  foreach ($folios as $folio) {
 
-      if($tipo_integracion==2){ // APPOCTABA        
-        $f_sii++;
-        $token=$this->ObtieneToken();      
-        if($token!=""){
-          $valido=$this->valida_token($token);
-          if($valido!='NO'){
-              $generado=$this->procesa_dte($token,$folio,$f_sii);
-          }else{
-            $this->error .= "Token invalido $token <br><br>";
-          }
-        }else{
-          $this->error .= "No se pudo generar token de acceso <br><br>";
-        
-        }
-      }else{
-
-        $consulta = "SELECT 
+      $consulta = "SELECT 
                 CASE 
                     WHEN td.id =1  THEN 41
                     WHEN td.id = 3 THEN 39
                     ELSE 'OTRO TIPO' 
                 END AS tipo
-
                 from metros m
                 inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
                 inner join tipo_documento td on td.id=a.id_tipo_documento
                 where m.id=$folio and m.id_apr=$id_apr";
-        $query = $this->db->query($consulta);
-        $result  = $query->getResultArray();
+      $query = $this->db->query($consulta);
+      $result  = $query->getResultArray();
 
-        $tipo_dte = (int)$result[0]['tipo'];
+      $tipo_dte = (int)$result[0]['tipo'];
 
-        if ($tipo_dte == 41) {
-          $f_sii++;
-        } elseif ($tipo_dte == 39) {
-          $f_sii39++;
+      if ($tipo_dte == 41) {
+        $f_sii++;
+      } elseif ($tipo_dte == 39) {
+        $f_sii39++;
+      }
+
+      if($tipo_integracion==2){ // APPOCTABA        
+       
+        $token=$this->ObtieneToken();      
+        if($token!=""){
+          $valido=$this->valida_token($token);
+
+          if($valido!='NO'){
+            
+            if ($tipo_dte == 41) {
+              $generado = $this->procesa_dte($token, $folio, $f_sii);
+            } elseif ($tipo_dte == 39) {
+              $generado=$this->procesa_dte($token,$folio, $f_sii39);
+            }
+
+          }else{
+            $this->error .= "Token invalido $token <br><br>";
+          }
+        
+        }else{
+          $this->error .= "No se pudo generar token de acceso <br><br>";
+        
         }
-
+      }else{
         if ($tipo_dte == 41) {
           $generado = $this->procesa_dtePablo($folio, $f_sii);
         } elseif ($tipo_dte == 39) {

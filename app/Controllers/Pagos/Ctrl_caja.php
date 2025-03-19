@@ -77,17 +77,37 @@ class Ctrl_caja extends BaseController {
   public function datatable_deuda_socio($id_socio) {
     $this->validar_sesion();
 
+
+
+
+
     $datosDeuda = $this->metros->select("id as id_metros")
                                ->select("total_mes as deuda")
                                ->select("date_format(fecha_vencimiento, '%d-%m-%Y') as fecha_vencimiento")
+                               ->select("id_tipo_documento as tipo_documento")
                                ->where("id_socio", $id_socio)
                                ->where("estado", 1)
                                ->findAll();
 
+    
+
     foreach ($datosDeuda as $key) {
+
+      $tipo_documento = $key["tipo_documento"];
+
+      if($tipo_documento==3 or $tipo_documento==4){
+        
+        $total = $key["deuda"];
+        $iva = intval($total * 0.19);
+        $total = $total + $iva;
+
+      }else{
+        $total= $key["deuda"];
+      }
+
       $row = [
        "id_metros"         => $key["id_metros"],
-       "deuda"             => $key["deuda"],
+       "deuda"             => $total,
        "fecha_vencimiento" => $key["fecha_vencimiento"]
       ];
 

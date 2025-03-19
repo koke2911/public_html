@@ -186,6 +186,7 @@
 					->select("apr.nombre as apr")
 					->select("apr.codigo_comercio")
 					->select("date_format(m.fecha_ingreso, '%m/%Y') as mes_consumo")
+					->select("m.id_tipo_documento as tipo_documento")
 					->join("metros m", "m.id_socio = socios.id")
 					->join("apr", "m.id_apr = apr.id")
 					->where("socios.rut", $rut)
@@ -193,6 +194,26 @@
 					->where("m.estado", ACTIVO)
 					->where("m.punto_blue", 'SI')
 					->findAll();
+				
+				$i=-1;
+				
+				foreach ($datosSocios as $key) {
+					$i++;
+					$tipo_documento = $key["tipo_documento"];
+
+					if ($tipo_documento == 3 or $tipo_documento == 4) {
+
+						$total = $key["total_pagar"];
+						$iva = intval($total * 0.19);
+						$total = $total + $iva;
+					} else {
+						$total = $key["total_pagar"];
+					}
+
+					$datosSocios[$i]["total_pagar"]=strval($total);
+
+				}
+					
 
 					$salida = array('data' => $datosSocios);
 					return $this->respond($salida, 200);
