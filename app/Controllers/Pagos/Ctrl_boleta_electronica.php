@@ -114,7 +114,7 @@ public function ObtieneToken(){
     
 
     //COMENTAAAAAAAAR
-    // $parametros = array("RUTACCESOAPI" =>'44444444-4',"PASSWORDACCESOAPI" =>  'AmFMmcj8i0'); 
+    // $parametros = array("RUTACCESOAPI" => '99999999-9',"PASSWORDACCESOAPI" =>  '43yhsaq-.'); 
 
        
     try{
@@ -1296,6 +1296,9 @@ $Totales["porcdescuento_exento"]="0";
 }
 public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
+  // echo '-->'.$f_sii.'<---';
+  // exit();
+
   ini_set("soap.wsdl_cache_enabled", "0"); 
   define("BOLETA_EXENTA", 41);
   define("FACTURA_EXENTA", 34);
@@ -1499,18 +1502,18 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
               $facturable=$total1+$alcantarillado;
 
 
-              // $rut_apr='44444444-4'; // COMENTAAAAAAR
+              // $rut_apr= '99999999-9'; // COMENTAAAAAAR
 
               
               
-              if($tipo_dte==41){ // BOLETA EXENTA
+              if($tipo_dte==41 || $tipo_dte==34){ // BOLETA y FACTURA EXENTA
                 
                 $adicionales = $total_mes - $facturable;
                 $totales='<MntExe>'.$facturable.'</MntExe>
                 <MntTotal>'.$facturable.'</MntTotal>';
                 $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf);
 
-              }else if($tipo_dte == 39){  // BOLETA AFECTA
+              }else if($tipo_dte == 39 || $tipo_dte == 33){  // BOLETA AFECTA
 
                     $adicionales = $total_mes - $facturable;                    
                     $total= $total1 + $alcantarillado;
@@ -1519,7 +1522,9 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
                     $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf) + $iva;
 
-                    $totales = '<MntNeto>'. $neto.'</MntNeto>
+                    $totales = '<MntNeto>'. $neto. '</MntNeto>
+                                <MntExe>0</MntExe> 
+                                <TasaIVA>19</TasaIVA> 
                                 <IVA>'. $iva.'</IVA>
                                 <MntTotal>'. $total.'</MntTotal>';
               }
@@ -1682,7 +1687,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                 // $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
                 $parametros = array("STRINGXML" => $xml_dte_limpio, "STRINGXMLADICIONAL" => $xml_adicional, "ASIGNAFOLIO" => "False", "TIPOIMPRESO" => "1", "AMBIENTE" => "1", "TOKEN" => $TokenObtenido);
 
-      if($tipo_dte==41 or $tipo_dte == 39){   
+      if($tipo_dte==41 or $tipo_dte == 39 or $tipo_dte == 33 or $tipo_dte == 34){   
             
               $resultado = $client->call("ProcesaDte", $parametros); 
 
@@ -1754,6 +1759,8 @@ public function emitir_dte_new(){
 
   $f_sii=$datosAprs["ultimo_folio"];
   $f_sii39 = $datosAprs["ultimo_folio_afecta"];
+  $f_sii33 = $datosAprs["ultimo_folio_fa"];
+  $f_sii34 = $datosAprs["ultimo_folio_fe"];
 
   $folios = $this->request->getPost("arr_boletas");
 
@@ -1762,7 +1769,9 @@ public function emitir_dte_new(){
       $consulta = "SELECT 
                 CASE 
                     WHEN td.id =1  THEN 41
+                    WHEN td.id = 2 THEN 34
                     WHEN td.id = 3 THEN 39
+                    WHEN td.id = 4 THEN 33
                     ELSE 'OTRO TIPO' 
                 END AS tipo
                 from metros m
@@ -1778,6 +1787,10 @@ public function emitir_dte_new(){
         $f_sii++;
       } elseif ($tipo_dte == 39) {
         $f_sii39++;
+      } elseif ($tipo_dte == 33) {
+        $f_sii33++;
+      } elseif ($tipo_dte == 34) {
+        $f_sii34++;
       }
 
       if($tipo_integracion==2){ // APPOCTABA        
@@ -1792,6 +1805,10 @@ public function emitir_dte_new(){
               $generado = $this->procesa_dte($token, $folio, $f_sii);
             } elseif ($tipo_dte == 39) {
               $generado=$this->procesa_dte($token,$folio, $f_sii39);
+            } elseif ($tipo_dte == 34) {
+              $generado = $this->procesa_dte($token, $folio, $f_sii34);
+            } elseif ($tipo_dte == 33) {
+              $generado = $this->procesa_dte($token, $folio, $f_sii33);
             }
 
           }else{

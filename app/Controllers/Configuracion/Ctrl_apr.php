@@ -78,6 +78,8 @@ class Ctrl_apr extends BaseController {
     $website              = $this->request->getPost('website');
     $ultimo_folio         = $this->request->getPost('ultimo_folio');
     $ultimo_folio39         = $this->request->getPost('ultimo_folio39');
+    $ultimo_folio34         = $this->request->getPost('ultimo_folio34');
+    $ultimo_folio33         = $this->request->getPost('ultimo_folio33');
     $clave_dete           = $this->request->getPost('clave_dete');
     $email_dte            = $this->request->getPost('email_dte');
     $clave_appoct            = $this->request->getPost('clave_appoct');
@@ -116,7 +118,9 @@ class Ctrl_apr extends BaseController {
      "tope_subsidio50"      => $tope_subsidio50,
      "tipo_integracion"      => $tipo_integracion,
       "sucursal_sii"         => $sucursal_sii,
-      "ultimo_folio_afecta" => $ultimo_folio39
+      "ultimo_folio_afecta" => $ultimo_folio39,
+      "ultimo_folio_fe"      => $ultimo_folio34,
+      "ultimo_folio_fa"      => $ultimo_folio33
     ];
 
     // print_r($datosAPR);

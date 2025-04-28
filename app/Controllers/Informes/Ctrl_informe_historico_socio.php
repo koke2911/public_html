@@ -46,7 +46,7 @@ class Ctrl_informe_historico_socio extends BaseController {
     $this->mpdf                  = new \Mpdf\Mpdf([
                                                    'mode'    => 'utf-8',
                                                    'format'  => 'letter',
-                                                   'tempDir' => $_SERVER["DOCUMENT_ROOT"] . '/writable/cache'
+                                                  // 'tempDir' => $_SERVER["DOCUMENT_ROOT"] . '/writable/cache'
                                                   ]);
   }
 
@@ -459,9 +459,9 @@ class Ctrl_informe_historico_socio extends BaseController {
      ->select("metros.metros as metros_consumidos")
      ->select("metros.subtotal")
      ->select("metros.monto_subsidio")
-     ->select("metros.multa")
+     ->select("ifnull(metros.multa, 0) as multa")
      ->select("metros.total_servicios")
-     ->select("metros.cuota_repactacion")
+     ->select("ifnull(metros.cuota_repactacion, 0) as cuota_repactacion")
      ->select("metros.total_mes")
      ->select("date_format(metros.fecha_ingreso, '%d-%m-%Y') as fecha_toma_lectura")
      ->select("date_format(metros.fecha_vencimiento, '%d-%m-%Y') as fecha_vencimiento_pago")
@@ -511,7 +511,7 @@ class Ctrl_informe_historico_socio extends BaseController {
 	                    	<th style="border: 1px solid; font-weight: normal;">' . $key["folio_bolect"] . '</th>
 	                    	<th style="border: 1px solid; font-weight: normal;">' . $key["metros"] . 'm<sup>3</sup></th>
 	                        <th style="border: 1px solid; font-weight: normal;">' . $key["metros_consumidos"] . 'm<sup>3</sup></th>
-	                        
+                            <th style="border: 1px solid; font-weight: normal;">' . $key["subtotal"] . '</th>	                        
 	                        <th style="border: 1px solid; font-weight: normal;">' . number_format($key["monto_subsidio"], 0, ',', '.') . '</th>
 	                        <th style="border: 1px solid; font-weight: normal;">' . number_format($key["multa"], 0, ',', '.') . '</th>
 	                        <th style="border: 1px solid; font-weight: normal;">' . number_format($key["total_servicios"], 0, ',', '.') . '</th>

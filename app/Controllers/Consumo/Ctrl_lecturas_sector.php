@@ -617,9 +617,7 @@ class Ctrl_lecturas_sector extends BaseController {
 
                         }
                       }
-
                       
-
                       if($metros_consumidos==0 && $cargo_fijo_sc>0){
                         $cargo_fijo=$cargo_fijo_sc;
                         $subtotal= $cargo_fijo_sc * $subsidio / 100;

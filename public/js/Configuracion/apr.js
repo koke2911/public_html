@@ -24,6 +24,8 @@ function des_habilitar (a, b) {
   $("#txt_fono").prop("disabled", a);
   $("#txt_ultimo").prop("disabled", a);
   $("#txt_ultimo39").prop("disabled", a);
+  $("#txt_ultimo33").prop("disabled", a);
+  $("#txt_ultimo34").prop("disabled", a);
   $("#txt_octava").prop("disabled", a);
   $("#txt_octava_web").prop("disabled", a);
   $("#txt_horas_extras").prop("disabled", a);
@@ -87,6 +89,8 @@ function mostrar_datos_apr (data) {
 
   $("#txt_ultimo").val(data['ultimo_folio']);
   $("#txt_ultimo39").val(data['ultimo_folio_afecta']);
+  $("#txt_ultimo33").val(data['ultimo_folio_fa']);
+  $("#txt_ultimo34").val(data['ultimo_folio_fe']);
   $("#txt_octava").val(data['clave_dete']);
   $("#txt_octava_web").val(data['clave_appoct']);
   $("#txt_horas_extras").val(data['horas_extras']);
@@ -282,6 +286,9 @@ function guardar_apr () {
       tipo_integracion:$("#cmb_tipo_integracion").val()   ,
       sucursal_sii: $("#cmb_sucursal_sii").val(),
       ultimo_folio39: $("#txt_ultimo39").val(),
+      ultimo_folio34: $("#txt_ultimo34").val(),
+      ultimo_folio33: $("#txt_ultimo33").val()
+      
 
     },
     success: function (respuesta) {
@@ -532,6 +539,14 @@ $(document).ready(function () {
         digits: true,
         maxlength: 11
       },
+      txt_ultimo34: {
+        digits: true,
+        maxlength: 11
+      },
+      txt_ultimo33: {
+        digits: true,
+        maxlength: 11
+      },
       txt_octava: {
           maxlength: 100
       }
@@ -592,6 +607,14 @@ $(document).ready(function () {
         maxlength: "Máximo 11 números"
       },
       txt_ultimo39: {
+        digits: "Solo números",
+        maxlength: "Máximo 11 números"
+      },
+      txt_ultimo34: {
+        digits: "Solo números",
+        maxlength: "Máximo 11 números"
+      },
+      txt_ultimo33: {
         digits: "Solo números",
         maxlength: "Máximo 11 números"
       },
