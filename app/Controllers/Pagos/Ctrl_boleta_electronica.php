@@ -1733,7 +1733,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
 
               }else{
-                  $this->error .= "ERROR AL PROCESAR DTE $folio <br><br>";
+                  $this->error .= "ERROR AL PROCESAR DTE". $folio." <br> ".$resultado_estado." <br><br>";
               }
           }else{
                 $this->error .= "BOLETA NO EXENTA O AFECTA $folio <br><br>";
