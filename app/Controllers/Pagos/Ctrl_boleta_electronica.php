@@ -1833,8 +1833,8 @@ public function emitir_dte_new(){
     $datosMetros = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=1 and m.id_tipo_documento=1")->getRow();
     $datosMetros39 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=3 and m.id_tipo_documento=3")->getRow();
 
-    //$datosMetros34 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=2 and m.id_tipo_documento=2")->getRow();
-    //$datosMetros33 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=4 and m.id_tipo_documento=4")->getRow();
+    $datosMetros34 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=2 and m.id_tipo_documento=2")->getRow();
+    $datosMetros33 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=4 and m.id_tipo_documento=4")->getRow();
     
 
     // print_r($datosMetros->maximo);
