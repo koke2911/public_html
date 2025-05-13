@@ -171,9 +171,14 @@ public function anular_boleta(){
 public function ver_estado_SII(){ 
   ini_set("soap.wsdl_cache_enabled", "0"); 
   $idSii = $this->request->getPost("idSii");
+  $id_tipo_documento = $this->request->getPost("id_tipo_documento");
+
+  helper('tipo_dte');
+  $tipo_dte = tipo_dte($id_tipo_documento);
+
   $token=$this->ObtieneToken();
 
-  $parametros = array("TIPODTE" => "41","FOLIODTE" => $idSii,"AMBIENTE" => "1","TOKEN" => $token); 
+  $parametros = array("TIPODTE" => $tipo_dte,"FOLIODTE" => $idSii,"AMBIENTE" => "1","TOKEN" => $token); 
 
   $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl"); 
 
@@ -1579,6 +1584,8 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                         </Documento>
                         </DTE>';
 
+                        // echo $cadena;
+
 
                          $cadena = str_replace(
                             array('á', 'à', 'ä', 'â', 'ª', 'Á', 'À', 'Â', 'Ä'),
@@ -1864,6 +1871,47 @@ public function emitir_dte_new(){
     }
    
 }
+
+  public function reenviar_boleta()
+  {
+
+    ini_set('max_execution_time', 480);
+    ini_set('max_input_time', 480);
+    ini_set('memory_limit', 5120 . 'M');
+
+    $this->validar_sesion();
+    $id_apr = $this->sesión->id_apr_ses;
+
+    $tipo_integracion = $this->sesión->tipo_integracion_ses;
+
+    $folio = $this->request->getPost("id_metros");
+    $f_sii = $this->request->getPost("idSii");
+    
+
+      if ($tipo_integracion == 2) { 
+
+        $token = $this->ObtieneToken();
+        if ($token != "") {
+          $valido = $this->valida_token($token);
+
+          if ($valido != 'NO') {             
+              $generado = $this->procesa_dte($token, $folio, $f_sii);            
+          } else {
+            $this->error .= "Token invalido $token <br><br>";
+          }
+        } else {
+          $this->error .= "No se pudo generar token de acceso <br><br>";
+        }
+      } 
+   
+
+    if ($this->error == "") {
+      echo 1;
+    } else {
+      echo $this->error;
+    }
+  }
+
 
   public function emitir_dte() {
     $this->validar_sesion();

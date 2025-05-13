@@ -72,7 +72,8 @@ class Md_metros extends Model {
 							ifnull(m.multa, 0) as multa,
 							ifnull(m.total_servicios, 0) as total_servicios,
 							ifnull(m.total_mes, 0) as total_mes,
-							case when soc.ruta = '' then 0 else ifnull(soc.ruta, 0) end as ruta
+							case when soc.ruta = '' then 0 else ifnull(soc.ruta, 0) end as ruta,
+              a.id_tipo_documento
               
 
 						from 

@@ -1,26 +1,41 @@
 var base_url = $("#txt_base_url").val();
 
-function opciones_anular(idSii, id_metros){
+function opciones_anular(idSii, id_metros,id_tipo_documento){
   Swal.fire({
     title: 'Opciones de la boleta',
     showDenyButton: true,
     showCancelButton: true,
     confirmButtonText: 'Anular',
-    denyButtonText: 'Estado SII',
+    denyButtonText: 'Reenviar',
+    cancelButtonText: 'Estado SII',
   }).then((result) => {
     if (result.isConfirmed) {
       anular_boleta(idSii, id_metros);
     } else if (result.isDenied) {
-      ver_estado_sii(idSii);
+      reenviar_boleta(idSii, id_metros);
+    } else if (result.isDismissed) {
+      ver_estado_sii(idSii, id_tipo_documento);
+    }
+  });
+
+function reenviar_boleta(idSii, id_metros) {
+  $.ajax({
+    url: base_url + "/Pagos/Ctrl_boleta_electronica/reenviar_boleta",
+    type: "POST",
+    data: { idSii: idSii, id_metros: id_metros },
+    success: function (respuesta) {
+      console.log(respuesta);
+      buscar_boletas();
     }
   });
 }
+}
 
-function ver_estado_sii(idSii){
+function ver_estado_sii(idSii, id_tipo_documento){
   $.ajax({
     url: base_url + "/Pagos/Ctrl_boleta_electronica/ver_estado_SII",
     type: "POST",
-    data: { idSii: idSii },
+    data: { idSii: idSii, id_tipo_documento: id_tipo_documento },
     success: function (respuesta) {
 
       var data = JSON.parse(respuesta);
@@ -435,7 +450,7 @@ $(document).ready(function () {
         "data": "folio_bolect",
         "render": function(data, type, row) {
           if (data != 0) {
-            return "<a href='#' title='Anular boleta' onclick='opciones_anular("+ data + "," + row.id_metros + ")'>"+ data + "</a>";
+            return "<a href='#' title='Anular boleta' onclick='opciones_anular("+ data + "," + row.id_metros + ","+row.id_tipo_documento+")'>"+ data + "</a>";
           } else {
             return data;
           }
@@ -497,7 +512,8 @@ $(document).ready(function () {
         "render": function (data, type, row) {
           return peso.formateaNumero(data);
         }
-      }
+      },
+      { "data": "id_tipo_documento" }
     ],
     order: [[2, "asc"]],
     "columnDefs": [
