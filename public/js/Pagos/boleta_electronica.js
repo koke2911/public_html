@@ -24,8 +24,19 @@ function reenviar_boleta(idSii, id_metros) {
     type: "POST",
     data: { idSii: idSii, id_metros: id_metros },
     success: function (respuesta) {
-      console.log(respuesta);
-      buscar_boletas();
+      const OK = 1;
+      if (respuesta == OK) {
+        buscar_boletas();
+        alerta.ok("alerta", "Boletas agregada a la cola con éxito");
+        
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Errores',
+          html: respuesta,
+          footer: 'Procedimiento terminado con errores'
+        });
+      }
     }
   });
 }
