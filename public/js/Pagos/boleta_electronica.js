@@ -524,7 +524,7 @@ $(document).ready(function () {
           return peso.formateaNumero(data);
         }
       },
-      { "data": "id_tipo_documento" }
+      { "data": "id_tipo_documento" ,visible:false}
     ],
     order: [[2, "asc"]],
     "columnDefs": [
