@@ -1529,8 +1529,6 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                     $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf) + $iva;
 
                     $totales = '<MntNeto>'. $neto. '</MntNeto>
-                                <MntExe>0</MntExe> 
-                                <TasaIVA>19</TasaIVA> 
                                 <IVA>'. $iva.'</IVA>
                                 <MntTotal>'. $total.'</MntTotal>';
               }
