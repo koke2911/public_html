@@ -126,7 +126,7 @@ function buscar_boletas () {
 
   var chk_boleta_exenta = $("#chk_boleta_exenta").is(":checked");
   var chk_boleta_afecta = $("#chk_boleta_afecta").is(":checked");
-  var chk_factura_exenta = $("#chk_factura_afecta").is(":checked");
+  var chk_factura_exenta = $("#chk_factura_exenta").is(":checked");
   var chk_factura_afecta = $("#chk_factura_afecta").is(":checked");
 
   if (!chk_boleta_exenta && !chk_boleta_afecta && !chk_factura_exenta && !chk_factura_afecta) {
