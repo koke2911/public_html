@@ -1536,11 +1536,11 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                         <Documento ID="F437T33">
                         <Encabezado>
                         <IdDoc>
-                        <TipoDTE>'.$tipo_dte.'</TipoDTE>
-                        <Folio>'.$f_sii.'</Folio>
-                        <FchEmis>'.$fecha.'</FchEmis>
-                        <IndServicio>1</IndServicio>
-                        <FchVenc>'.$fecha_venc.'</FchVenc>
+                          <TipoDTE>'.$tipo_dte.'</TipoDTE>
+                          <Folio>'.$f_sii.'</Folio>
+                          <FchEmis>'.$fecha.'</FchEmis>
+                          <IndServicio>1</IndServicio>
+                          <FchVenc>'.$fecha_venc.'</FchVenc>
                         </IdDoc>
                         <Emisor>
                         <RUTEmisor>'.$rut_apr.'</RUTEmisor>
