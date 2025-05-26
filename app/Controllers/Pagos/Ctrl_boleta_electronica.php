@@ -59,9 +59,9 @@ class Ctrl_boleta_electronica extends BaseController {
     }
   }
 
-  public function datatable_boleta_electronica($datosBusqueda) {
+  public function datatable_boleta_electronica($datosBusqueda,$dte) {
     $this->validar_sesion();
-    echo $this->metros->datatable_boleta_electronica($this->db, $this->sesión->id_apr_ses, $datosBusqueda);
+    echo $this->metros->datatable_boleta_electronica($this->db, $this->sesión->id_apr_ses, $datosBusqueda,$dte);
   }
 
   public function periodo_desde($mes_consumo) {

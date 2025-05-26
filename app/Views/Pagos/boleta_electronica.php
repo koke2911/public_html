@@ -1,3 +1,9 @@
+<?php
+  session_start();
+  $Bafecta=$_SESSION['Bafecta'];
+  $Fafecta=$_SESSION['Fafecta'];
+  $Fexenta=$_SESSION['Fexenta'];
+?>
 <main>
   <div class="container-fluid">
     <h3 class="mt-4" align="center"><i class="fas fa-receipt"></i> Boleta Electronica</h3>
@@ -8,7 +14,7 @@
         <div class="card-body">
           <div class="container-fluid">
             <center>
-              <button type="button" name="btn_emitir" id="btn_emitir" class="btn btn-success" ><i class="fas fa-receipt"></i> Emitir DTE</button>
+              <button type="button" name="btn_emitir" id="btn_emitir" class="btn btn-success"><i class="fas fa-receipt"></i> Emitir DTE</button>
               <button type="button" name="btn_imprimir" id="btn_imprimir" class="btn btn-primary"><i class="fas fa-print"></i> Imprimir DTE</button>
               <button type="button" name="btn_aviso_cobranza" id="btn_aviso_cobranza" class="btn btn-info"><i class="fas fa-print"></i> Imprimir Aviso de Cobranza</button>
               <button type="button" name="btn_enviar_mail" id="btn_enviar_mail" class="btn btn-info"><i class="fas fa-print"></i> Enviar Email</button>
@@ -18,6 +24,27 @@
         </div>
       </div>
       <br>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <!-- <label class="small mb-1" for="txt_bafecta">Bafecta</label> -->
+                <input type="hidden" class="form-control" id="txt_bafecta" name="txt_bafecta" value="<?php echo $Bafecta; ?>" readonly />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <!-- <label class="small mb-1" for="txt_fafecta">Fafecta</label>/ -->
+                <input type="hidden" class="form-control" id="txt_fafecta" name="txt_fafecta" value="<?php echo $Fafecta; ?>" readonly />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <!-- <label class="small mb-1" for="txt_fexenta">Fexenta</label> -->
+                <input type="hidden" class="form-control" id="txt_fexenta" name="txt_fexenta" value="<?php echo $Fexenta; ?>" readonly />
+            </div>
+        </div>
+    </div>
+
       <div class="row">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
           <div class="card mb-4">
@@ -32,19 +59,19 @@
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_id_socio">Id. Socio</label>
-                          <input type='text' class="form-control" id='txt_id_socio' name="txt_id_socio"/>
+                          <input type='text' class="form-control" id='txt_id_socio' name="txt_id_socio" />
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_rut_socio">RUT Socio</label>
-                          <input type='text' class="form-control" id='txt_rut_socio' name="txt_rut_socio"/>
+                          <input type='text' class="form-control" id='txt_rut_socio' name="txt_rut_socio" />
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_rol">ROL Socio</label>
-                          <input type='text' class="form-control" id='txt_rol' name="txt_rol"/>
+                          <input type='text' class="form-control" id='txt_rol' name="txt_rol" />
                         </div>
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
@@ -58,7 +85,7 @@
                       <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_nombre_socio">Nombre Socio</label>
-                          <input type='text' class="form-control" id='txt_nombre_socio' name="txt_nombre_socio"/>
+                          <input type='text' class="form-control" id='txt_nombre_socio' name="txt_nombre_socio" />
                         </div>
                       </div>
                     </div>
@@ -66,13 +93,63 @@
                       <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="dt_mes_año">Mes Consumo</label>
-                          <input type='text' class="form-control" id='dt_mes_año' name="dt_mes_año"/>
+                          <input type='text' class="form-control" id='dt_mes_año' name="dt_mes_año" />
                         </div>
                       </div>
                       <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="cmb_sector">Sector</label>
                           <select id="cmb_sector" name="cmb_sector" class="form-control"></select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card shadow mb-4">
+                      <div class="card-header">
+                        DTE a emitir
+                      </div>
+                      <div class="card-body">
+                        <div class="row">
+                          <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3">
+                            <div class="form-group">
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="chk_boleta_exenta" name="chk_boleta_exenta">
+                                <label class="form-check-label" for="chk_boleta_exenta">
+                                  Boleta Exenta
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3">
+                            <div class="form-group">
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="chk_boleta_afecta" name="chk_boleta_afecta">
+                                <label class="form-check-label" for="chk_boleta_afecta">
+                                  Boleta Afecta
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3">
+                            <div class="form-group">
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="chk_factura_exenta" name="chk_factura_exenta">
+                                <label class="form-check-label" for="chk_factura_exenta">
+                                  Factura Exenta
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3">
+                            <div class="form-group">
+                              <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="chk_factura_afecta" name="chk_factura_afecta">
+                                <label class="form-check-label" for="chk_factura_afecta">
+                                  Factura Afecta
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+
                         </div>
                       </div>
                     </div>

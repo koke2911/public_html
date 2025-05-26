@@ -1,5 +1,9 @@
 var base_url = $("#txt_base_url").val();
 
+var txt_bafecta = $("#txt_bafecta").val();
+var txt_fafecta = $("#txt_fafecta").val();
+var txt_fexenta = $("#txt_fexenta").val();
+
 function opciones_anular(idSii, id_metros,id_tipo_documento){
   Swal.fire({
     title: 'Opciones de la boleta',
@@ -120,10 +124,41 @@ function buscar_boletas () {
   var mes_año = $("#dt_mes_año").val();
   var id_sector = $("#cmb_sector").val();
 
+  var chk_boleta_exenta = $("#chk_boleta_exenta").is(":checked");
+  var chk_boleta_afecta = $("#chk_boleta_afecta").is(":checked");
+  var chk_factura_exenta = $("#chk_factura_afecta").is(":checked");
+  var chk_factura_afecta = $("#chk_factura_afecta").is(":checked");
+
+  if (!chk_boleta_exenta && !chk_boleta_afecta && !chk_factura_exenta && !chk_factura_afecta) {
+    alerta.error("alerta", "Debe seleccionar al menos un tipo DTE (Exenta o Afecta)");
+    return;
+  }
+
+  var dte=[];
+
+  if (chk_boleta_exenta){
+    var bExenta='1';
+    dte.push(bExenta);
+  }
+  if (chk_boleta_afecta) {
+    var bAfecta = '3';
+     dte.push(bAfecta);
+  }
+  
+  if (chk_factura_exenta) {
+    var fExenta = '2';
+     dte.push(fExenta);
+  }
+
+  if (chk_factura_afecta) {
+    var fAfecta = '4';
+     dte.push(fAfecta);
+  }
+
   if (id_socio != "" || mes_año != "" || id_sector != "") {
     var datosBusqueda = [id_socio, mes_año, id_sector];
 
-    $("#grid_boletas").dataTable().fnReloadAjax(base_url + "/Pagos/Ctrl_boleta_electronica/datatable_boleta_electronica/" + datosBusqueda);
+    $("#grid_boletas").dataTable().fnReloadAjax(base_url + "/Pagos/Ctrl_boleta_electronica/datatable_boleta_electronica/" + datosBusqueda+"/"+dte);
   } else {
     alerta.aviso("alerta", "Debe seleccionar un items");
   }
@@ -350,6 +385,25 @@ $(document).ready(function () {
   $("#txt_rut_socio").prop("readonly", true);
   $("#txt_rol").prop("readonly", true);
   $("#txt_nombre_socio").prop("readonly", true);
+
+  if(txt_bafecta == 'true'){
+      $("#chk_boleta_afecta").prop("disabled", false);
+  }else{
+      $("#chk_boleta_afecta").prop("disabled", true);
+  }
+
+  if (txt_fexenta == 'true') {
+    $("#chk_factura_exenta").prop("disabled", false);
+  } else {
+    $("#chk_factura_exenta").prop("disabled", true);
+  }
+
+  if (txt_fafecta == 'true') {
+    $("#chk_factura_afecta").prop("disabled", false);
+  } else {
+    $("#chk_factura_afecta").prop("disabled", true);
+  }
+ 
 
   llenar_cmb_sector();
 

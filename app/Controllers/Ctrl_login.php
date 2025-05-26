@@ -58,9 +58,34 @@ class Ctrl_login extends BaseController {
                                      ->first();
       if ($datosUsuario != NULL) {
         if (password_verify($password, $datosUsuario["clave"])) {
+          
           $datosApr = $this->apr->select("*")
                                 ->where("id", $datosUsuario["id_apr"])
                                 ->first();
+
+               
+            $ultimo_folio_afecta= $datosApr['ultimo_folio_afecta'];
+            $ultimo_folio_fa = $datosApr['ultimo_folio_fa'];
+            $ultimo_folio_fe = $datosApr['ultimo_folio_fe'];
+
+            if($ultimo_folio_afecta==0 or $ultimo_folio_afecta == "" or $ultimo_folio_afecta == null){
+              $Bafecta='false';
+            }else{
+            $Bafecta='true';
+            }
+
+            if ($ultimo_folio_fa == 0 or $ultimo_folio_fa == "" or $ultimo_folio_fa == null) {
+              $Fafecta = 'false';
+            }else{
+            $Fafecta='true';
+            }
+
+            if ($ultimo_folio_fe == 0 or $ultimo_folio_fe == "" or $ultimo_folio_fe == null) {
+              $Fexenta = 'false';
+            }else{
+              $Fexenta='true';
+            }
+
           define("ACTIVADO", 1);
           define("BLOQUEADO", 2);
           define("PENDIENTE", 0);
@@ -79,7 +104,10 @@ class Ctrl_login extends BaseController {
                "rut_apr_ses"    => $datosApr["rut"],
                "dv_apr_ses"     => $datosApr["dv"],
                "es_admin"       => $datosUsuario["es_admin"],
-               "tipo_integracion_ses" => $datosApr["tipo_integracion"]
+               "tipo_integracion_ses" => $datosApr["tipo_integracion"],
+               "Bafecta" => $Bafecta,
+               "Fafecta" => $Fafecta,
+               "Fexenta" => $Fexenta
               ];
 
               $session = session();

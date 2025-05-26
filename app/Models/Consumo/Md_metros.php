@@ -42,7 +42,7 @@ class Md_metros extends Model {
    'punto_blue'
   ];
 
-  public function datatable_boleta_electronica($db, $id_apr, $datosBusqueda) {
+  public function datatable_boleta_electronica($db, $id_apr, $datosBusqueda,$dte) {
     define("ELIMINADO", 0);
     $estado = ELIMINADO;
 
@@ -94,6 +94,12 @@ class Md_metros extends Model {
      $estado,
      $id_apr
     ];
+
+    if($dte!=""){
+        $consulta .= " and a.id_tipo_documento in ($dte) ";
+    };
+
+    // echo $consulta;
 
     if ($datosBusqueda != "") {
       $datos = explode(",", $datosBusqueda);
