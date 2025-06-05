@@ -529,7 +529,8 @@
 			<body>
 				<div class='container'>
 					<h1>✅ ¡Pago Realizado con Éxito!</h1>
-					<p>Gracias. Tu transacción fue procesada correctamente.</p>
+					<p>Gracias. Tu transacción fue procesada correctamente. #Od".$id_webpay."&Ptb</p>
+					
 					<p>A continuación se detalla el comprobante de pago:</p>
 
 					<table>
@@ -555,6 +556,7 @@
 							<tr>
 								<th colspan='3'>Total Pagado: $" . number_format($total, 0, ',', '.') . "</th>
 							</tr>
+							
 						</tfoot>
 					</table>
 
