@@ -431,6 +431,7 @@
 		{
 						$datosPago = $this->caja_webpay
 							->select("m.id as id_metros", false)
+							->select("concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre")
 							->select("
 						CASE 
 							WHEN m.id_tipo_documento IN (3, 4) THEN ROUND(m.total_mes * 1.19, 0)
@@ -440,6 +441,7 @@
 							->join("caja cj", "cj.id = caja_webpay.id_caja")
 							->join("caja_detalle dt", "dt.id_caja = cj.id")
 							->join("metros m", "m.id = dt.id_metros")
+							->join("socios s", "s.id = m.id_socio")
 							->where("caja_webpay.id_webpay", $id_webpay)
 							->findAll();
 
@@ -529,9 +531,9 @@
 			<body>
 				<div class='container'>
 					<h1>✅ ¡Pago Realizado con Éxito!</h1>
-					<p>Gracias. Tu transacción fue procesada correctamente. #Od".$id_webpay."&Ptb</p>
+					<p>Gracias. Tu transacción fue procesada correctamente. #Od".$id_webpay. "&Ptb</p>
 					
-					<p>A continuación se detalla el comprobante de pago:</p>
+					<p>A continuación se detalla el comprobante de pago del socio<br> <strong>".$datosPago[0]['nombre']."</strong></p>
 
 					<table>
 						<thead>
