@@ -342,13 +342,14 @@
 						$fecha = date("Y-m-d H:i:s");
 						$id_usuario = PUNTO_BLUE;
 						
+						$id_webpay = $datosWebpay->id_webpay;
+
 						$respuesta = [
 							"message" => "Datos de transacción guardados con éxito",
 							"estado" => "exito",
-							"folio" => ""
+							"folio" => $id_webpay
 						];
 
-						$id_webpay = $datosWebpay->id_webpay;
 						$datosCajaWebpay = $this->caja_webpay->select("id_caja")->where("id_webpay", $id_webpay)->findAll();
 
 						foreach ($datosCajaWebpay as $key) {
