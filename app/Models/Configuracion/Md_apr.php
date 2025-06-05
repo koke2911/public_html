@@ -42,7 +42,8 @@ class Md_apr extends Model {
    'sucursal_sii',
    'ultimo_folio_afecta',
    'ultimo_folio_fe',
-   'ultimo_folio_fa'
+   'ultimo_folio_fa',
+   'utimo_notac'
   ];
 
   public function datatable_apr($db) {

@@ -425,5 +425,148 @@
 				return $this->respond($respuesta, 401);
 			}
 		}
+
+		public function datos_impresion($id_webpay)
+		{
+						$datosPago = $this->caja_webpay
+							->select("m.id as id_metros", false)
+							->select("
+						CASE 
+							WHEN m.id_tipo_documento IN (3, 4) THEN ROUND(m.total_mes * 1.19, 0)
+							ELSE m.total_mes
+						END as total_mes", false)
+							->select("DATE_FORMAT(m.fecha_ingreso, '%m/%Y') as mes_consumo", false)
+							->join("caja cj", "cj.id = caja_webpay.id_caja")
+							->join("caja_detalle dt", "dt.id_caja = cj.id")
+							->join("metros m", "m.id = dt.id_metros")
+							->where("caja_webpay.id_webpay", $id_webpay)
+							->findAll();
+
+		$total = 0;
+
+		$html = "<!DOCTYPE html>
+			<html lang='es'>
+
+			<head>
+				<meta charset='UTF-8'>
+				<title>Pago Exitoso</title>
+				<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+				<style>
+					body {
+						font-family: Arial, sans-serif;
+						background-color: #f0f9f2;
+						color: #3c763d;
+						text-align: center;
+						padding: 50px;
+					}
+
+					.container {
+						border: 2px solid #d6e9c6;
+						background-color: #dff0d8;
+						padding: 30px;
+						border-radius: 8px;
+						max-width: 600px;
+						margin: auto;
+						box-shadow: 0 0 10px rgba(60, 118, 61, 0.2);
+					}
+
+					h1 {
+						font-size: 2em;
+					}
+
+					p {
+						font-size: 1.2em;
+					}
+
+					table {
+						width: 100%;
+						margin-top: 20px;
+						border-collapse: collapse;
+						background-color: #fff;
+						color: #333;
+					}
+
+					th, td {
+						padding: 10px;
+						border: 1px solid #bbb;
+						text-align: center;
+					}
+
+					th {
+						background-color: #eaf5ea;
+					}
+
+					tfoot th {
+						background-color: #e0f0e0;
+						font-weight: bold;
+					}
+
+					.btn {
+						display: inline-block;
+						margin-top: 25px;
+						padding: 12px 20px;
+						font-size: 1em;
+						background-color: #3c763d;
+						color: #fff;
+						text-decoration: none;
+						border-radius: 5px;
+						cursor: pointer;
+					}
+
+					.btn:hover {
+						background-color: #2e5e2e;
+					}
+
+					@media print {
+						.no-print {
+							display: none;
+						}
+					}
+				</style>
+			</head>
+
+			<body>
+				<div class='container'>
+					<h1>✅ ¡Pago Realizado con Éxito!</h1>
+					<p>Gracias. Tu transacción fue procesada correctamente.</p>
+					<p>A continuación se detalla el comprobante de pago:</p>
+
+					<table>
+						<thead>
+							<tr>
+								<th>#ID</th>
+								<th>Monto</th>
+								<th>Mes de Consumo</th>
+							</tr>
+						</thead>
+						<tbody>";
+
+					foreach ($datosPago as $value) {
+						$metros = $value["id_metros"];
+						$monto = number_format($value["total_mes"], 0, ',', '.');
+						$mes = htmlspecialchars($value["mes_consumo"]);
+						$html .= "<tr><td>$metros</td><td>\$$monto</td><td>$mes</td></tr>";
+						$total += $value["total_mes"];
+					}
+
+					$html .= "</tbody>
+						<tfoot>
+							<tr>
+								<th colspan='3'>Total Pagado: $" . number_format($total, 0, ',', '.') . "</th>
+							</tr>
+						</tfoot>
+					</table>
+
+					<div class='no-print'>
+						<a class='btn' href='https://www.puntoblue.cl/'>Volver al inicio</a>
+						<button class='btn' onclick='window.print()'>🖨️ Imprimir Comprobante</button>
+					</div>
+				</div>
+			</body>
+
+			</html>";
+
+		echo $html;
+	}
 	}
 ?>

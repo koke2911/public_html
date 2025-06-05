@@ -1521,16 +1521,25 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
               }else if($tipo_dte == 39 || $tipo_dte == 33){  // BOLETA AFECTA
 
-                    $adicionales = $total_mes - $facturable;                    
-                    $total= $total1 + $alcantarillado;
-                    $iva = intval($total * 0.19);
-                    $neto= $total - $iva;
+                   
 
-                    $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf) + $iva;
+                $adicionales = $total_mes - $facturable;                    
+                $total= $total1 + $alcantarillado;
+                $iva = intval($total * 0.19);
+                $neto= $total - $iva;
+                
+                $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf) + $iva;
 
-                    $totales = '<MntNeto>'. $neto. '</MntNeto>
-                                <IVA>'. $iva.'</IVA>
-                                <MntTotal>'. $total.'</MntTotal>';
+                    if ($tipo_dte == 33) {
+                      $totales = '<MntNeto>' . $neto . '</MntNeto>  
+                      <TasaIVA>19</TasaIVA>                      
+                      <IVA>' . $iva . '</IVA>
+                      <MntTotal>' . $total . '</MntTotal>';
+                    } else {
+                      $totales = '<MntNeto>' . $neto . '</MntNeto>                        
+                      <IVA>' . $iva . '</IVA>
+                      <MntTotal>' . $total . '</MntTotal>';
+                    }
               }
               $cadena = '<DTE version="1.0">
                         <Documento ID="F437T33">
@@ -1709,7 +1718,8 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                      "id_tipo_documento" => $datosSocios["tipo_documento"],
                      "id"                => $folio,
                      "url_boleta"        => $url_pdf,
-                     "id_tipo_documento" => $tipo_doc_metros
+                     "id_tipo_documento" => $tipo_doc_metros,
+                     "fecha_documento"   => $fecha
                     ];
 
                     //
@@ -1869,6 +1879,510 @@ public function emitir_dte_new(){
     }
    
 }
+
+public function procesa_NC($TokenObtenido, $folio, $f_sii){
+// echo 'asasd';
+    ini_set("soap.wsdl_cache_enabled", "0");
+    define("BOLETA_EXENTA", 41);
+    define("FACTURA_EXENTA", 34);
+    define("ASIGNA_FOLIO_BOLECT", 7);
+    define("PENDIENTE", 1);
+    define("ACTIVO", 1);
+
+
+
+    $datosMetros = $this->metros
+      ->select("id_socio")
+      ->select("monto_facturable")
+      ->select("total_mes")
+      ->select("total_servicios")
+      ->select("multa")
+      ->select("cuota_repactacion")
+      ->select("consumo_anterior")
+      ->select("consumo_actual")
+      ->select("metros")
+      ->select("monto_subsidio")
+      ->select("subtotal")
+      ->select("ifnull(alcantarillado,0) as alcantarillado")
+      ->select("cuota_socio")
+      ->select("otros")
+      ->select("iva")
+      ->select("cargo_fijo")
+      ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
+      ->select("date_format(fecha_vencimiento, '%Y-%m-%d') as fecha_vencimiento")
+      ->select("ifnull(elt(field(tipo_facturacion, 1, 2), 'NORMAL', 'TÉRMINO MEDIO'), 'NO REGISTRADO') as tipo_facturacion")
+      ->select("folio_bolect as folio_factura")
+      ->select("date_format(fecha_documento, '%Y-%m-%d') as fecha_documento")
+      ->where("id", $folio)
+      ->first();
+
+    $consumo_anterior  = $datosMetros["consumo_anterior"];
+    $consumo_actual    = $datosMetros["consumo_actual"];
+    $metros_           = $datosMetros["metros"];
+    $total_mes         = $datosMetros["total_mes"];
+    $monto_facturable  = $datosMetros["monto_facturable"];
+    $cuota_repactacion = $datosMetros["cuota_repactacion"];
+    $total_servicios   = $datosMetros["total_servicios"];
+    $multa             = $datosMetros["multa"];
+    $monto_subsidio    = $datosMetros["monto_subsidio"];
+    $subtotal          = $datosMetros["subtotal"];
+    $alcantarillado    = $datosMetros["alcantarillado"];
+    $cuota_socio       = $datosMetros["cuota_socio"];
+    $otros             = $datosMetros["otros"];
+    $iva               = $datosMetros["iva"];
+    $mes_consumo       = $datosMetros["mes_consumo"];
+    $periodo_desde     = $this->periodo_desde($mes_consumo);
+    $periodo_hasta     = $this->periodo_hasta($mes_consumo);
+    $fecha_vencimiento = $datosMetros["fecha_vencimiento"];
+    $id_socio          = $datosMetros["id_socio"];
+    $cargo_fijo        = $datosMetros["cargo_fijo"];
+
+    $folio_factura        = $datosMetros["folio_factura"];
+    $fecha_documento        = $datosMetros["fecha_documento"];
+
+
+
+
+    if (intval($total_mes) > 0) {
+      $datosSocios = $this->socios
+        ->select("concat(socios.rut, '-', socios.dv) as rut_socio")
+        ->select("concat(socios.nombres, ' ', socios.ape_pat, ' ', socios.ape_mat) as nombre_socio")
+        ->select("concat(socios.calle, ', ', socios.numero, ', ', socios.resto_direccion) as direccion")
+        ->select("socios.rol")
+        ->select("socios.id_comuna")
+        ->select("a.id_tipo_documento as tipo_documento")
+        ->select("m.numero as num_medidor")
+        ->select("cf.cargo_fijo")
+        ->select("socios.id")
+        ->select("s.nombre as sector")
+        ->select("t.tipo as tarifa")
+        ->select("ifnull(afecto_corte(socios.id,socios.id_apr),0) as meses_deuda")
+        ->join("arranques a", "a.id_socio = socios.id")
+        ->join("sectores s", "a.id_sector = s.id")
+        ->join("medidores m", "a.id_medidor = m.id")
+        ->join("tarifas t", "a.tarifa = t.id_tarifa")
+        ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro = m.id_diametro")
+        ->where("socios.id", $id_socio)
+        ->first();
+
+
+      if ($datosSocios["rut_socio"] != "") {
+        $rut_socio = $datosSocios["rut_socio"];
+      } else {
+        $rut_socio = "66666666-6";
+      }
+
+      if ($datosSocios["nombre_socio"] != "") {
+        $nombre_socio = $datosSocios["nombre_socio"];
+      } else {
+        $nombre_socio = "Sin RUT";
+      }
+
+      if ($datosSocios["direccion"] != ", , ") {
+        $direccion = $datosSocios["direccion"];
+      } else {
+        $direccion = "Sin Dirección";
+      }
+
+      if ($datosSocios["id_comuna"] != "") {
+        $datosComuna = $this->comunas->select("nombre")
+          ->where("id", $datosSocios["id_comuna"])
+          ->first();
+        $comuna      = $datosComuna["nombre"];
+      } else {
+        $comuna = "Sin Comuna";
+      }
+
+      helper('tipo_dte');
+      $tipo_dte = tipo_dte($datosSocios["tipo_documento"]);
+      $tipo_doc_metros = $datosSocios["tipo_documento"];
+
+      $num_medidor = $datosSocios["num_medidor"];
+      $sector      = $datosSocios["sector"];
+
+      $datosParaGrafico = $this->metros->select("date_format(fecha_ingreso, '%m-%Y') as fecha")
+        ->select("consumo_actual")
+        ->where("id_socio", $id_socio)
+        ->whereNotIn("estado", [0])
+        ->findAll();
+      $datos_graf       = [];
+
+      foreach ($datosParaGrafico as $key) {
+        $datos_graf[$key["fecha"]] = $key["consumo_actual"];
+      }
+
+      $datosDeuda            = $this->metros->select("total_mes")
+        ->where("id_socio", $id_socio)
+        ->where("estado", PENDIENTE)
+        ->where("id<", $folio)
+        ->findAll();
+
+
+
+      $datosObservacionesDte = $this->observaciones_dte
+        ->select("titulo")
+        ->select("observacion")
+        ->where("id_apr", $this->sesión->id_apr_ses)
+        ->where("estado", ACTIVO)
+        ->findAll();
+
+
+      $datosUltPagoId = $this->caja
+        ->selectMax("id")
+        ->where("id_socio", $id_socio)
+        ->where("estado", ACTIVO)
+        ->first();
+
+      $datosUltPago = $this->caja
+        ->select("total_pagar")
+        ->select("date_format(fecha, '%d-%m-%Y') as fecha")
+        ->where("id", $datosUltPagoId["id"])
+        ->first();
+
+      $consumo_anterior_nf = 0;
+
+      if ($datosDeuda != NULL) {
+        foreach ($datosDeuda as $key) {
+          $consumo_anterior_nf = $consumo_anterior_nf + intval($key["total_mes"]);
+        }
+      }
+
+      $observaciones = "TIPO FACTURACION, " . $datosMetros["tipo_facturacion"] . "\n";
+
+      if ($datosUltPago != NULL) {
+        $observaciones .= "ULTIMO PAGO REALIZADO: " . $datosUltPago["fecha"] . ", POR $" . number_format($datosUltPago["total_pagar"], 0, ",", ".") . "\n";
+      }
+
+      if ($datosObservacionesDte != NULL) {
+        foreach ($datosObservacionesDte as $key) {
+          $observaciones .= $key["titulo"] . ", " . $key["observacion"] . "\n";
+        }
+      }
+
+
+      if ($datosSocios["meses_deuda"] >= 2) {
+        $observaciones .= 'CORTE DE SUMINISTRO  EN TRAMITE POR : ' . $datosSocios["meses_deuda"] . ' MESES VENCIDOS';
+      }
+
+      $monto_metros = intval($subtotal) - intval($cargo_fijo);
+      $exento       = $tipo_dte === BOLETA_EXENTA || $tipo_dte === FACTURA_EXENTA;
+      $rut_apr = $this->sesión->rut_apr_ses . "-" . $this->sesión->dv_apr_ses;
+      $id_apr = $this->sesión->id_apr_ses;
+
+      $datosApr = $this->apr->select("*")
+        ->where("id", $id_apr)
+        ->first();
+
+      $datosComuna = $this->comunas->select("comunas.nombre")
+        ->select("r.nombre as region")
+        ->join("provincias p", "p.id = comunas.id_provincia")
+        ->join("regiones r", "r.id = p.id_region")
+        ->where("comunas.id", $datosApr["id_comuna"])
+        ->first();
+
+
+      $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl");
+
+      $fecha = date('Y-m-d');
+      $fecha_venc = date("Y-m-d", strtotime($fecha . "+ 1 month"));
+
+      $total1 = intval($cargo_fijo) + intval($monto_metros) - intval($monto_subsidio);
+      $total2 = intval($cargo_fijo) + intval($monto_metros);
+      $facturable = $total1 + $alcantarillado;
+
+
+      // $rut_apr= '99999999-9'; // COMENTAAAAAAR
+
+      $adicionales = $total_mes - $facturable;
+      $total = $total1 + $alcantarillado;
+      $iva = intval($total * 0.19);
+      $neto = $total - $iva;
+
+      $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf) + $iva;
+
+
+      $cadena = '<DTE version="1.0">
+                  <Documento ID="R78276600-7T61F1">
+                  <Encabezado>
+                    <IdDoc>
+                    <TipoDTE>61</TipoDTE>
+                    <Folio>'.$f_sii. '</Folio>
+                    <FchEmis>' . $fecha . '</FchEmis>
+                    </IdDoc>
+                    <Emisor>
+                      <RUTEmisor>' . $rut_apr . '</RUTEmisor>
+                      <RznSoc>' . $datosApr['nombre'] . '</RznSoc>
+                      <GiroEmis>' . $datosApr['activity'] . '</GiroEmis>   
+                      <Acteco>1</Acteco>                  
+                      <DirOrigen>' . $datosApr['calle'] . ' ' . $datosApr['numero'] . ' ' . $datosApr['resto_direccion'] . '</DirOrigen>
+                      <CmnaOrigen>' . $datosComuna['nombre'] . '</CmnaOrigen>
+                      <CiudadOrigen>' . $datosComuna['nombre'] . '</CiudadOrigen>
+                    </Emisor>
+                    <Receptor>
+                      <RUTRecep>' . strtoupper($rut_socio) . '</RUTRecep>
+                      <RznSocRecep>' . $nombre_socio . '</RznSocRecep>
+                      <GiroRecep>Particular</GiroRecep>
+                      <DirRecep>' . $direccion . '</DirRecep>
+                      <CmnaRecep>' . $comuna . '</CmnaRecep>
+                      <CiudadRecep>' . $comuna . '</CiudadRecep>
+                    </Receptor>
+                    <Totales>
+                      <MntNeto>' . $neto . '</MntNeto>  
+                      <TasaIVA>19</TasaIVA>                      
+                      <IVA>' . $iva . '</IVA>
+                      <MntTotal>' . $total . '</MntTotal>
+                    </Totales>
+                  </Encabezado>
+                  <Detalle>
+                      <NroLinDet>1</NroLinDet>
+                      <NmbItem>ELIMINA FACTURA CONSUMO AGUA POTABLE</NmbItem>
+                      <MontoItem>' . $total . '</MontoItem>
+                  </Detalle>
+                    <Referencia>
+                    <NroLinRef>1</NroLinRef>
+                    <TpoDocRef>'. $tipo_dte.'</TpoDocRef>
+                    <FolioRef>'. $folio_factura. '</FolioRef>
+                    <FchRef>' . $fecha_documento . '</FchRef>
+                    <CodRef>1</CodRef>
+                  </Referencia>
+                  </Documento>
+                  </DTE>';
+
+      // echo $cadena;
+
+
+      $cadena = str_replace(
+        array('á', 'à', 'ä', 'â', 'ª', 'Á', 'À', 'Â', 'Ä'),
+        array('a', 'a', 'a', 'a', 'a', 'A', 'A', 'A', 'A'),
+        $cadena
+      );
+
+      $cadena = str_replace(
+        array('é', 'è', 'ë', 'ê', 'É', 'È', 'Ê', 'Ë'),
+        array('e', 'e', 'e', 'e', 'E', 'E', 'E', 'E'),
+        $cadena
+      );
+
+      $cadena = str_replace(
+        array('í', 'ì', 'ï', 'î', 'Í', 'Ì', 'Ï', 'Î'),
+        array('i', 'i', 'i', 'i', 'I', 'I', 'I', 'I'),
+        $cadena
+      );
+
+      $cadena = str_replace(
+        array('ó', 'ò', 'ö', 'ô', 'Ó', 'Ò', 'Ö', 'Ô'),
+        array('o', 'o', 'o', 'o', 'O', 'O', 'O', 'O'),
+        $cadena
+      );
+
+      $cadena = str_replace(
+        array('ú', 'ù', 'ü', 'û', 'Ú', 'Ù', 'Û', 'Ü'),
+        array('u', 'u', 'u', 'u', 'U', 'U', 'U', 'U'),
+        $cadena
+      );
+
+      $cadena = str_replace(
+        array('ñ', 'Ñ'),
+        array('n', 'N'),
+        $cadena
+      );
+
+      $xml_dte_limpio = $cadena;
+
+      $fecha_comp = explode('-', $mes_consumo);
+      $monthNumber = $fecha_comp[0];
+      if ($monthNumber == '01') {
+        $mes = 'Enero';
+      }
+      if ($monthNumber == '02') {
+        $mes = 'Febrero';
+      }
+      if ($monthNumber == '03') {
+        $mes = 'Marzo';
+      }
+      if ($monthNumber == '04') {
+        $mes = 'Abril';
+      }
+      if ($monthNumber == '05') {
+        $mes = 'Mayo';
+      }
+      if ($monthNumber == '06') {
+        $mes = 'Junio';
+      }
+      if ($monthNumber == '07') {
+        $mes = 'Julio';
+      }
+      if ($monthNumber == '08') {
+        $mes = 'Agosto';
+      }
+      if ($monthNumber == '09') {
+        $mes = 'Septiembre';
+      }
+      if ($monthNumber == '10') {
+        $mes = 'Octubre';
+      }
+      if ($monthNumber == '11') {
+        $mes = 'Noviembre';
+      }
+      if ($monthNumber == '12') {
+        $mes = 'Diciembre';
+      }
+
+      $subsidiario = 'NO';
+      if (intval($monto_subsidio) > 0) {
+        $subsidiario = 'SI';
+      }
+
+
+      if ($multa > 0) {
+        $multas = 'Multas : $' . $multa;
+      }
+
+      if (intval($cuota_repactacion) > 0) {
+        $cuotas = 'Cuota Repactacion : $' . $cuota_repactacion;
+      }
+
+      if (intval($total_servicios) > 0 || intval($otros) > 0) {
+        $otr = $total_servicios + $otros;
+        $total_servicio = 'Otros servicios : $' . $otr;
+      }
+
+      if (intval($cuota_socio) > 0) {
+        $cuotas_socios = 'Cuota Socio : $' . $cuota_socio;
+      }
+
+      $trece = $fecha_vencimiento;
+
+
+
+      $xml_adicional = '';
+
+
+      // $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
+      $parametros = array("STRINGXML" => $xml_dte_limpio, "STRINGXMLADICIONAL" => $xml_adicional, "ASIGNAFOLIO" => "False", "TIPOIMPRESO" => "1", "AMBIENTE" => "1", "TOKEN" => $TokenObtenido);
+      
+      if ( $tipo_dte == 33 ) {
+
+        $resultado = $client->call("ProcesaDte", $parametros);
+
+
+        $resultado_estado = $resultado['item']['ResultadoFE'];
+        $url_pdf = $resultado['item']['UrlPdf'];
+        $folioSii = $resultado['item']['FolioAsignado'];
+
+        if ($resultado_estado == 'DTE procesado correctamente.') {
+          $datosMetrosSave = [
+            "folio_nc"      => $f_sii,            
+            "id"            => $folio,
+            "url_notac"     => $url_pdf,
+            "folio_bolect"  => 0,
+            "url_boleta"    => null         
+          ];
+
+          // *************** DESCOMENTAR ARRIBAAAAAA *********************
+          
+          $this->metros->save($datosMetros);
+          //
+
+            if ($this->metros->save($datosMetrosSave)) {
+                $fecha      = date("Y-m-d H:i:s");
+                $id_usuario = $this->sesión->id_usuario_ses;
+                $estado     = 2;
+
+                $datosTraza = [
+                  "id_metros"  => $folio,
+                  "estado"     => $estado,
+                  "id_usuario" => $id_usuario,
+                  "fecha"      => $fecha,
+                  "observacion" => 'Genera Nota de credito para DTE: ' . $folio_factura.' - Metros ' . $folio.' Por anulación'
+                ];
+
+                  if (!$this->metros_traza->save($datosTraza)) {
+                    $this->error .= "Id Metros: $folio, <br>";
+                    $this->error .= "Error: Falló al ingresar traza. <br><br>";
+                  }else{
+                    echo json_encode(['codigo' => 1, 'mensaje' => $url_pdf]);
+                  }
+            } else {
+              $this->error .= "Id Metros: $folio, <br>";
+              $this->error .= "Error: Falló al actualizar el folio SII. <br><br>";
+            }
+          } else {
+            $this->error .= "ERROR AL PROCESAR DTE" . $folio . " <br> " . $resultado_estado . " <br><br>";
+          }
+      } else {
+
+          $id_metros = $this->request->getPost("id_metros");
+
+          $datosMetros = [
+            "id" => $folio,
+            "folio_bolect" => 0,
+            "url_boleta" => null
+          ];
+
+          $this->metros->save($datosMetros);
+
+        echo json_encode(['codigo' => 2, 'mensaje' => "Anulado con exito"]);
+      }
+    }
+  }
+
+
+  public function emitir_nota_credito()
+  {
+
+    ini_set('max_execution_time', 480);
+    ini_set('max_input_time', 480);
+    ini_set('memory_limit', 5120 . 'M');
+
+    $this->validar_sesion();
+    $id_apr = $this->sesión->id_apr_ses;
+
+
+    $datosAprs = $this->apr->select("*")
+      ->where("id", $id_apr)
+      ->first();
+
+    $f_siinc = $datosAprs["utimo_notac"];
+    $f_siinc++;
+
+
+    $folio = $this->request->getPost("folio_metros");
+
+    $token = $this->ObtieneToken();
+    if ($token != "") {
+      $valido = $this->valida_token($token);
+
+      if ($valido != 'NO') {
+    
+        $generado = $this->procesa_NC($token, $folio, $f_siinc);
+      
+      } else {
+        $this->error .= "Token invalido $token <br><br>";
+      }
+    } else {
+      $this->error .= "No se pudo generar token de acceso <br><br>";
+    }
+
+
+    $datosMetros = $this->db->query("SELECT ifnull(max(folio_nc),0) as maximo from metros m where m.id_apr=$id_apr and url_notac is not null ")->getRow();
+    $ultimo = $datosMetros->maximo;
+
+    $datosAPR     = [
+      'utimo_notac' => $ultimo,      
+      'id' => $id_apr
+    ];
+
+    if (!$this->apr->save($datosAPR)) {
+      $this->error .= "ERROR AL ACTUALIZAR ULTIMO FOLIO NC CONTACTE AL ADM <br><br>";
+    }
+
+    if ($this->error == "") {
+      echo $generado;
+    } else {
+      echo $this->error;
+    }
+  }
 
   public function reenviar_boleta()
   {

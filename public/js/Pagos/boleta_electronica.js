@@ -75,10 +75,9 @@ function ver_estado_sii(idSii, id_tipo_documento){
 }
 
 function anular_boleta(idSii, id_metros) {
-  // alert(idSii +"--" +id_metros);
   Swal.fire({
     title: '¿Está seguro de anular la boleta?',
-    text: "No podrá revertir esta acción, debe realizar la regularización correspondiente en el sitio de SII",
+    text: "No podrá revertir esta acción, debe realizar la regularización correspondiente en el sitio de SII- Para Factura Afecta se genera la NOTA DE CREDITO",
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#3085d6',
@@ -87,11 +86,35 @@ function anular_boleta(idSii, id_metros) {
   }).then((result) => {
     if (result.isConfirmed) {
       $.ajax({
-        url: base_url + "/Pagos/Ctrl_boleta_electronica/anular_boleta",
+        // url: base_url + "/Pagos/Ctrl_boleta_electronica/anular_boleta",
+        url: base_url + "/Pagos/Ctrl_boleta_electronica/emitir_nota_credito",
+
         type: "POST",
-        data: {idSii: idSii, id_metros: id_metros},
-        success: function (respuesta) {
-          buscar_boletas();
+        dataType: 'json',
+        data: { idSii: idSii, folio_metros: id_metros},
+        success: function (data) {
+          if (data.codigo == 2 || data.codigo==1) {
+            
+            if(data.codigo==1){
+              window.open(data.mensaje);
+            }
+            Swal.fire({
+              title: 'Boleta anulada correctamente',
+              icon: 'success',
+              text: data.mensaje,
+              confirmButtonText: 'Aceptar'
+            });
+            
+            buscar_boletas();
+          }else{  
+            Swal.fire({
+              title: 'Ha ocurrido un error',
+              text: respuesta,
+              icon: 'error',
+              confirmButtonText: 'Aceptar'
+            });
+          }
+
         }
       });
     }

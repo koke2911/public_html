@@ -106,6 +106,7 @@ class Ctrl_historial_pagos extends BaseController {
       $datosPagoDetalle = $this->caja_detalle->select("*")
                                              ->where("id_caja", $id_caja)
                                              ->findAll();
+      
 
       foreach ($datosPagoDetalle as $key) {
         $datosMetros = [
@@ -126,37 +127,39 @@ class Ctrl_historial_pagos extends BaseController {
           if (!$this->metros_traza->save($datosMetrosTraza)) {
             echo "Error al registrar traza al registro de metros";
           }else{
-             $datosSocios = $this->socios->select("socios.id,socios.abono,c.abono as abono_caja")
-                                             ->join("caja c","c.id_socio=socios.id")
-                                             ->where("c.id", $id_caja)
-                                             ->findAll();
-              $id_socio=$datosSocios[0]['id'];
-              $abono_socio=$datosSocios[0]['abono'];
-              $abono_caja=$datosSocios[0]['abono_caja'];
-
-              $anula_abono=$abono_socio+$abono_caja;
-
-               $datosSocios = [
-               "id"         => $id_socio,
-               "abono"      => $anula_abono,
-               "id_usuario" => $id_usuario,
-               "fecha"      => $fecha
-              ];
-
-              $this->socios->save($datosSocios);
-
-              $datosSociosTraza = [
-               "id_socio"   => $id_socio,
-               "estado"     => 8,
-               "id_usuario" => $id_usuario,
-               "fecha"      => $fecha
-              ];
-
-              $this->socios_traza->save($datosSociosTraza);
+            
 
           }
         }
       }
+
+      $datosSocios = $this->socios->select("socios.id,socios.abono,c.abono as abono_caja")
+        ->join("caja c", "c.id_socio=socios.id")
+        ->where("c.id", $id_caja)
+        ->findAll();
+      $id_socio = $datosSocios[0]['id'];
+      $abono_socio = $datosSocios[0]['abono'];
+      $abono_caja = $datosSocios[0]['abono_caja'];
+
+      $anula_abono = $abono_socio + $abono_caja;
+
+      $datosSocios = [
+        "id"         => $id_socio,
+        "abono"      => $anula_abono,
+        "id_usuario" => $id_usuario,
+        "fecha"      => $fecha
+      ];
+
+      $this->socios->save($datosSocios);
+
+      $datosSociosTraza = [
+        "id_socio"   => $id_socio,
+        "estado"     => 8,
+        "id_usuario" => $id_usuario,
+        "fecha"      => $fecha
+      ];
+
+      $this->socios_traza->save($datosSociosTraza);
 
       echo OK;
     } else {

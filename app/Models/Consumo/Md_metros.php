@@ -39,7 +39,10 @@ class Md_metros extends Model {
    'iva',
    'url_boleta',
    'estado_mail',
-   'punto_blue'
+   'punto_blue',
+   'folio_nc',
+   'url_notac',
+   'fecha_documento'
   ];
 
   public function datatable_boleta_electronica($db, $id_apr, $datosBusqueda,$dte) {
