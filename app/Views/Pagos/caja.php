@@ -12,19 +12,19 @@
               <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                 <div class="form-group">
                   <label class="small mb-1" for="txt_id_socio">Id. Socio</label>
-                  <input type='text' class="form-control" id='txt_id_socio' name="txt_id_socio"/>
+                  <input type='text' class="form-control" id='txt_id_socio' name="txt_id_socio" />
                 </div>
               </div>
               <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                 <div class="form-group">
                   <label class="small mb-1" for="txt_rut_socio">RUT Socio</label>
-                  <input type='text' class="form-control" id='txt_rut_socio' name="txt_rut_socio"/>
+                  <input type='text' class="form-control" id='txt_rut_socio' name="txt_rut_socio" />
                 </div>
               </div>
               <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                 <div class="form-group">
                   <label class="small mb-1" for="txt_rol">ROL Socio</label>
-                  <input type='text' class="form-control" id='txt_rol' name="txt_rol"/>
+                  <input type='text' class="form-control" id='txt_rol' name="txt_rol" />
                 </div>
               </div>
               <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
@@ -38,13 +38,19 @@
               <div class="col-xl-8 col-lg-8 col-md-12 col-sm-12">
                 <div class="form-group">
                   <label class="small mb-1" for="txt_nombre_socio">Nombre Socio</label>
-                  <input type='text' class="form-control" id='txt_nombre_socio' name="txt_nombre_socio"/>
+                  <input type='text' class="form-control" id='txt_nombre_socio' name="txt_nombre_socio" />
                 </div>
               </div>
               <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
                 <div class="form-group">
                   <label class="small mb-1" for="txt_abono">Abono</label>
-                  <input type='text' class="form-control" id='txt_abono' name="txt_abono"/>
+                  <input type='text' class="form-control" id='txt_abono' name="txt_abono" />
+                </div>
+              </div>
+              <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
+                <div class="form-group">
+                  <label class="small mb-1" for="txt_descuentoSocio">descuento</label>
+                  <input type='text' class="form-control" id='txt_descuentoSocio' name="txt_descuentoSocio" disabled/>
                 </div>
               </div>
             </div>
@@ -77,7 +83,7 @@
                           <div class="input-group-prepend">
                             <span class="input-group-text font-weight-bold" id="basic-addon1">$</span>
                           </div>
-                          <input type='text' class="form-control bg-info text-white" id='txt_descuento' name="txt_descuento" style="font-size: 150%;"/>
+                          <input type='text' class="form-control bg-info text-white" id='txt_descuento' name="txt_descuento" style="font-size: 150%;" />
                         </div>
                       </div>
                     </div>
@@ -88,7 +94,7 @@
                           <div class="input-group-prepend">
                             <span class="input-group-text font-weight-bold" id="basic-addon1">$</span>
                           </div>
-                          <input type='text' class="form-control bg-warning text-dark" id='txt_total_pagar' name="txt_total_pagar" style="font-size: 150%;"/>
+                          <input type='text' class="form-control bg-warning text-dark" id='txt_total_pagar' name="txt_total_pagar" style="font-size: 150%;" />
                         </div>
                       </div>
                     </div>
@@ -112,13 +118,13 @@
                   <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                     <div class="form-group">
                       <label class="small mb-1" for="txt_n_transaccion" style="font-size: 150%;">Fecha Transferencia</label>
-                      <input type='text' class="form-control bg-light text-dark" id='dt_f_transa' name="dt_f_transa" style="font-size: 150%;"/>
+                      <input type='text' class="form-control bg-light text-dark" id='dt_f_transa' name="dt_f_transa" style="font-size: 150%;" />
                     </div>
                   </div>
                   <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                     <div class="form-group">
                       <label class="small mb-1" for="txt_n_transaccion" style="font-size: 150%;">N° de Transacción</label>
-                      <input type='text' class="form-control bg-light text-dark" id='txt_n_transaccion' name="txt_n_transaccion" style="font-size: 150%;"/>
+                      <input type='text' class="form-control bg-light text-dark" id='txt_n_transaccion' name="txt_n_transaccion" style="font-size: 150%;" />
                     </div>
                   </div>
                   <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
@@ -128,7 +134,7 @@
                         <div class="input-group-prepend">
                           <span class="input-group-text font-weight-bold" id="basic-addon1">$</span>
                         </div>
-                        <input type='text' class="form-control bg-secondary text-white" id='txt_entregado' name="txt_entregado" style="font-size: 150%;"/>
+                        <input type='text' class="form-control bg-secondary text-white" id='txt_entregado' name="txt_entregado" style="font-size: 150%;" />
                       </div>
                     </div>
                   </div>
@@ -139,7 +145,7 @@
                         <div class="input-group-prepend">
                           <span class="input-group-text font-weight-bold" id="basic-addon1">$</span>
                         </div>
-                        <input type='text' class="form-control bg-info text-white" id='txt_vuelto' name="txt_vuelto" style="font-size: 150%;"/>
+                        <input type='text' class="form-control bg-info text-white" id='txt_vuelto' name="txt_vuelto" style="font-size: 150%;" />
                       </div>
                     </div>
                   </div>

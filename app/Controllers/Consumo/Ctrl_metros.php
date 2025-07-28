@@ -282,6 +282,7 @@ class Ctrl_metros extends BaseController {
      ->select("arranques.id_tipo_documento")
      ->select("arranques.tarifa")
      ->select("cf.sin_consumo")
+      ->select("arranques.descuento")
      ->join("medidores m", "arranques.id_medidor = m.id")
      ->join("diametro d", "m.id_diametro = d.id")
      ->join("socios s", "arranques.id_socio = s.id")

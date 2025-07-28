@@ -6,9 +6,12 @@
 	use App\Models\Pagos\Md_caja_detalle;
 	use App\Models\Pagos\Md_caja_traza;
 	use App\Models\Formularios\Md_socios;
+	use App\Models\Formularios\Md_arranques;
+	use App\Models\Formularios\Md_medidores;
 	use App\Models\Pagos\Md_webpay;
 	use App\Models\Pagos\Md_caja_webpay;
 	use App\Models\Configuracion\Md_apr;
+	
 
 	class Webpay extends Auth {
 		protected $metros;
@@ -21,6 +24,8 @@
 		protected $caja_webpay;
 		protected $apr;
 		protected $db;
+		protected $arranques;
+		protected $medidores;
 
 		public function __construct() {
 			$this->metros = new Md_metros();
@@ -29,6 +34,8 @@
 			$this->caja_detalle = new Md_caja_detalle();
 			$this->caja_traza = new Md_caja_traza();
 			$this->socios = new Md_socios();
+			$this->arranques = new Md_arranques();
+			$this->medidores = new Md_medidores();
 			$this->webpay = new Md_webpay();
 			$this->caja_webpay = new Md_caja_webpay();
 			$this->apr = new Md_apr();
@@ -187,8 +194,10 @@
 					->select("apr.codigo_comercio")
 					->select("date_format(m.fecha_ingreso, '%m/%Y') as mes_consumo")
 					->select("m.id_tipo_documento as tipo_documento")
+					->select("a.descuento as descuento")
 					->join("metros m", "m.id_socio = socios.id")
 					->join("apr", "m.id_apr = apr.id")
+					->join("arranques a", "a.id_socio = socios.id")
 					->where("socios.rut", $rut)
 					->where("socios.estado", ACTIVO)
 					->where("m.estado", ACTIVO)
@@ -200,6 +209,7 @@
 				foreach ($datosSocios as $key) {
 					$i++;
 					$tipo_documento = $key["tipo_documento"];
+					$descuento= $key["descuento"];
 
 					if ($tipo_documento == 3 or $tipo_documento == 4) {
 
@@ -210,7 +220,7 @@
 						$total = $key["total_pagar"];
 					}
 
-					$datosSocios[$i]["total_pagar"]=strval($total);
+					$datosSocios[$i]["total_pagar"]=strval($total-$descuento);
 
 				}
 					
@@ -572,6 +582,73 @@
 			</html>";
 
 		echo $html;
+		}
+
+	public function login_portal()
+	{
+		$token = ($this->request->getHeader("Authorization") != null) ? $this->request->getHeader("Authorization")->getValue() : "";
+		if ($this->validateToken($token) == true) {
+			if ($this->request->getMethod() == "post") {
+				$rut = $this->request->getPost('rut');
+				$medidor = $this->request->getPost('medidor');
+
+				
+
+				// echo $medidor;
+				// exit();
+
+				$datosSocios = $this->socios
+					->select("socios.id as id_socio")
+					->select("socios.rol")
+					->select("concat(socios.nombres, ' ', socios.ape_pat, ' ', socios.ape_mat) as nombre")				
+					->join("arranques a", "a.id_socio = socios.id")
+					->join("medidores m", "m.id = a.id_medidor")
+					->where("socios.rut", $rut)
+					->where("socios.estado", 1)
+					->where("m.numero", $medidor)
+					->findAll();
+				
+					// print_r($datosSocios);exit();
+
+				if(empty($datosSocios)){
+					$respuesta = [
+						"message" => "Socio no existe",
+						"estado" => "-1",
+						"datos" => ""
+					];
+
+					return $this->respond($respuesta, 401);
+				}else{
+					$respuesta = [
+						"message" => "Socio existe",
+						"estado" => "1",
+						"datos" => $datosSocios
+					];
+
+					return $this->respond($respuesta, 200);
+				}
+
+				
+			} else {
+				$respuesta = [
+					"message" => "No hay datos enviados por post",
+					"estado" => "-1",
+					"datos" => ""
+				];
+
+				return $this->respond($respuesta, 401);
+			}
+		} else {
+			$respuesta = [
+				"message" => "Token Inválido",
+				"estado" => "-1",
+				"datos" => ""
+			];
+
+			return $this->respond($respuesta, 401);
+		}
 	}
+
+
 	}
 ?>

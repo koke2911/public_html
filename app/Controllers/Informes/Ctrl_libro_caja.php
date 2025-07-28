@@ -1634,6 +1634,65 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
     }
     $pdf->Cell(195, 5, 'TOTAL   $' . number_format($total_depo, 0, ',', '.'), 1, 0, 'R', true);
 
+    $pdf->ln(10);
+    $pdf->SetFont('dejavusans',  'B',      12);
+    $pdf->Cell(0, 5, 'INGRESO POR TARJETA', 0, 1, 'C');
+
+    $pdf->SetFont(
+      'dejavusans',
+      '',
+      8
+    );
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.1);
+    $pdf->SetX(10);
+    $pdf->Cell(30, 5, 'N° comprobante', 1, 0, 'C', true);
+    $pdf->Cell(30, 5, 'Fecha emisión', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Servicio', 1, 0, 'C', true);
+    $pdf->Cell(25, 5, 'N° Medidor ', 1, 0, 'C', true);
+    $pdf->Cell(
+      65,
+      5,
+      'Cliente',
+      1,
+      0,
+      'C',
+      true
+    );
+    $pdf->Cell(20, 5, 'Monto', 1, 1, 'C', true);
+
+    $sql = "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar FROM caja c 
+            inner join socios s on s.id=c.id_socio 
+            inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
+            inner join medidores m on m.id=a.id_medidor
+            where c.id_apr=$id_apr and c.estado=1
+            AND c.fecha BETWEEN '$inicio 00:00:00' AND '$fin 23:59:59' and c.id_forma_pago=2 order by c.fecha desc";
+    $query = $db->query($sql);
+    $pdf->SetX(10);
+
+    $count = 0;
+    $total_tarjeta = 0;
+    foreach ($query->getResult() as $row) {
+      $total_tarjeta += $row->total_pagar;
+      $pdf->Cell(
+        30,
+        5,
+        $row->id,
+        1,
+        0,
+        'C',
+        true
+      );
+      $pdf->Cell(30, 5, $row->fecha, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->rol, 1, 0, 'C', true);
+      $pdf->Cell(25, 5, $row->numero, 1, 0, 'C', true);
+      $pdf->Cell(65, 5, $row->nombres, 1, 0, 'C', true);
+      $pdf->Cell(20, 5, '$' . number_format($row->total_pagar, 0, ',', '.'), 1, 0, 'C', true);
+      $pdf->Ln(5);
+    }
+    $pdf->Cell(195, 5, 'TOTAL   $' . number_format($total_tarjeta, 0, ',', '.'), 1, 0, 'R', true);
+
 
     // $pdf->AddPage();
     $pdf->ln(10);
@@ -1887,6 +1946,11 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
     $pdf->Cell(50, 5, '$ '.number_format($total_efectivo, 0, ',', '.'), 1, 1,'L', true);
 
     $pdf->SetX(10);
+    $pdf->Cell(50, 5, 'PAGO', 1, 0, 'L', true);
+    $pdf->Cell(50, 5, 'TARJETA', 1, 0, 'L', true);
+    $pdf->Cell(50, 5, '$ ' . number_format($total_tarjeta, 0, ',', '.'), 1, 1, 'L', true);
+
+    $pdf->SetX(10);
     $pdf->Cell(50, 5, 'PAGO', 1, 0,'L', true);
     $pdf->Cell(50, 5, 'TRANSFERENCIA', 1, 0,'L', true);
     $pdf->Cell(50, 5, '$ '.number_format($total_transf, 0, ',', '.'), 1, 1,'L', true);
@@ -1911,7 +1975,7 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
     $pdf->Cell(50, 5, 'DEPOSITO', 1, 0,'L', true);
     $pdf->Cell(50, 5, '$ '.number_format($total_depo, 0, ',', '.'), 1, 1,'L', true);
 
-    $ingresos_total=$total_efectivo+$total_transf+$total_cheque+$total_web+$total_depo+$total_otros;
+    $ingresos_total=$total_efectivo+$total_transf+$total_cheque+$total_web+$total_depo+$total_otros+$total_tarjeta;
     $pdf->Cell(150, 5, 'TOTAL INGRESOS $' . number_format($ingresos_total, 0, ',', '.'), 1, 1, 'R', true);
 
 

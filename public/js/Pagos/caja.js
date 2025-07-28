@@ -43,28 +43,44 @@ function sumar_deudas() {
     var total = 0;
     total_deuda=0;
     var datos = $("#grid_deuda").DataTable().rows(".selected").data();
+    const descuento = $("#txt_descuentoSocio").val();
 
     for (var i = 0; i < datos.length; i++) {
-        total += parseInt(datos[i].deuda);
+        total += parseInt(datos[i].deuda)-descuento;
         total_deuda += parseInt(datos[i].deuda);
     }
 
+    
     $("#txt_entregado").val(0);
     $("#txt_vuelto").val(0);
     $("#txt_descuento").val(0);
     $("#txt_total_pagar").val(peso.formateaNumero(total));
     totalRes = $("#txt_total_pagar").val();
-
+    
     var abono = peso.quitar_formato($("#txt_abono").val());
-
+    
     if (parseInt(abono) >= total) {
         $("#txt_entregado").val(peso.formateaNumero(total));
     }else{
         $("#txt_descuento").val(abono);
         calcular_descuento();
     }
-
+    
     $("#cmb_forma_pago").val("");
+
+    // if (descuento > 0) {
+
+    //     let aPagar = $("#txt_total_pagar").val();
+    //     let PagoconDesc = peso.quitar_formato(aPagar) - (descuento);
+
+    //     console.log(PagoconDesc);
+    //     if(PagoconDesc > 0){
+    //         $("#txt_total_pagar").val(PagoconDesc);
+    //     }else{
+    //         $("#txt_total_pagar").val(0);
+    //     }
+    // }
+
 }
 
 function calcular_vuelto() {

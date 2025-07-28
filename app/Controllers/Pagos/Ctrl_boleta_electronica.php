@@ -1374,6 +1374,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
              ->select("s.nombre as sector")
              ->select("t.tipo as tarifa")
              ->select("ifnull(afecto_corte(socios.id,socios.id_apr),0) as meses_deuda")
+              ->select("a.descuento as descuento")
              ->join("arranques a", "a.id_socio = socios.id")
              ->join("sectores s", "a.id_sector = s.id")
              ->join("medidores m", "a.id_medidor = m.id")
@@ -1382,6 +1383,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
              ->where("socios.id", $id_socio)
              ->first();
 
+            $descuento_arranque = $datosSocios["descuento"];
 
              if ($datosSocios["rut_socio"] != "") {
               $rut_socio = $datosSocios["rut_socio"];
@@ -1413,6 +1415,8 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
             helper('tipo_dte');
             $tipo_dte = tipo_dte($datosSocios["tipo_documento"]);
             $tipo_doc_metros= $datosSocios["tipo_documento"];
+
+            // echo $datosSocios["tipo_documento"];
 
             $num_medidor = $datosSocios["num_medidor"];
             $sector      = $datosSocios["sector"];
@@ -1503,16 +1507,17 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
               $fecha=date('Y-m-d');             
               $fecha_venc= date("Y-m-d",strtotime($fecha."+ 1 month"));
 
-              $total1=intval($cargo_fijo)+intval($monto_metros)-intval($monto_subsidio);
+              $total1=intval($cargo_fijo)+intval($monto_metros)-intval($monto_subsidio)- intval($descuento_arranque);
               $total2=intval($cargo_fijo)+intval($monto_metros);
               $facturable=$total1+$alcantarillado;
 
 
               // $rut_apr= '99999999-9'; // COMENTAAAAAAR
+              // $rut_apr = '44444444-4'; // COMENTAAAAAAR
 
-              
-              
-              if($tipo_dte==41 || $tipo_dte==34){ // BOLETA y FACTURA EXENTA
+      // echo $tipo_dte;exit();
+
+      if($tipo_dte==41 || $tipo_dte==34){ // BOLETA y FACTURA EXENTA
                 
                 $adicionales = $total_mes - $facturable;
                 $totales='<MntExe>'.$facturable.'</MntExe>
@@ -1524,7 +1529,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                    
 
                 $adicionales = $total_mes - $facturable;                    
-                $total= $total1 + $alcantarillado;
+                $total= $total1 + $alcantarillado ;
                 $iva = intval($total * 0.19);
                 $neto= $total - $iva;
                 
@@ -1573,10 +1578,10 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                         <Detalle>
                         <NroLinDet>1</NroLinDet>
                         <IndExe>1</IndExe>
-                        <NmbItem>CONSUMO AGUA POTABLE: Cargo fijo $'.$cargo_fijo.', '.$metros_.' Mt3 $'.$monto_metros.'</NmbItem>
+                        <NmbItem>CONSUMO AGUA POTABLE: Cargo fijo $'.$cargo_fijo.', '.$metros_.' Mt3 $'.$monto_metros.' - Descuento Arranque $'.$descuento_arranque.'</NmbItem>
                         <QtyItem>1</QtyItem>
                         <PrcItem>'.$total2.'</PrcItem>
-                        <DescuentoMonto>'.$monto_subsidio.'</DescuentoMonto>
+                        <DescuentoMonto>'.($descuento_arranque+$monto_subsidio).'</DescuentoMonto>
                         <MontoItem>'.$total1.'</MontoItem>
                         </Detalle>
                         <Detalle>
@@ -1591,7 +1596,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                         </Documento>
                         </DTE>';
 
-                        // echo $cadena;
+                        // echo $cadena;exit();
 
 
                          $cadena = str_replace(
@@ -1699,14 +1704,14 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 </Adicional>';
   
                    
-                // $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
-                $parametros = array("STRINGXML" => $xml_dte_limpio, "STRINGXMLADICIONAL" => $xml_adicional, "ASIGNAFOLIO" => "False", "TIPOIMPRESO" => "1", "AMBIENTE" => "1", "TOKEN" => $TokenObtenido);
+                $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
+                // $parametros = array("STRINGXML" => $xml_dte_limpio, "STRINGXMLADICIONAL" => $xml_adicional, "ASIGNAFOLIO" => "False", "TIPOIMPRESO" => "1", "AMBIENTE" => "1", "TOKEN" => $TokenObtenido);
 
       if($tipo_dte==41 or $tipo_dte == 39 or $tipo_dte == 33 or $tipo_dte == 34){   
             
               $resultado = $client->call("ProcesaDte", $parametros); 
 
-              // print_r($resultado);
+              print_r($resultado);exit();
 
               $resultado_estado=$resultado['item']['ResultadoFE'];
               $url_pdf=$resultado['item']['UrlPdf'];

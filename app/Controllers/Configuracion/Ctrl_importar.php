@@ -299,11 +299,15 @@ class Ctrl_importar extends BaseController {
               $monto_alcantarillado=trim($sheet->getCellByColumnAndRow(7, $row->getRowIndex()));
               $monto_cuota_socio=trim($sheet->getCellByColumnAndRow(8, $row->getRowIndex()));
               $monto_otros=trim($sheet->getCellByColumnAndRow(9, $row->getRowIndex()));
+              $tarifa = trim($sheet->getCellByColumnAndRow(10, $row->getRowIndex()));
               $alcantarillado=0;
               $cuota_socio=0;
               $otros=0;
               
-              
+              if($tarifa==""){
+                $tarifa=1;
+              }
+
               if($monto_alcantarillado>0){
                 $alcantarillado=1;
               }
@@ -343,6 +347,7 @@ class Ctrl_importar extends BaseController {
                    "monto_cuota_socio"    => $monto_cuota_socio,
                    "monto_otros"          => $monto_otros,
                    "descuento"            => $descuento,
+                   "tarifa"               => $tarifa
                   ];             
 
                   // print_r($datosArranque);

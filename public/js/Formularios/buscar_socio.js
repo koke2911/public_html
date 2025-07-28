@@ -25,7 +25,8 @@ $(document).ready(function () {
      {"data": "alcantarillado"},
      {"data": "cuota_socio"},
      {"data": "otros"},
-     {"data": "id_tipo_documento"}
+     {"data": "id_tipo_documento"},
+     { "data": "descuento" }
     );
 
     columnasOcultas = [
@@ -153,6 +154,7 @@ $(document).ready(function () {
       buscar_deuda();
       $("#txt_abono").val(peso.formateaNumero(data["abono"]));
       $('#dlg_buscar_socio').modal('hide');
+      $('#txt_descuentoSocio').val(data["descuento"]);
     } else if (origen == "Ctrl_historial_pagos") {
       buscar_pagos();
       $('#dlg_buscar_socio').modal('hide');
