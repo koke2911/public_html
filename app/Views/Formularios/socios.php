@@ -34,19 +34,19 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_id_socio">Identificador</label>
-                          <input type="text" class="form-control" name="txt_id_socio" id="txt_id_socio"/>
+                          <input type="text" class="form-control" name="txt_id_socio" id="txt_id_socio" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_rut">RUT</label>
-                          <input type='text' class="form-control" id='txt_rut' name="txt_rut"/>
+                          <input type='text' class="form-control" id='txt_rut' name="txt_rut" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_rol">ROL</label>
-                          <input type='text' class="form-control" id='txt_rol' name="txt_rol"/>
+                          <input type='text' class="form-control" id='txt_rol' name="txt_rol" />
                         </div>
                       </div>
                     </div>
@@ -54,19 +54,19 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_nombres">Nombre</label>
-                          <input type='text' class="form-control" id='txt_nombres' name="txt_nombres"/>
+                          <input type='text' class="form-control" id='txt_nombres' name="txt_nombres" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_ape_pat">Apellido Paterno</label>
-                          <input type='text' class="form-control" id='txt_ape_pat' name="txt_ape_pat"/>
+                          <input type='text' class="form-control" id='txt_ape_pat' name="txt_ape_pat" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_ape_mat">Apellido Materno</label>
-                          <input type='text' class="form-control" id='txt_ape_mat' name="txt_ape_mat"/>
+                          <input type='text' class="form-control" id='txt_ape_mat' name="txt_ape_mat" />
                         </div>
                       </div>
                     </div>
@@ -74,19 +74,19 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="dt_fecha_entrada">Fecha Entrada</label>
-                          <input type='text' class="form-control" id='dt_fecha_entrada' name="dt_fecha_entrada"/>
+                          <input type='text' class="form-control" id='dt_fecha_entrada' name="dt_fecha_entrada" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="dt_fecha_nacimiento">Fecha Nacimiento</label>
-                          <input type='text' class="form-control" id='dt_fecha_nacimiento' name="dt_fecha_nacimiento"/>
+                          <input type='text' class="form-control" id='dt_fecha_nacimiento' name="dt_fecha_nacimiento" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="dt_email">E-mail</label>
-                          <input type='email' class="form-control" id='dt_email' name="dt_email"/>
+                          <input type='email' class="form-control" id='dt_email' name="dt_email" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
@@ -97,6 +97,12 @@
                             <option value="1">Masculino</option>
                             <option value="2">Femenino</option>
                           </select>
+                        </div>
+                      </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_fono">Telefono +569</label>
+                          <input type='text' class="form-control" id='txt_fono' name="txt_fono" maxlength="8" />
                         </div>
                       </div>
                     </div>
@@ -124,13 +130,13 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_calle">Calle</label>
-                          <input type='text' class="form-control" id='txt_calle' name="txt_calle"/>
+                          <input type='text' class="form-control" id='txt_calle' name="txt_calle" />
                         </div>
                       </div>
                       <div class="col-xl-2 col-lg-2 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_numero">Número</label>
-                          <input type='text' class="form-control" id='txt_numero' name="txt_numero"/>
+                          <input type='text' class="form-control" id='txt_numero' name="txt_numero" />
                         </div>
                       </div>
                       <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
@@ -144,7 +150,7 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_ruta">Ruta</label>
-                          <input type='text' class="form-control" id='txt_ruta' name="txt_ruta"/>
+                          <input type='text' class="form-control" id='txt_ruta' name="txt_ruta" />
                         </div>
                       </div>
                     </div>
@@ -189,6 +195,7 @@
                           <th>Traza</th>
                           <th>ruta</th>
                           <th>Cert.</th>
+                          <th>fono</th>
                         </tr>
                       </thead>
                     </table>

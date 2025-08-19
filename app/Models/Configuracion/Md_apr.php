@@ -5,7 +5,7 @@ use CodeIgniter\Model;
 class Md_apr extends Model {
 
   protected $table      = 'apr';
-  protected $primaryKey = 'id';
+  protected $primaryKey = 'rut';
 
   protected $returnType = 'array';
   // protected $useSoftDeletes = true;

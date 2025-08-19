@@ -144,8 +144,8 @@ class Ctrl_importar_certificado extends BaseController {
         "exponente" => $rsapk_e,
         "indice" => $idk,
         "firma_folios" => $frma,
-        "llave_privadafolios" => $rsask,
-        "llave_publicafolios" => $rsapubk,
+        "llave_privadafolios" => trim($rsask),
+        "llave_publicafolios" => trim($rsapubk),
         "siguiente_folio" => (int)$rng_d,
         "id_apr" => $id_apr
       ];

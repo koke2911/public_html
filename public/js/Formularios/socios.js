@@ -22,6 +22,7 @@ function des_habilitar (a, b) {
   $("#cmb_comuna").prop("disabled", a);
   $("#txt_calle").prop("disabled", a);
   $("#txt_numero").prop("disabled", a);
+  $("#txt_fono").prop("disabled", a);  
   $("#txt_resto_direccion").prop("disabled", a);
   $("#txt_ruta").prop("disabled", a);
 }
@@ -67,6 +68,11 @@ function mostrar_datos_socios (data) {
   if (data["numero"] != null) {
     $("#txt_numero").val(data["numero"]);
   }
+
+  if (data["fono"] != null) {
+    $("#txt_fono").val(data["fono"]);
+  }
+
   if (data["resto_direccion"] != null) {
     $("#txt_resto_direccion").val(data["resto_direccion"]);
   }
@@ -161,6 +167,7 @@ function guardar_socio () {
   var id_comuna = $("#cmb_comuna").val();
   var calle = $("#txt_calle").val();
   var numero = $("#txt_numero").val();
+  var fono = $("#txt_fono").val();
   var resto_direccion = $("#txt_resto_direccion").val();
   var ruta = $("#txt_ruta").val();
   var email = $("#dt_email").val();
@@ -186,7 +193,8 @@ function guardar_socio () {
       numero: numero,
       resto_direccion: resto_direccion,
       ruta: ruta,
-      email: email
+      email: email,
+      fono: fono
     },
     success: function (respuesta) {
       const OK = 1;
@@ -460,6 +468,10 @@ $(document).ready(function () {
         digits: true,
         maxlength: 6
       },
+      txt_fono: {
+        digits: true,
+        maxlength: 8
+      },
       txt_resto_direccion: {
         charspecial: true,
         maxlength: 200
@@ -503,6 +515,10 @@ $(document).ready(function () {
       txt_numero: {
         digits: "Solo números",
         maxlength: "Máximo 6 dígitos"
+      },
+      txt_fono: {
+        digits: "Solo números",
+        maxlength: "Máximo 8 dígitos"
       },
       txt_resto_direccion: {
         charspecial: "Hay caracteres extraños no permitdos",
@@ -557,7 +573,8 @@ $(document).ready(function () {
         "render":function(data,type,row){
                          return "<button type='button' class='btn_certificado btn btn-primary' title='Imprimir'><i class='fas fa-print'></i></button>"
                }
-      }
+      },
+      { "data": "fono" }
     ],
     "columnDefs": [
       {"targets": [0, 3, 4, 5, 9, 10, 11, 12, 14, 15, 16, 20], "visible": false, "searchable": false}

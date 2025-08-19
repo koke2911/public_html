@@ -129,6 +129,17 @@ class Ctrl_apr extends BaseController {
       $estado_traza   = MODIFICAR_APR;
       $datosAPR["id"] = $id_apr;
     } else {
+      
+      $contar = $this->apr->select("count(*) as existe")
+                          ->where("rut", $rut)
+                           ->first();
+      $existe     = $contar["existe"];
+
+      if($existe>0){
+        echo "ya existe un apr con este RUT";
+        exit();
+      }
+
       $estado_traza = CREAR_APR;
     }
 

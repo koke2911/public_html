@@ -104,7 +104,7 @@ class Ctrl_importar extends BaseController {
               $resto_direccion=trim($sheet->getCellByColumnAndRow(12, $row->getRowIndex()));
               $id_comuna=trim($sheet->getCellByColumnAndRow(13, $row->getRowIndex()));
               $ruta      =trim($sheet->getCellByColumnAndRow(14, $row->getRowIndex()));
-
+              $fono      = trim($sheet->getCellByColumnAndRow(15, $row->getRowIndex()));
               $datosSocioRut  = $this->socios->select("rut")
                                                 ->where("id_apr", $id_apr)
                                                 ->where("rut", $rut)
@@ -141,7 +141,8 @@ class Ctrl_importar extends BaseController {
                      "fecha"            => $fecha,
                      "id_apr"           => $id_apr,
                      "estado"           =>1,
-                     "email"            =>$email
+                     "email"            =>$email,
+                     "fono"             => $fono
                     ];
 
                   if ($this->socios->save($datosSocio)) {

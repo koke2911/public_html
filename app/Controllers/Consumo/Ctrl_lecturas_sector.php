@@ -759,7 +759,7 @@ class Ctrl_lecturas_sector extends BaseController {
              ->select("s.id as id_socio")
              ->select("s.rol")
              ->select("concat(s.nombres, ' ', s.ape_pat, ' ', s.ape_mat) as nombre_socio")
-              ->select("sec.nombre as sector")
+             ->select("sec.nombre as sector")
              ->select("arranques.id as id_arranque") 
              ->select("ifnull((select consumo_actual from metros m where m.id = (select max(m2.id) from metros m2 where m2.id_socio = arranques.id_socio and estado <> 0)), 0) as consumo_anterior")
              ->join("medidores m", "arranques.id_medidor = m.id")
@@ -768,9 +768,9 @@ class Ctrl_lecturas_sector extends BaseController {
              ->join("sectores sec", "arranques.id_sector = sec.id")
              ->join("subsidios sub", "sub.id_socio = s.id", "left")
              ->join("porcentajes p", "sub.id_porcentaje = p.id", "left")
-            // ->join("apr_cargo_fijo cf", "cf.id_apr = s.id_apr and cf.id_diametro = m.id_diametro")
              ->where("s.id_apr", $id_apr)
-             ->where("m.id_apr", $id_apr)             
+             ->where("m.id_apr", $id_apr)
+             ->orderBy("sec.nombre")
              ->findAll();
 
       $sheet->fromArray($datosSocios, NULL, 'A2'); 

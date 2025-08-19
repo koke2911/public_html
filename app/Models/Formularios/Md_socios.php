@@ -31,7 +31,8 @@ class Md_socios extends Model {
    'id_apr',
    'ruta',
    'abono',
-   'email'
+   'email',
+   'fono'
   ];
 
   public function datatable_socios($db, $id_apr) {
@@ -56,7 +57,8 @@ class Md_socios extends Model {
 							s.ruta,
 							u.usuario,
 							date_format(s.fecha, '%d-%m-%Y %H:%i:%s') as fecha,
-       s.email
+              s.email,
+              s.fono
 						from 
 							socios s
 							inner join usuarios u on u.id = s.id_usuario
@@ -91,7 +93,9 @@ class Md_socios extends Model {
        "ruta"             => $key["ruta"],
        "usuario"          => $key["usuario"],
        "fecha"            => $key["fecha"],
-       "email"            => $key["email"]
+       "email"            => $key["email"],
+        "fono"            => $key["fono"]
+
       ];
 
       $data[] = $row;
@@ -128,7 +132,8 @@ class Md_socios extends Model {
 							s.ruta,
 							u.usuario,
 							date_format(s.fecha, '%d-%m-%Y %H:%i:%s') as fecha,
-              s.email
+              s.email,
+              s.fono
 						from 
 							socios s
 							inner join usuarios u on u.id = s.id_usuario
@@ -163,7 +168,8 @@ class Md_socios extends Model {
        "ruta"             => $key["ruta"],
        "usuario"          => $key["usuario"],
        "fecha"            => $key["fecha"],
-       "email"            => $key["email"]
+       "email"            => $key["email"],
+        "fono"            => $key["fono"]
       ];
 
       $data[] = $row;

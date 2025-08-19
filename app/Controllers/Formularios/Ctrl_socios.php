@@ -67,6 +67,7 @@ class Ctrl_socios extends BaseController {
     $resto_direccion  = $this->request->getPost("resto_direccion");
     $ruta             = $this->request->getPost("ruta");
     $email             = $this->request->getPost("email");
+    $fono             = $this->request->getPost("fono");
 
     if ($id_comuna == "") {
       $id_comuna = NULL;
@@ -104,7 +105,8 @@ class Ctrl_socios extends BaseController {
      "id_usuario"       => $id_usuario,
      "fecha"            => $fecha,
      "email"            => $email,
-     "id_apr"           => $id_apr
+     "id_apr"           => $id_apr,
+     "fono"             => $fono
      
     ];
 

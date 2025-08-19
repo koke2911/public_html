@@ -821,8 +821,8 @@ public function procesa_dtePablo($folio,$f_sii){
               $fp = fopen(dirname(__FILE__,4)."/public/".$f_sii.".txt", "w");
 
 
-           $logo ="../../logos/" . $rut_apr_ses . "png";
-           $logo = "../../logos/65086630.png";
+           $logo ="../../logos/" . $rut_apr_ses . ".png";
+          //  $logo = "../../logos/65086630.png";
           
            if($tipo_dte==41){
 
@@ -1704,14 +1704,14 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 </Adicional>';
   
                    
-                $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
-                // $parametros = array("STRINGXML" => $xml_dte_limpio, "STRINGXMLADICIONAL" => $xml_adicional, "ASIGNAFOLIO" => "False", "TIPOIMPRESO" => "1", "AMBIENTE" => "1", "TOKEN" => $TokenObtenido);
+                // $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
+                $parametros = array("STRINGXML" => $xml_dte_limpio, "STRINGXMLADICIONAL" => $xml_adicional, "ASIGNAFOLIO" => "False", "TIPOIMPRESO" => "1", "AMBIENTE" => "1", "TOKEN" => $TokenObtenido);
 
       if($tipo_dte==41 or $tipo_dte == 39 or $tipo_dte == 33 or $tipo_dte == 34){   
             
               $resultado = $client->call("ProcesaDte", $parametros); 
 
-              print_r($resultado);exit();
+              // print_r($resultado);exit();
 
               $resultado_estado=$resultado['item']['ResultadoFE'];
               $url_pdf=$resultado['item']['UrlPdf'];
