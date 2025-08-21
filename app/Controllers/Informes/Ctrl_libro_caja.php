@@ -83,8 +83,8 @@ class Ctrl_libro_caja extends BaseController {
 
         $consulta = "SELECT date_format(c.fecha,'%d-%m-%Y') as dia , 
         'PAGO CONSUMO MES AGUA POTABLE' as glosa,
-        sum(c.total_pagar-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0)) 
-        as total ,'' as total2 , '' as total3, '' as total4,'' as total5,sum(c.total_pagar-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0))  as total6
+        sum(m.total_mes-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0)) 
+        as total ,'' as total2 , '' as total3, '' as total4,'' as total5,sum(m.total_mes-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0))  as total6
         from caja c
         inner join caja_detalle d on d.id_caja=c.id
         inner join metros m on m.id=d.id_metros
@@ -1382,7 +1382,8 @@ SELECT date_format(es.fecha,'%m-%Y') as dia,
     $pdf->Cell(65, 5, 'Cliente', 1, 0, 'C', true);
     $pdf->Cell(20, 5, 'Monto', 1, 1, 'C', true);
 
-    $sql= "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar FROM caja c 
+    $sql= "SELECT c.id,date_format(c.fecha, '%d-%m-%Y') as fecha, s.rol,m.numero,concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombres,c.total_pagar 
+            FROM caja c 
             inner join socios s on s.id=c.id_socio 
             inner join arranques a on a.id_socio=s.id and a.id_apr=c.id_apr 
             inner join medidores m on m.id=a.id_medidor

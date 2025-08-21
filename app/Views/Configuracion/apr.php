@@ -205,6 +205,12 @@
                       </div>
                       <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
                         <div class="form-group">
+                          <label class="small mb-1" for="txt_ultimoNc">Utlimo Folio Nota C</label>
+                          <input type='text' class="form-control" id='txt_ultimoNc' name="txt_ultimoNc" />
+                        </div>
+                      </div>
+                      <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
+                        <div class="form-group">
                           <label class="small mb-1" for="txt_octava">Clave AppOctava</label>
                           <input type='text' class="form-control" id='txt_octava' name="txt_octava" />
                         </div>

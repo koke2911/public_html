@@ -5,7 +5,7 @@ use CodeIgniter\Model;
 class Md_apr extends Model {
 
   protected $table      = 'apr';
-  protected $primaryKey = 'rut';
+  protected $primaryKey = 'id';
 
   protected $returnType = 'array';
   // protected $useSoftDeletes = true;
@@ -76,7 +76,8 @@ class Md_apr extends Model {
                 sucursal_sii,
                 ultimo_folio_afecta,
                 ultimo_folio_fe,
-                ultimo_folio_fa
+                ultimo_folio_fa,
+                utimo_notac
 						from 
 							apr
 							inner join usuarios u on u.id = apr.id_usuario
@@ -116,7 +117,8 @@ class Md_apr extends Model {
         'sucursal_sii'    => $key['sucursal_sii'],
         'ultimo_folio_afecta'=> $key['ultimo_folio_afecta'],
         'ultimo_folio_fe' => $key['ultimo_folio_fe'],
-        'ultimo_folio_fa' => $key['ultimo_folio_fa']
+        'ultimo_folio_fa' => $key['ultimo_folio_fa'],
+        'utimo_notac' => $key['utimo_notac']
       ];
 
       $data[] = $row;
