@@ -131,7 +131,7 @@ class Ctrl_informe_trimestral extends BaseController {
   // CONSUMO AP
     $consulta="SELECT 
               date_format(c.fecha,'%m-%Y') mes,
-              sum(c.total_pagar-ifnull(m.cuota_socio,0)-ifnull(m.multa,0)-ifnull(m.monto_subsidio,0)-ifnull(m.cargo_fijo,0)) as total
+              sum(m.total_mes-ifnull(m.cuota_socio,0)-ifnull(m.multa,0)-ifnull(m.monto_subsidio,0)-ifnull(m.cargo_fijo,0)) as total
               from caja c
               inner join caja_detalle d on d.id_caja=c.id
               inner join metros m on m.id=d.id_metros
@@ -733,13 +733,12 @@ class Ctrl_informe_trimestral extends BaseController {
     $sql="SELECT case when a.id_tipo_documento in (1,2) then 'SOCIO' else 'USUARIO' end as tipo,
         s.id, concat(s.nombres,' ',s.ape_pat,' ',s.ape_mat) as nombre,
 
-        (select sum(metros) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m1') and m2.id_socio=s.id and m2.estado!=0) as m2,
-        (select sum(subtotal) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m1') and m2.id_socio=s.id and m2.estado!=0) as sub2,
-        (select sum(metros) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m2') and m2.id_socio=s.id and m2.estado!=0) as m3,
-        (select sum(subtotal) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m2') and m2.id_socio=s.id and m2.estado!=0) as sub3,
-        (select sum(metros) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m3') and m2.id_socio=s.id and m2.estado!=0) as m4,
-        (select sum(subtotal) from metros m2 where m2.id_apr=$id_apr and date_format(m2.fecha_ingreso,'%Y-%m') in ('$m3') and m2.id_socio=s.id and m2.estado!=0) as sub4
-
+        (select sum(metros) from metros m2 inner join caja_detalle cd on cd.id_metros=m2.id inner join caja c on c.id=cd.id_caja where m2.id_apr=7  and date_format(c.fecha,'%Y-%m') in ('$m1') and m2.id_socio=s.id and m2.estado!=0) as m2,
+        (select sum(m2.total_mes) from metros m2 inner join caja_detalle cd on cd.id_metros=m2.id inner join caja c on c.id=cd.id_caja where m2.id_apr=7  and date_format(c.fecha,'%Y-%m') in ('$m1')  and m2.id_socio=s.id  and m2.estado!=0) as sub2,
+        (select sum(metros) from metros m2 inner join caja_detalle cd on cd.id_metros=m2.id inner join caja c on c.id=cd.id_caja where m2.id_apr=7  and date_format(c.fecha,'%Y-%m') in ('$m2') and m2.id_socio=s.id and m2.estado!=0) as m3,
+        (select sum(m2.total_mes) from metros m2 inner join caja_detalle cd on cd.id_metros=m2.id inner join caja c on c.id=cd.id_caja where m2.id_apr=7  and date_format(c.fecha,'%Y-%m') in ('$m2')  and m2.id_socio=s.id  and m2.estado!=0) as sub3,
+        (select sum(metros) from metros m2 inner join caja_detalle cd on cd.id_metros=m2.id inner join caja c on c.id=cd.id_caja where m2.id_apr=7  and date_format(c.fecha,'%Y-%m') in ('$m3') and m2.id_socio=s.id and m2.estado!=0) as m4,
+        (select sum(m2.total_mes) from metros m2 inner join caja_detalle cd on cd.id_metros=m2.id inner join caja c on c.id=cd.id_caja where m2.id_apr=7  and date_format(c.fecha,'%Y-%m') in ('$m3')  and m2.id_socio=s.id  and m2.estado!=0) as sub4
         from socios s 
         inner join arranques a on a.id_socio=s.id and a.id_apr=s.id_apr
         where s.id_apr=$id_apr";

@@ -82,67 +82,101 @@ class Ctrl_libro_caja extends BaseController {
       } 
 
         $consulta = "SELECT date_format(c.fecha,'%d-%m-%Y') as dia , 
-        'PAGO CONSUMO MES AGUA POTABLE' as glosa,
-        sum(m.total_mes-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0)) 
-        as total ,'' as total2 , '' as total3, '' as total4,'' as total5,sum(m.total_mes-ifnull(m.alcantarillado,0)-ifnull(m.cuota_socio,0)-ifnull(m.multa,0))  as total6
-        from caja c
-        inner join caja_detalle d on d.id_caja=c.id
-        inner join metros m on m.id=d.id_metros
-        where date_format(c.fecha,'%m-%Y')='$mes' 
-        and c.id_apr=$id_apr  and c.estado =1
-        group by dia,glosa 
-        UNION
-              select date_format(c.fecha,'%m-Y') as dia , 
-              'CUOTA SOCIO $mes ' as glosa,
-              ' ' as total ,sum(ifnull(m.alcantarillado,0)) , ''as total3 , ''as total4,''as total5 ,sum(ifnull(m.alcantarillado,0)) as total6
-              from caja c
-              inner join caja_detalle d on d.id_caja=c.id
-              inner join metros m on m.id=d.id_metros
-              where date_format(c.fecha,'%m-%Y')='$mes' 
-              and c.id_apr=$id_apr  and c.estado =1 and m.cuota_socio!=0
-              group by dia,glosa 
-        UNION
-              select date_format(c.fecha,'%m-%Y') as dia , 
-              'ALCANTARILLADO $mes' as glosa,
-              '' as total ,'' as total2 , ''as total3 , '' as total4,sum(ifnull(m.alcantarillado,0))as total5,sum(ifnull(m.alcantarillado,0)) as total6
-              from caja c
-              inner join caja_detalle d on d.id_caja=c.id
-              inner join metros m on m.id=d.id_metros
-              where date_format(c.fecha,'%m-%Y')='$mes' 
-              and c.id_apr=$id_apr  and c.estado =1 and m.alcantarillado !=0
-              group by dia,glosa 
-        UNION
-            select date_format(c.fecha,'%m-%Y') as dia , 
-            'MULTAS $mes' as glosa,
-            '' as total ,'' as total2 , ''as total3 , '' as total4,sum(ifnull(m.multa,0))as total5,sum(ifnull(m.multa,0))as total6
-            from caja c
-            inner join caja_detalle d on d.id_caja=c.id
-            inner join metros m on m.id=d.id_metros
-            where date_format(c.fecha,'%m-%Y')='$mes' 
-            and c.id_apr=$id_apr  and c.estado =1 and m.multa !=0
-            group by dia,glosa 
-        UNION
-          select date_format(es.fecha,'%d-%m') as dia,
-                    concat(te.tipo_egreso,' (Por Egresos Simple)') as glosa,
-                    '' as total,
-                    '' as total2,
-                    '' as total3,
-                    sum(es.monto) as total4,
-                    '' as total5,
-                     sum(es.monto) as total6                    
-                     from  
-              egresos_simples es
-                left join cuentas c on es.id_cuenta = c.id
-                left join bancos b on c.id_banco = b.id
-                left join banco_tipo_cuenta btc on c.id_tipo_cuenta = btc.id
-                inner join motivos m on es.id_motivo = m.id
-                            inner join tipos_egreso te on es.id_tipo_egreso = te.id
-                            inner join egresos e on es.id_egreso = e.id
-                             where e.id_apr=$id_apr 
-              and date_format(es.fecha,'%m-%Y')='$mes' 
-              and e.estado=1  and btc.id not in (5,6)
-              group by dia,te.tipo_egreso   
-              order by dia,glosa asc";
+       'PAGO CONSUMO MES AGUA POTABLE' as glosa,
+       SUM(m.total_mes - IFNULL(m.alcantarillado,0) - IFNULL(m.cuota_socio,0) - IFNULL(m.multa,0)) as total,
+       0 as total2, 
+       0 as total3, 
+       0 as total4, 
+       0 as total5,
+       SUM(m.total_mes - IFNULL(m.alcantarillado,0) - IFNULL(m.cuota_socio,0) - IFNULL(m.multa,0)) as total6
+FROM caja c
+INNER JOIN caja_detalle d ON d.id_caja=c.id
+INNER JOIN metros m ON m.id=d.id_metros
+WHERE date_format(c.fecha,'%m-%Y')='$mes' 
+  AND c.id_apr=$id_apr  
+  AND c.estado =1
+GROUP BY dia, glosa
+
+UNION ALL
+
+SELECT date_format(c.fecha,'%d-%m-%Y') as dia , 
+       'CUOTA SOCIO' as glosa,
+       0 as total,
+       SUM(IFNULL(m.cuota_socio,0)) as total2, 
+       0 as total3, 
+       0 as total4, 
+       0 as total5,
+       SUM(IFNULL(m.cuota_socio,0)) as total6
+FROM caja c
+INNER JOIN caja_detalle d ON d.id_caja=c.id
+INNER JOIN metros m ON m.id=d.id_metros
+WHERE date_format(c.fecha,'%m-%Y')='$mes' 
+  AND c.id_apr=$id_apr  
+  AND c.estado =1 
+  AND m.cuota_socio != 0
+GROUP BY dia, glosa
+
+UNION ALL
+
+SELECT date_format(c.fecha,'%d-%m-%Y') as dia , 
+       'ALCANTARILLADO' as glosa,
+       0 as total,
+       0 as total2,
+       0 as total3,
+       0 as total4,
+       SUM(IFNULL(m.alcantarillado,0)) as total5,
+       SUM(IFNULL(m.alcantarillado,0)) as total6
+FROM caja c
+INNER JOIN caja_detalle d ON d.id_caja=c.id
+INNER JOIN metros m ON m.id=d.id_metros
+WHERE date_format(c.fecha,'%m-%Y')='$mes' 
+  AND c.id_apr=$id_apr  
+  AND c.estado =1 
+  AND m.alcantarillado != 0
+GROUP BY dia, glosa
+
+UNION ALL
+
+SELECT date_format(c.fecha,'%d-%m-%Y') as dia , 
+       'MULTAS' as glosa,
+       0 as total,
+       0 as total2,
+       0 as total3,
+       0 as total4,
+       SUM(IFNULL(m.multa,0)) as total5,
+       SUM(IFNULL(m.multa,0)) as total6
+FROM caja c
+INNER JOIN caja_detalle d ON d.id_caja=c.id
+INNER JOIN metros m ON m.id=d.id_metros
+WHERE date_format(c.fecha,'%m-%Y')='$mes' 
+  AND c.id_apr=$id_apr  
+  AND c.estado =1 
+  AND m.multa != 0
+GROUP BY dia, glosa
+
+UNION ALL
+
+SELECT date_format(es.fecha,'%d-%m-%Y') as dia,
+       CONCAT(te.tipo_egreso,' (Por Egresos Simple)') as glosa,
+       0 as total,
+       0 as total2,
+       0 as total3,
+       SUM(es.monto) as total4,
+       0 as total5,
+       SUM(es.monto) as total6
+FROM egresos_simples es
+LEFT JOIN cuentas c ON es.id_cuenta = c.id
+LEFT JOIN bancos b ON c.id_banco = b.id
+LEFT JOIN banco_tipo_cuenta btc ON c.id_tipo_cuenta = btc.id
+INNER JOIN motivos m ON es.id_motivo = m.id
+INNER JOIN tipos_egreso te ON es.id_tipo_egreso = te.id
+INNER JOIN egresos e ON es.id_egreso = e.id
+WHERE e.id_apr=$id_apr 
+  AND date_format(es.fecha,'%m-%Y')='$mes' 
+  AND e.estado=1  
+  AND btc.id NOT IN (5,6)
+GROUP BY dia, glosa
+ORDER BY dia, glosa ASC";
 
       $query = $db->query($consulta);
       $result  = $query->getResultArray();
