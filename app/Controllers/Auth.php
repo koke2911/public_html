@@ -9,17 +9,14 @@ class Auth extends ResourceController {
   protected $format = 'json';
 
   public function create() {
-    /**
-     * JWT claim types
-     * https://auth0.com/docs/tokens/concepts/jwt-claims#reserved-claims
-     */
 
     $usuario = $this->request->getPost('usuario');
     $clave   = $this->request->getPost('clave');
 
-    // add code to fetch through db and check they are valid
-    // sending no email and password also works here because both are empty
-    if ($usuario === "puntoblue" && $clave === "pb380380$#") {
+    // print_r($this->request->getPost());
+
+   
+    if (($usuario === "puntoblue" && $clave === "pb380380$#") || ($usuario === "aquaia" && $clave === "aquaia1234") ) {
       $time    = time();
       $key     = Services::getSecretKey();
       $payload = [
@@ -28,12 +25,6 @@ class Auth extends ResourceController {
        // 'data' => ["usuario" => "puntoblue", "name"],
       ];
 
-      /**
-       * IMPORTANT:
-       * You must specify supported algorithms for your application. See
-       * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
-       * for a list of spec-compliant algorithms.
-       */
       $jwt = JWT::encode($payload, $key);
 
       return $this->respond(['token' => $jwt], 200);
