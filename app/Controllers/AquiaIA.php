@@ -55,7 +55,9 @@ class AquiaIA extends Auth
         if ($this->validateToken($token) == true) {
             if ($this->request->getMethod() == "post") {
                 $id_apr = $this->request->getPost('id_apr');
-                $id_socio = $this->request->getPost('id_socio');               
+                $id_socio = $this->request->getPost('id_socio');
+                $from = $this->request->getPost('from');
+                $to = $this->request->getPost('to');
 
 
                 define("ACTIVO", 1);
@@ -84,6 +86,10 @@ class AquiaIA extends Auth
                 // si viene id_socio, filtra también por él
                 if (!empty($id_socio)) {
                     $builder->where("socios.id", $id_socio);
+                }
+
+                if (!empty($from) && !empty($to)) {
+                    $builder->where("m.fecha_ingreso BETWEEN '$from' AND '$to'");
                 }
 
                 $datosSocios = $builder->findAll();
