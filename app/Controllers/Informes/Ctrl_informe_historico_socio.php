@@ -630,10 +630,12 @@ class Ctrl_informe_historico_socio extends BaseController {
                 </div>
             ');
 
+    $estadoAbono=1;
     $datosAbonos = $this->abonos
      ->select("abono")
      ->select("date_format(fecha, '%d-%m-%Y %H:%m:%s') as fecha")
      ->where("id_socio", $id_socio)
+     ->where("estado", $estadoAbono)
      ->orderBy("id", "DESC")
      ->findAll();
 
