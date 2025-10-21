@@ -13,6 +13,7 @@ use App\Models\Formularios\Md_medidores;
 use App\Models\Pagos\Md_webpay;
 use App\Models\Pagos\Md_caja_webpay;
 use App\Models\Configuracion\Md_apr;
+use App\Models\Configuracion\Md_usuarios;
 
 
 
@@ -30,6 +31,7 @@ class AquiaIA extends Auth
     protected $db;
     protected $arranques;
     protected $medidores;
+    protected $usuarios;
 
     public function __construct()
     {
@@ -44,6 +46,7 @@ class AquiaIA extends Auth
         $this->webpay = new Md_webpay();
         $this->caja_webpay = new Md_caja_webpay();
         $this->apr = new Md_apr();
+        $this->usuarios      = new Md_usuarios();
         $this->db = \Config\Database::connect();
     }
 
@@ -97,6 +100,82 @@ class AquiaIA extends Auth
 
                 $salida =  $datosSocios;
                 return $this->respond($salida, 200);
+            } else {
+                $respuesta = [
+                    "message" => "No hay datos enviados por post",
+                    "estado" => "error",
+                    "folio" => ""
+                ];
+
+                return $this->respond($respuesta, 401);
+            }
+        } else {
+            $respuesta = [
+                "message" => "Token Inválido",
+                "estado" => "error",
+                "folio" => ""
+            ];
+
+            return $this->respond($respuesta, 401);
+        }
+    }
+
+    public function consulta_login()
+    {
+        $token = ($this->request->getHeader("Authorization") != null) ? $this->request->getHeader("Authorization")->getValue() : "";
+        if ($this->validateToken($token) == true) {
+            if ($this->request->getMethod() == "post") {
+                $usuario = $this->request->getPost('usuario');
+                $password = $this->request->getPost('password');
+
+                $datosUsuario = $this->usuarios->where("usuario", $usuario)
+                    ->first();
+
+                if ($datosUsuario != NULL) {
+                        if (password_verify($password, $datosUsuario["clave"])) {
+
+                            if($datosUsuario['estado']==1){
+                            
+                            $datosApr = $this->apr->select("*")
+                                ->where("id", $datosUsuario["id_apr"])
+                                ->first();
+
+                            $salida =  array("id_usuario"=>$datosUsuario['id'],
+                                            "rut_usuario"=> $datosUsuario['usuario'],
+                                            "nombre_usuario"=> $datosUsuario['nombres'].' '. $datosUsuario['ape_paterno'].' '. $datosUsuario['ape_materno'],
+                                            "id_apr"=> $datosApr['id'],
+                                            "nombre_apr" => $datosApr['nombre'],
+                                            ); 
+
+                            return $this->respond($salida, 200);
+                        }else{
+                            $respuesta = [
+                                "message" => "Usuario bloqueado",
+                                "estado" => "error",
+                                "folio" => ""
+                            ];
+                            return $this->respond($respuesta, 401);
+                        }
+
+                    }else{
+                        $respuesta = [
+                            "message" => "Contraseña Invalida",
+                            "estado" => "error",
+                            "folio" => ""
+                        ];
+                        return $this->respond($respuesta, 401);
+                    }
+
+
+
+                }else{
+                    $respuesta = [
+                        "message" => "Usuario no existe",
+                        "estado" => "error",
+                        "folio" => ""
+                    ];
+                    return $this->respond($respuesta, 401);
+                }
             } else {
                 $respuesta = [
                     "message" => "No hay datos enviados por post",
