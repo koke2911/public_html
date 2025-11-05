@@ -1532,6 +1532,9 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                 $total= $total1 + $alcantarillado ;
                 $iva = intval($total * 0.19);
                 $neto= $total - $iva;
+
+                $iva_enterior= intval($consumo_anterior_nf * 0.19);
+                $consumo_anterior_nf= intval($consumo_anterior_nf) + intval($iva_enterior);
                 
                 $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf) + $iva;
 
