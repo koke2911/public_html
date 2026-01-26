@@ -297,120 +297,304 @@ public function valida_token($TokenObtenido){
 
 }
 
+public function generarGrafico($id_socio)
+{
+    // ===============================
+    // 1. CONSULTA CORRECTA
+    // ===============================
+    $sql = "
+        SELECT 
+            DATE_FORMAT(fecha_ingreso, '%Y-%m') AS periodo,
+            MONTH(fecha_ingreso) AS mes,
+            SUM(metros) AS total_metros
+        FROM metros
+        WHERE id_socio = ?
+          AND fecha_ingreso >= CURDATE() - INTERVAL 12 MONTH
+        GROUP BY periodo, mes
+        ORDER BY periodo ASC
+    ";
 
-  public function generarGrafico($id_socio)
-  {
-    // Realizar la consulta
-    $consulta = "SELECT DATE_FORMAT(fecha_ingreso, '%m') AS mes, metros 
-                 FROM metros 
-                 WHERE id_socio = $id_socio
-                 AND fecha_ingreso >= CURDATE() - INTERVAL 6 MONTH
-                 ORDER BY mes ASC";
-    $query = $this->db->query($consulta);
+    $query  = $this->db->query($sql, [$id_socio]);
     $result = $query->getResultArray();
 
-    // Crear un array para los meses y los metros
-    $meses = [];
+    // ===============================
+    // 2. PREPARAR DATOS
+    // ===============================
+    $meses  = [];
     $metros = [];
 
     foreach ($result as $row) {
-      $meses[] = (int)$row['mes'];  // Obtener el mes (número)
-      $metros[] = (int)$row['metros'];  // Obtener los metros
+        $meses[]  = (int) $row['mes'];
+        $metros[] = (int) $row['total_metros'];
     }
 
-    // Crear una imagen en blanco
-    $width = 400;  // Ancho de la imagen
-    $height = 200;  // Alto de la imagen
-    $image = imagecreatetruecolor($width, $height);
+    // Evitar errores si no hay datos
+    if (empty($metros)) {
+        $metros = [0];
+        $meses  = [date('n')];
+    }
+
+    // ===============================
+    // 3. CREAR IMAGEN
+    // ===============================
+    $width  = 500;
+    $height = 300;
+    $image  = imagecreatetruecolor($width, $height);
 
     // Colores
-    $white = imagecolorallocate($image, 255, 255, 255);  // Blanco (fondo)
-    $black = imagecolorallocate($image, 0, 0, 0);  // Negro (líneas)
-    $blue = imagecolorallocate($image, 0, 0, 255);  // Azul (barras)
-    $red = imagecolorallocate($image, 255, 0, 0);  // Rojo (texto de los metros)
+    $white = imagecolorallocate($image, 255, 255, 255);
+    $black = imagecolorallocate($image, 0, 0, 0);
+    $blue  = imagecolorallocate($image, 0, 102, 204);
+    $red   = imagecolorallocate($image, 220, 0, 0);
 
-    // Rellenar fondo con color blanco
     imagefill($image, 0, 0, $white);
 
-    // Obtener el valor máximo de metros para escalar la altura de las barras
-    $maxValue = max($metros);  // Valor máximo de los metros
-    $scaleFactor = ($height - 100) / $maxValue; // Factor de escala para la altura de las barras
+    // ===============================
+    // 4. ESCALAS
+    // ===============================
+    $paddingLeft   = 60;
+    $paddingBottom = 50;
+    $paddingTop    = 40;
+    $paddingRight  = 30;
 
-    // Dibujar las barras
-    $barWidth = 30;  // Ancho de las barras
-    $spacing = 70;  // Espacio entre las barras
+    $maxValue    = max($metros) ?: 1;
+    $usableHeight = $height - $paddingTop - $paddingBottom;
+    $scaleFactor  = $usableHeight / $maxValue;
 
-    for ($i = 0; $i < count($metros); $i++) {
-      $x1 = $spacing * $i + 100;  // Posición horizontal (empezar con un margen)
-      $y1 = $height - 50;  // Posición en el eje Y (parte inferior de la imagen)
-      $x2 = $x1 + $barWidth;  // Ancho de la barra
-      $y2 = $y1 - ($metros[$i] * $scaleFactor);  // Altura proporcional de la barra
+    // Escala horizontal automática
+    $barCount    = count($metros);
+    $usableWidth = $width - $paddingLeft - $paddingRight;
+    $barWidth    = max(14, floor($usableWidth / ($barCount * 1.5)));
+    $spacing     = $barWidth * 1.5;
 
-      // Dibujar la barra
-      imagefilledrectangle($image, $x1, $y1, $x2, $y2, $blue);
+    // ===============================
+    // 5. EJES
+    // ===============================
+    imageline(
+        $image,
+        $paddingLeft,
+        $paddingTop,
+        $paddingLeft,
+        $height - $paddingBottom,
+        $black
+    );
 
-      // Colocar el valor de los metros sobre la barra
-      $text = $metros[$i];
-      $textWidth = strlen($text) * 10;  // Ancho aproximado del texto
-      $textX = $x1 + ($barWidth / 2) - ($textWidth / 2);  // Centrar horizontalmente
-      $textY = $y2 - 15;  // Coloca el texto encima de la barra
-      imagestring($image, 5, $textX, $textY, $text, $red);  // Coloca el valor sobre la barra con color rojo
+    imageline(
+        $image,
+        $paddingLeft,
+        $height - $paddingBottom,
+        $width - $paddingRight,
+        $height - $paddingBottom,
+        $black
+    );
+
+    // ===============================
+    // 6. BARRAS + VALORES
+    // ===============================
+    $mesAbreviado = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+
+    for ($i = 0; $i < $barCount; $i++) {
+
+        $x1 = $paddingLeft + ($i * $spacing);
+        $x2 = $x1 + $barWidth;
+
+        $y1 = $height - $paddingBottom;
+        $y2 = $y1 - ($metros[$i] * $scaleFactor);
+
+        imagefilledrectangle($image, $x1, $y1, $x2, $y2, $blue);
+
+        // Valor arriba de la barra
+        $text  = (string) $metros[$i];
+        $textX = $x1 + ($barWidth / 2) - (strlen($text) * 3);
+        $textY = max(10, $y2 - 15);
+
+        imagestring($image, 3, $textX, $textY, $text, $red);
+
+        // Mes abajo
+        imagestring(
+            $image,
+            3,
+            $x1 + 2,
+            $height - 35,
+            $mesAbreviado[$meses[$i] - 1],
+            $black
+        );
     }
 
-    // Dibujar los ejes (X y Y)
-    imageline($image, 50, 30, 50, $height - 50, $black);  // Eje Y
-    imageline($image, 50, $height - 50, $width - 30, $height - 50, $black);  // Eje X
-
-    // Definir los meses abreviados
-    $mesAbreviado = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
-
-    // Dibujar las etiquetas de los meses abreviados en el eje X
-    for ($i = 0; $i < count($meses); $i++) {
-      $x = $spacing * $i + 100 + $barWidth / 2;  // Centrar la etiqueta debajo de la barra
-      $y = $height - 30;  // Colocar debajo del eje X
-      imagestring($image, 3, $x - 10, $y, $mesAbreviado[$meses[$i] - 1], $black);  // Dibujar el mes abreviado
-    }
-
-    // Dibujar las etiquetas del eje Y (m3)
-    $steps = 5;  // Número de marcas en el eje Y
-    $stepHeight = ($height - 100) / $steps;  // Altura entre las marcas en el eje Y
+    // ===============================
+    // 7. MARCAS EJE Y
+    // ===============================
+    $steps = 5;
 
     for ($i = 0; $i <= $steps; $i++) {
-      // Calcular la posición de la marca en el eje Y
-      $yPosition = $height - 50 - ($i * $stepHeight);
-      $value = $maxValue * ($i / $steps);  // Calcular el valor correspondiente en metros
+        $y = $height - $paddingBottom - ($i * ($usableHeight / $steps));
+        $val = round($maxValue * ($i / $steps));
 
-      // Colocar las etiquetas del eje Y (m³)
-      imagestring($image, 3, 10, $yPosition - 7, number_format($value, 0) . " m3", $black);
-      imageline($image, 45, $yPosition, 50, $yPosition, $black);  // Dibujar la línea de la marca en el eje Y
+        imageline($image, $paddingLeft - 5, $y, $paddingLeft, $y, $black);
+        imagestring($image, 2, 5, $y - 7, $val . " m3", $black);
     }
 
-    // Título del gráfico
-    imagestring($image, 5, $width / 3, 10, "Consumo ultimos meses", $black);
+    // ===============================
+    // 8. TÍTULO
+    // ===============================
+    imagestring(
+        $image,
+        5,
+        ($width / 2) - 90,
+        10,
+        "Consumo ultimos 12 meses",
+        $black
+    );
 
+    // ===============================
+    // 9. EXPORTAR IMAGEN
+    // ===============================
+    $ruta = "grafico.jpg";
+    imagejpeg($image, $ruta, 100);
 
-    // Definir la ruta donde se guardará la imagen
-    $ruta_imagen ="grafico.jpg";  // Puedes cambiar el nombre y la carpeta
+    $base64 = base64_encode(file_get_contents($ruta));
 
-    // Guardar la imagen como un archivo JPEG
-    imagejpeg($image, $ruta_imagen, 100);  // El tercer parámetro es la calidad (0-100)
+    imagedestroy($image);
 
-  // Leer la imagen guardada
-    $imageData = file_get_contents($ruta_imagen);
+    return $base64;
+}
 
-  // Codificar la imagen en base64
-    $base64Image = base64_encode($imageData);
+public function imagenTablaConsumo($id_metros)
+{
+    // ===============================
+    // 1. CONSUMO + CARGO FIJO
+    // ===============================
+    $sql = "
+        SELECT cf.id, m.metros
+        FROM metros m
+        INNER JOIN arranques a ON a.id_socio = m.id_socio
+        INNER JOIN medidores me ON me.id = a.id_medidor
+        INNER JOIN apr_cargo_fijo cf 
+            ON cf.id_diametro = me.id_diametro
+           AND cf.tarifa = a.tarifa
+           AND cf.id_apr = m.id_apr
+        WHERE m.id = ?
+    ";
 
-  // Retornar la imagen en base64
+    $row = $this->db->query($sql, [$id_metros])->getRowArray();
+    if (!$row) {
+        return null;
+    }
 
-  // Liberar recursos
-      imagedestroy($image);
-      
-      return $base64Image;
+    $consumo = (int)$row['metros'];
+    $idCargoFijo = (int)$row['id'];
 
-    // Opcional: Retornar la ruta del archivo guardado para mostrarla al usuario
-    // return $ruta_imagen;
-  }
+    // ===============================
+    // 2. RANGOS DESDE costo_metros
+    // ===============================
+    $rangos = $this->db->query("
+        SELECT desde, hasta, costo
+        FROM costo_metros
+        WHERE id_cargo_fijo = ?
+        ORDER BY desde ASC
+    ", [$idCargoFijo])->getResultArray();
+
+    if (!$rangos) {
+        return null;
+    }
+
+    // ===============================
+    // 3. DISTRIBUCIÓN CORRECTA
+    // ===============================
+    $detalle = [];
+    $total = 0;
+
+    foreach ($rangos as $r) {
+
+        if ($consumo < $r['desde']) {
+            continue;
+        }
+
+        $metrosRango = min($consumo, $r['hasta']) - $r['desde'] + 1;
+
+        if ($metrosRango <= 0) {
+            continue;
+        }
+
+        $subtotal = $metrosRango * $r['costo'];
+
+        $detalle[] = [
+            'rango'    => $r['desde'] . ' - ' . $r['hasta'],
+            'metros'   => $metrosRango,
+            'costo'    => $r['costo'],
+            'subtotal' => $subtotal
+        ];
+
+        $total += $subtotal;
+    }
+
+    // ===============================
+    // 4. CREAR IMAGEN
+    // ===============================
+    $rowHeight = 28;
+    $rows = count($detalle) + 2;
+    $width = 520;
+    $height = ($rows * $rowHeight) + 40;
+
+    $img = imagecreatetruecolor($width, $height);
+
+    $white = imagecolorallocate($img, 255, 255, 255);
+    $black = imagecolorallocate($img, 0, 0, 0);
+    $gray  = imagecolorallocate($img, 230, 230, 230);
+    $blue  = imagecolorallocate($img, 0, 102, 204);
+
+    imagefill($img, 0, 0, $white);
+
+    // ===============================
+    // 5. TÍTULO
+    // ===============================
+    imagestring($img, 5, 140, 10, "Detalle Consumo por Tramo", $blue);
+
+    // ===============================
+    // 6. CABECERA
+    // ===============================
+    $y = 40;
+    imagefilledrectangle($img, 10, $y, $width - 10, $y + $rowHeight, $gray);
+
+    imagestring($img, 4, 20,  $y + 6, "Rango (m3)", $black);
+    imagestring($img, 4, 170, $y + 6, "Consumo",   $black);
+    imagestring($img, 4, 290, $y + 6, "Costo",     $black);
+    imagestring($img, 4, 390, $y + 6, "Subtotal",  $black);
+
+    $y += $rowHeight;
+
+    // ===============================
+    // 7. FILAS
+    // ===============================
+    foreach ($detalle as $d) {
+
+        imagerectangle($img, 10, $y, $width - 10, $y + $rowHeight, $black);
+
+        imagestring($img, 3, 20,  $y + 6, $d['rango'], $black);
+        imagestring($img, 3, 185, $y + 6, $d['metros'], $black);
+        imagestring($img, 3, 300, $y + 6, "$" . number_format($d['costo'], 0), $black);
+        imagestring($img, 3, 395, $y + 6, "$" . number_format($d['subtotal'], 0), $black);
+
+        $y += $rowHeight;
+    }
+
+    // ===============================
+    // 8. TOTAL
+    // ===============================
+    imagefilledrectangle($img, 10, $y, $width - 10, $y + $rowHeight, $gray);
+    imagestring($img, 4, 280, $y + 6, "TOTAL", $black);
+    imagestring($img, 4, 395, $y + 6, "$" . number_format($total, 0), $black);
+
+    // ===============================
+    // 9. GUARDAR + BASE64
+    // ===============================
+    $ruta = FCPATH . "tabla_consumo.jpg";
+    imagejpeg($img, $ruta, 100);
+    imagedestroy($img);
+
+    return base64_encode(file_get_contents($ruta));
+}
+
 
 
 
@@ -1358,7 +1542,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
       $cargo_fijo        = $datosMetros["cargo_fijo"];
       
 
-     
+    
 
     if (intval($total_mes) > 0) {
             $datosSocios = $this->socios
@@ -1674,6 +1858,9 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
                 $trece=$fecha_vencimiento;
 
+                $img_grafico=$this->generarGrafico($id_socio);
+                $img_consumo=$this->imagenTablaConsumo($folio);
+                //exit();
 
                 
                 $xml_adicional = '<Adicional>
@@ -1731,6 +1918,10 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                     ];
 
                     //
+                  $nombre_grafico = 'grafico.jpg';
+                  $nombre_tabla = 'tabla_consumo.jpg';
+                  unlink(realpath(dirname(__FILE__,4))."/public/".$nombre_grafico);
+                  unlink(realpath(dirname(__FILE__,4))."/public/".$nombre_tabla);
 
                   if ($this->metros->save($datosMetrosSave)) {
                     $fecha      = date("Y-m-d H:i:s");
@@ -2107,6 +2298,9 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
       $neto = $total - $iva;
 
       $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf) + $iva;
+
+
+      
 
 
       $cadena = '<DTE version="1.0">
