@@ -1891,6 +1891,8 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 <Veinticinco>SOCIO</Veinticinco>
                                 <Veintiseis>'.$datosApr['fono'].'/'.$datosApr['email'].'</Veintiseis>
                                 <Veintisiete></Veintisiete>
+                                <Cuarentayocho>'.$img_grafico.'</Cuarentayocho>
+                                <Cuarentaynueve>'.$img_consumo.'</Cuarentaynueve>
                                 </Adicional>';
   
                    
@@ -1917,11 +1919,12 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                      "fecha_documento"   => $fecha
                     ];
 
-                    //
+                  /*
                   $nombre_grafico = 'grafico.jpg';
                   $nombre_tabla = 'tabla_consumo.jpg';
                   unlink(realpath(dirname(__FILE__,4))."/public/".$nombre_grafico);
                   unlink(realpath(dirname(__FILE__,4))."/public/".$nombre_tabla);
+                  */
 
                   if ($this->metros->save($datosMetrosSave)) {
                     $fecha      = date("Y-m-d H:i:s");
