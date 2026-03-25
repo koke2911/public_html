@@ -106,8 +106,8 @@ public function ObtieneToken(){
 
     $pass_api=$datosApr["clave_dete"];
 
-    // $pass_api='AmFMmcj8i0';
-    // $rut_apr='44444444-4';
+   //  $pass_api='AmFMmcj8i0';
+   //  $rut_apr='44444444-4';
 
     $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl");
     $parametros = array("RUTACCESOAPI" => $rut_apr,"PASSWORDACCESOAPI" =>  $pass_api); 
@@ -297,7 +297,7 @@ public function valida_token($TokenObtenido){
 
 }
 
-public function generarGrafico($id_socio)
+public function generarGrafico($id_socio,$mes_consumo)
 {
     // ===============================
     // 1. CONSULTA CORRECTA
@@ -310,6 +310,8 @@ public function generarGrafico($id_socio)
         FROM metros
         WHERE id_socio = ?
           AND fecha_ingreso >= CURDATE() - INTERVAL 12 MONTH
+        AND estado IN (1,2)
+        AND DATE_FORMAT(fecha_ingreso, '%m-%Y') <> '$mes_consumo'
         GROUP BY periodo, mes
         ORDER BY periodo ASC
     ";
@@ -999,7 +1001,7 @@ public function procesa_dtePablo($folio,$f_sii){
                   exit();
                 }
 
-                $grafico= $this->generarGrafico($id_socio);
+                $grafico= $this->generarGrafico($id_socio,$mes_consumo);
               
 
               $fp = fopen(dirname(__FILE__,4)."/public/".$f_sii.".txt", "w");
@@ -1557,7 +1559,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
              ->select("socios.id")
              ->select("s.nombre as sector")
              ->select("t.tipo as tarifa")
-             ->select("ifnull(afecto_corte(socios.id,socios.id_apr),0) as meses_deuda")
+             ->select("0  as meses_deuda")
               ->select("a.descuento as descuento")
              ->join("arranques a", "a.id_socio = socios.id")
              ->join("sectores s", "a.id_sector = s.id")
@@ -1858,10 +1860,11 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
                 $trece=$fecha_vencimiento;
 
-                $img_grafico=$this->generarGrafico($id_socio);
+                $img_grafico=$this->generarGrafico($id_socio,$mes_consumo);
                 $img_consumo=$this->imagenTablaConsumo($folio);
                 //exit();
 
+                $abono=0;
                 
                 $xml_adicional = '<Adicional>
                                 <Uno>0</Uno>
@@ -1890,14 +1893,14 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 <Veinticuatro>'.$subsidiario.'</Veinticuatro>
                                 <Veinticinco>SOCIO</Veinticinco>
                                 <Veintiseis>'.$datosApr['fono'].'/'.$datosApr['email'].'</Veintiseis>
-                                <Veintisiete></Veintisiete>
+                                <Veintisiete>'.$abono.'</Veintisiete>
                                 <Cuarentayocho>'.$img_grafico.'</Cuarentayocho>
                                 <Cuarentaynueve>'.$img_consumo.'</Cuarentaynueve>
                                 </Adicional>';
   
                    
                 // $parametros = array("STRINGXML" => $xml_dte_limpio,"STRINGXMLADICIONAL" => $xml_adicional,"ASIGNAFOLIO" => "True","TIPOIMPRESO" => "1","AMBIENTE" => "0","TOKEN" => $TokenObtenido);
-                $parametros = array("STRINGXML" => $xml_dte_limpio, "STRINGXMLADICIONAL" => $xml_adicional, "ASIGNAFOLIO" => "False", "TIPOIMPRESO" => "1", "AMBIENTE" => "1", "TOKEN" => $TokenObtenido);
+                 $parametros = array("STRINGXML" => $xml_dte_limpio, "STRINGXMLADICIONAL" => $xml_adicional, "ASIGNAFOLIO" => "False", "TIPOIMPRESO" => "1", "AMBIENTE" => "1", "TOKEN" => $TokenObtenido);
 
       if($tipo_dte==41 or $tipo_dte == 39 or $tipo_dte == 33 or $tipo_dte == 34){   
             
