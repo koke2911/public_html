@@ -106,8 +106,8 @@ public function ObtieneToken(){
 
     $pass_api=$datosApr["clave_dete"];
 
-   //  $pass_api='AmFMmcj8i0';
-   //  $rut_apr='44444444-4';
+    //$pass_api='AmFMmcj8i0';
+    //$rut_apr='44444444-4';
 
     $client = new \nusoap_client("http://www.appoctava.cl/ws/WebService.php?wsdl");
     $parametros = array("RUTACCESOAPI" => $rut_apr,"PASSWORDACCESOAPI" =>  $pass_api); 
@@ -1560,7 +1560,8 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
              ->select("s.nombre as sector")
              ->select("t.tipo as tarifa")
              ->select("0  as meses_deuda")
-              ->select("a.descuento as descuento")
+             ->select("a.descuento as descuento")
+             ->select("ifnull(socios.abono,0) as abono")
              ->join("arranques a", "a.id_socio = socios.id")
              ->join("sectores s", "a.id_sector = s.id")
              ->join("medidores m", "a.id_medidor = m.id")
@@ -1570,6 +1571,9 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
              ->first();
 
             $descuento_arranque = $datosSocios["descuento"];
+            $abono = $datosSocios["abono"];
+
+    
 
              if ($datosSocios["rut_socio"] != "") {
               $rut_socio = $datosSocios["rut_socio"];
@@ -1699,7 +1703,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
 
 
               // $rut_apr= '99999999-9'; // COMENTAAAAAAR
-              // $rut_apr = '44444444-4'; // COMENTAAAAAAR
+            // $rut_apr = '44444444-4'; // COMENTAAAAAAR
 
       // echo $tipo_dte;exit();
 
@@ -1864,7 +1868,9 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                 $img_consumo=$this->imagenTablaConsumo($folio);
                 //exit();
 
-                $abono=0;
+               // $abono=1000;
+
+               $vlr_pagar= $vlr_pagar - $abono;
                 
                 $xml_adicional = '<Adicional>
                                 <Uno>0</Uno>
@@ -1893,7 +1899,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 <Veinticuatro>'.$subsidiario.'</Veinticuatro>
                                 <Veinticinco>SOCIO</Veinticinco>
                                 <Veintiseis>'.$datosApr['fono'].'/'.$datosApr['email'].'</Veintiseis>
-                                <Veintisiete>'.$abono.'</Veintisiete>
+                                <Veintisiete>-'.$abono.'</Veintisiete>
                                 <Cuarentayocho>'.$img_grafico.'</Cuarentayocho>
                                 <Cuarentaynueve>'.$img_consumo.'</Cuarentaynueve>
                                 </Adicional>';
