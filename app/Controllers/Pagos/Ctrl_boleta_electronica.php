@@ -297,10 +297,10 @@ public function valida_token($TokenObtenido){
 
 }
 
-public function generarGrafico($id_socio,$mes_consumo)
-{
+  public function generarGrafico($id_socio, $mes_consumo)
+  {
     // ===============================
-    // 1. CONSULTA CORRECTA
+    // 1. CONSULTA
     // ===============================
     $sql = "
         SELECT 
@@ -309,31 +309,35 @@ public function generarGrafico($id_socio,$mes_consumo)
             SUM(metros) AS total_metros
         FROM metros
         WHERE id_socio = ?
-          AND fecha_ingreso >= CURDATE() - INTERVAL 12 MONTH
-        AND estado IN (1,2)
-        AND DATE_FORMAT(fecha_ingreso, '%m-%Y') <> '$mes_consumo'
+          AND fecha_ingreso >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+          AND estado IN (1,2)
+          AND DATE_FORMAT(fecha_ingreso, '%Y-%m') <> ?
         GROUP BY periodo, mes
         ORDER BY periodo ASC
     ";
 
-    $query  = $this->db->query($sql, [$id_socio]);
+    $query  = $this->db->query($sql, [$id_socio, $mes_consumo]);
     $result = $query->getResultArray();
 
     // ===============================
-    // 2. PREPARAR DATOS
+    // 2. COMPLETAR MESES FALTANTES
     // ===============================
+    $datos = [];
+
+    foreach ($result as $row) {
+      $datos[(int)$row['mes']] = (int)$row['total_metros'];
+    }
+
     $meses  = [];
     $metros = [];
 
-    foreach ($result as $row) {
-        $meses[]  = (int) $row['mes'];
-        $metros[] = (int) $row['total_metros'];
-    }
+    for ($i = 11; $i >= 0; $i--) {
+      $timestamp = strtotime("-$i month");
 
-    // Evitar errores si no hay datos
-    if (empty($metros)) {
-        $metros = [0];
-        $meses  = [date('n')];
+      $mesNumero = (int) date('n', $timestamp);
+
+      $meses[]  = $mesNumero;
+      $metros[] = $datos[$mesNumero] ?? 0; // si no existe → 0
     }
 
     // ===============================
@@ -359,11 +363,10 @@ public function generarGrafico($id_socio,$mes_consumo)
     $paddingTop    = 40;
     $paddingRight  = 30;
 
-    $maxValue    = max($metros) ?: 1;
+    $maxValue     = max($metros) ?: 1;
     $usableHeight = $height - $paddingTop - $paddingBottom;
     $scaleFactor  = $usableHeight / $maxValue;
 
-    // Escala horizontal automática
     $barCount    = count($metros);
     $usableWidth = $width - $paddingLeft - $paddingRight;
     $barWidth    = max(14, floor($usableWidth / ($barCount * 1.5)));
@@ -372,84 +375,69 @@ public function generarGrafico($id_socio,$mes_consumo)
     // ===============================
     // 5. EJES
     // ===============================
-    imageline(
-        $image,
-        $paddingLeft,
-        $paddingTop,
-        $paddingLeft,
-        $height - $paddingBottom,
-        $black
-    );
-
-    imageline(
-        $image,
-        $paddingLeft,
-        $height - $paddingBottom,
-        $width - $paddingRight,
-        $height - $paddingBottom,
-        $black
-    );
+    imageline($image, $paddingLeft, $paddingTop, $paddingLeft, $height - $paddingBottom, $black);
+    imageline($image, $paddingLeft, $height - $paddingBottom, $width - $paddingRight, $height - $paddingBottom, $black);
 
     // ===============================
-    // 6. BARRAS + VALORES
+    // 6. BARRAS
     // ===============================
-    $mesAbreviado = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+    $mesAbreviado = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
     for ($i = 0; $i < $barCount; $i++) {
 
-        $x1 = $paddingLeft + ($i * $spacing);
-        $x2 = $x1 + $barWidth;
+      $x1 = $paddingLeft + ($i * $spacing);
+      $x2 = $x1 + $barWidth;
 
-        $y1 = $height - $paddingBottom;
-        $y2 = $y1 - ($metros[$i] * $scaleFactor);
+      $y1 = $height - $paddingBottom;
+      $y2 = $y1 - ($metros[$i] * $scaleFactor);
 
-        imagefilledrectangle($image, $x1, $y1, $x2, $y2, $blue);
+      imagefilledrectangle($image, $x1, $y1, $x2, $y2, $blue);
 
-        // Valor arriba de la barra
-        $text  = (string) $metros[$i];
-        $textX = $x1 + ($barWidth / 2) - (strlen($text) * 3);
-        $textY = max(10, $y2 - 15);
+      // Valor arriba
+      $text  = (string) $metros[$i];
+      $textX = $x1 + ($barWidth / 2) - (strlen($text) * 3);
+      $textY = max(10, $y2 - 15);
 
-        imagestring($image, 3, $textX, $textY, $text, $red);
+      imagestring($image, 3, $textX, $textY, $text, $red);
 
-        // Mes abajo
-        imagestring(
-            $image,
-            3,
-            $x1 + 2,
-            $height - 35,
-            $mesAbreviado[$meses[$i] - 1],
-            $black
-        );
+      // Mes abajo
+      imagestring(
+        $image,
+        3,
+        $x1 + 2,
+        $height - 35,
+        $mesAbreviado[$meses[$i] - 1],
+        $black
+      );
     }
 
     // ===============================
-    // 7. MARCAS EJE Y
+    // 7. EJE Y
     // ===============================
     $steps = 5;
 
     for ($i = 0; $i <= $steps; $i++) {
-        $y = $height - $paddingBottom - ($i * ($usableHeight / $steps));
-        $val = round($maxValue * ($i / $steps));
+      $y = $height - $paddingBottom - ($i * ($usableHeight / $steps));
+      $val = round($maxValue * ($i / $steps));
 
-        imageline($image, $paddingLeft - 5, $y, $paddingLeft, $y, $black);
-        imagestring($image, 2, 5, $y - 7, $val . " m3", $black);
+      imageline($image, $paddingLeft - 5, $y, $paddingLeft, $y, $black);
+      imagestring($image, 2, 5, $y - 7, $val . " m3", $black);
     }
 
     // ===============================
     // 8. TÍTULO
     // ===============================
     imagestring(
-        $image,
-        5,
-        ($width / 2) - 90,
-        10,
-        "Consumo ultimos 12 meses",
-        $black
+      $image,
+      5,
+      ($width / 2) - 90,
+      10,
+      "Consumo ultimos 12 meses",
+      $black
     );
 
     // ===============================
-    // 9. EXPORTAR IMAGEN
+    // 9. EXPORTAR
     // ===============================
     $ruta = "grafico.jpg";
     imagejpeg($image, $ruta, 100);
@@ -459,7 +447,7 @@ public function generarGrafico($id_socio,$mes_consumo)
     imagedestroy($image);
 
     return $base64;
-}
+  }
 
 public function imagenTablaConsumo($id_metros)
 {
