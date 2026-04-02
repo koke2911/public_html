@@ -480,7 +480,7 @@ public function imagenTablaConsumo($id_metros)
     $rangos = $this->db->query("
         SELECT desde, hasta, costo
         FROM costo_metros
-        WHERE id_cargo_fijo = ?
+        WHERE id_cargo_fijo = ? and estado=1
         ORDER BY desde ASC
     ", [$idCargoFijo])->getResultArray();
 
