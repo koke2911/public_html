@@ -1561,6 +1561,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
              ->select("t.tipo as tarifa")
              ->select("ifnull(afecto_corte(socios.id,socios.id_apr),0) as meses_deuda")
              ->select("a.descuento as descuento")
+             ->select("ifnull(socios.abono,0) as abono")
              ->join("arranques a", "a.id_socio = socios.id")
              ->join("sectores s", "a.id_sector = s.id")
              ->join("medidores m", "a.id_medidor = m.id")
@@ -1898,7 +1899,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                                 <Veinticuatro>'.$subsidiario.'</Veinticuatro>
                                 <Veinticinco>SOCIO</Veinticinco>
                                 <Veintiseis>'.$datosApr['fono'].'/'.$datosApr['email'].'</Veintiseis>
-                                <Veintisiete>-'.$abono.'</Veintisiete>
+                                <Veintisiete>'.$abono.'</Veintisiete>
                                 <Cuarentayocho>'.$img_grafico.'</Cuarentayocho>
                                 <Cuarentaynueve>'.$img_consumo.'</Cuarentaynueve>
                                 </Adicional>';
