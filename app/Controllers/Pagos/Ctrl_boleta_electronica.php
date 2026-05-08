@@ -4940,7 +4940,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 
       $pdf = new \Imagick();
 
-      $pdf->setResolution(120, 120);
+      $pdf->setResolution(280, 280);
 
       $pdf->readImage($tempPdf . '[0]');
 
