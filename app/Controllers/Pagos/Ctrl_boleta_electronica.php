@@ -495,7 +495,7 @@ public function envia_mail($arr_boletas){
 
             $pdf = new \Imagick();
 
-            $pdf->setResolution(300, 300);
+            $pdf->setResolution(250, 250);
 
             $pdf->readImage(
               $tempPdf . '[0]'
@@ -4080,7 +4080,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 
           $pdf = new \Imagick();
 
-          $pdf->setResolution(300, 300);
+          $pdf->setResolution(250, 250);
 
           $pdf->readImage($tempPdf . '[0]');
 
@@ -5075,7 +5075,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 
         $pdf = new \Imagick();
 
-        $pdf->setResolution(300, 300);
+        $pdf->setResolution(250, 250);
 
         $pdf->readImage($tempPdf . '[0]');
 
