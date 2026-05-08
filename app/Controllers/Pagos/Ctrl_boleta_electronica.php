@@ -433,12 +433,7 @@ public function envia_mail($arr_boletas){
             \Imagick::INTERLACE_NO
           );
 
-          $img->resizeImage(
-            900,
-            0,
-            \Imagick::FILTER_TRIANGLE,
-            1
-          );
+          $img->thumbnailImage(900, 0);
 
           $img->setImageCompressionQuality(75);
 
@@ -3963,12 +3958,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
             \Imagick::INTERLACE_NO
           );
 
-          $img->resizeImage(
-            900,
-            0,
-            \Imagick::FILTER_TRIANGLE,
-            1
-          );
+          $img->thumbnailImage(900, 0);
 
           $img->setImageCompressionQuality(75);
 
@@ -4984,12 +4974,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
           \Imagick::INTERLACE_NO
         );
 
-        $img->resizeImage(
-          900,
-          0,
-          \Imagick::FILTER_TRIANGLE,
-          1
-        );
+        $img->thumbnailImage(900, 0);
 
         $img->setImageCompressionQuality(75);
 
