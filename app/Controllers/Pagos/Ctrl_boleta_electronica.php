@@ -297,6 +297,10 @@ public function envia_mail($arr_boletas){
       mkdir(FCPATH . 'boletas_nuevas', 0777, true);
     }
 
+    if (!is_dir(FCPATH . 'uploads')) {
+      mkdir(FCPATH . 'uploads', 0775, true);
+    }
+
     foreach ($folios as $folio) {
 
       try {
@@ -352,7 +356,7 @@ public function envia_mail($arr_boletas){
         }
 
         // ==================================================
-        // GENERAR PDF NUEVO FORMATO
+        // GENERAR GRAFICO Y TABLA
         // ==================================================
 
         $partes = explode('-', $fecha_ingreso);
@@ -365,7 +369,13 @@ public function envia_mail($arr_boletas){
           $folio
         );
 
-        $base64_tabla = $this->imagenTablaConsumo($folio);
+        $base64_tabla = $this->imagenTablaConsumo(
+          $folio
+        );
+
+        // ==================================================
+        // PDF TEMPORAL
+        // ==================================================
 
         $tempPdf = WRITEPATH . 'uploads/temp_' . $folio . '.pdf';
 
@@ -374,22 +384,72 @@ public function envia_mail($arr_boletas){
           file_get_contents($url_boleta)
         );
 
-        $imagick = new \Imagick();
+        if (!file_exists($tempPdf)) {
+          continue;
+        }
 
-        $imagick->setResolution(150, 150);
+        // ==================================================
+        // LEER PDF UNA SOLA VEZ
+        // ==================================================
 
-        $imagick->readImage($tempPdf . '[0]');
+        $pdf = new \Imagick();
 
-        $imagick->setImageFormat('jpg');
+        $pdf->setResolution(300, 300);
 
-        $width  = $imagick->getImageWidth();
-        $height = $imagick->getImageHeight();
+        $pdf->readImage($tempPdf . '[0]');
 
-        // =====================================
+        $pdf->setImageFormat('jpg');
+
+        $width  = $pdf->getImageWidth();
+        $height = $pdf->getImageHeight();
+
+        // ==================================================
+        // NORMALIZAR
+        // ==================================================
+
+        $normalizar = function ($img) {
+
+          $img->setImagePage(0, 0, 0, 0);
+
+          $img->setImageFormat('jpeg');
+
+          $img->stripImage();
+
+          $img->setImageColorspace(
+            \Imagick::COLORSPACE_RGB
+          );
+
+          $img->setImageAlphaChannel(
+            \Imagick::ALPHACHANNEL_REMOVE
+          );
+
+          $img->setBackgroundColor('white');
+
+          $img = $img->mergeImageLayers(
+            \Imagick::LAYERMETHOD_FLATTEN
+          );
+
+          $img->setInterlaceScheme(
+            \Imagick::INTERLACE_NO
+          );
+
+          $img->resizeImage(
+            900,
+            0,
+            \Imagick::FILTER_TRIANGLE,
+            1
+          );
+
+          $img->setImageCompressionQuality(75);
+
+          return $img;
+        };
+
+        // ==================================================
         // TIMBRE
-        // =====================================
+        // ==================================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.6,
@@ -398,13 +458,7 @@ public function envia_mail($arr_boletas){
           $height * 0.75
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/timbre_' . $folio . '.jpg'
@@ -413,11 +467,11 @@ public function envia_mail($arr_boletas){
         $img->clear();
         $img->destroy();
 
-        // =====================================
+        // ==================================================
         // ENCABEZADO
-        // =====================================
+        // ==================================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.9,
@@ -426,13 +480,7 @@ public function envia_mail($arr_boletas){
           0
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/encabezado_' . $folio . '.jpg'
@@ -441,11 +489,11 @@ public function envia_mail($arr_boletas){
         $img->clear();
         $img->destroy();
 
-        // =====================================
+        // ==================================================
         // CONSUMO
-        // =====================================
+        // ==================================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.35,
@@ -454,13 +502,7 @@ public function envia_mail($arr_boletas){
           $height * 0.44
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/consumo_' . $folio . '.jpg'
@@ -469,11 +511,11 @@ public function envia_mail($arr_boletas){
         $img->clear();
         $img->destroy();
 
-        // =====================================
+        // ==================================================
         // DETALLE
-        // =====================================
+        // ==================================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.45,
@@ -482,13 +524,7 @@ public function envia_mail($arr_boletas){
           $height * 0.44
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/detalle_' . $folio . '.jpg'
@@ -497,11 +533,11 @@ public function envia_mail($arr_boletas){
         $img->clear();
         $img->destroy();
 
-        // =====================================
+        // ==================================================
         // SOCIO
-        // =====================================
+        // ==================================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.92,
@@ -510,13 +546,7 @@ public function envia_mail($arr_boletas){
           $height * 0.13
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/socio_' . $folio . '.jpg'
@@ -525,11 +555,11 @@ public function envia_mail($arr_boletas){
         $img->clear();
         $img->destroy();
 
-        // =====================================
+        // ==================================================
         // GLOSA
-        // =====================================
+        // ==================================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.60,
@@ -538,13 +568,7 @@ public function envia_mail($arr_boletas){
           $height * 0.214
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/glosa_' . $folio . '.jpg'
@@ -553,16 +577,15 @@ public function envia_mail($arr_boletas){
         $img->clear();
         $img->destroy();
 
-        $imagick->clear();
-        $imagick->destroy();
-
-        // =====================================
+        // ==================================================
         // HTML
-        // =====================================
+        // ==================================================
 
-        $logo_encabezado = "uploads/encabezado_" . $folio . ".jpg";
+        $logo_encabezado =
+          "uploads/encabezado_" . $folio . ".jpg";
 
-        $timbre_sii = "uploads/timbre_" . $folio . ".jpg";
+        $timbre_sii =
+          "uploads/timbre_" . $folio . ".jpg";
 
         $html = '
 <style>
@@ -869,9 +892,9 @@ public function envia_mail($arr_boletas){
 </div>
 ';
 
-        // =====================================
+        // ==================================================
         // PDF FINAL
-        // =====================================
+        // ==================================================
 
         $pdf_final = FCPATH .
           'boletas_nuevas/' .
@@ -887,17 +910,20 @@ public function envia_mail($arr_boletas){
 
         $mpdf->SetBasePath(FCPATH);
 
+        $mpdf->showImageErrors = true;
+
         $mpdf->WriteHTML($html);
 
         $mpdf->Output($pdf_final, 'F');
 
-        // =====================================
+        // ==================================================
         // EMAIL
-        // =====================================
+        // ==================================================
 
         $this->email = \Config\Services::email();
 
-        $subject = 'Tu boleta de Agua ya está disponible';
+        $subject =
+          'Tu boleta de Agua ya está disponible';
 
         $message = '
             <p>
@@ -936,30 +962,64 @@ public function envia_mail($arr_boletas){
 
         $this->email->clear(true);
 
-        // =====================================
+        // ==================================================
         // LIMPIEZA
-        // =====================================
+        // ==================================================
+
+        $pdf->clear();
+        $pdf->destroy();
 
         @unlink($tempPdf);
-        $nombre_grafico = 'grafico_' . $folio . '.jpg';
-        $nombre_tabla = 'tabla_consumo_' . $folio . '.jpg';
-        unlink(realpath(dirname(__FILE__, 4)) . "/public/" . $nombre_grafico);
-        unlink(realpath(dirname(__FILE__, 4)) . "/public/" . $nombre_tabla);
 
-        @unlink(FCPATH . 'uploads/timbre_' . $folio . '.jpg');
-        @unlink(FCPATH . 'uploads/encabezado_' . $folio . '.jpg');
-        @unlink(FCPATH . 'uploads/consumo_' . $folio . '.jpg');
-        @unlink(FCPATH . 'uploads/detalle_' . $folio . '.jpg');
-        @unlink(FCPATH . 'uploads/socio_' . $folio . '.jpg');
-        @unlink(FCPATH . 'uploads/glosa_' . $folio . '.jpg');
+        $nombre_grafico =
+          'grafico_' . $folio . '.jpg';
+
+        $nombre_tabla =
+          'tabla_consumo_' . $folio . '.jpg';
+
+        @unlink(
+          realpath(dirname(__FILE__, 4))
+            . "/public/"
+            . $nombre_grafico
+        );
+
+        @unlink(
+          realpath(dirname(__FILE__, 4))
+            . "/public/"
+            . $nombre_tabla
+        );
+
+        @unlink(
+          FCPATH . 'uploads/timbre_' . $folio . '.jpg'
+        );
+
+        @unlink(
+          FCPATH . 'uploads/encabezado_' . $folio . '.jpg'
+        );
+
+        @unlink(
+          FCPATH . 'uploads/consumo_' . $folio . '.jpg'
+        );
+
+        @unlink(
+          FCPATH . 'uploads/detalle_' . $folio . '.jpg'
+        );
+
+        @unlink(
+          FCPATH . 'uploads/socio_' . $folio . '.jpg'
+        );
+
+        @unlink(
+          FCPATH . 'uploads/glosa_' . $folio . '.jpg'
+        );
       } catch (\Throwable $e) {
 
         log_message(
           'error',
-          'Error mail boleta ' .
-            $folio .
-            ': ' .
-            $e->getMessage()
+          'Error mail boleta '
+            . $folio
+            . ': '
+            . $e->getMessage()
         );
       }
     }
@@ -3792,6 +3852,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
     ]);
 
     $mpdf->SetBasePath(FCPATH);
+
     $mpdf->showImageErrors = true;
 
     $primera = true;
@@ -3833,7 +3894,9 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
           $id_metros
         );
 
-        $base64_tabla = $this->imagenTablaConsumo($id_metros);
+        $base64_tabla = $this->imagenTablaConsumo(
+          $id_metros
+        );
 
         // =========================================
         // PDF TEMPORAL
@@ -3851,25 +3914,72 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         }
 
         // =========================================
-        // ENCABEZADO
+        // LEER PDF UNA SOLA VEZ
         // =========================================
 
-        $imagick = new \Imagick();
+        $pdf = new \Imagick();
 
-        $imagick->setResolution(150, 150);
+        $pdf->setResolution(300, 300);
 
-        $imagick->readImage($tempPdf . '[0]');
+        $pdf->readImage($tempPdf . '[0]');
 
-        $imagick->setImageFormat('jpg');
+        $pdf->setImageFormat('jpg');
 
-        $width  = $imagick->getImageWidth();
-        $height = $imagick->getImageHeight();
+        $width  = $pdf->getImageWidth();
+        $height = $pdf->getImageHeight();
 
-        // =========================
+        if (!is_dir(FCPATH . 'uploads')) {
+
+          mkdir(FCPATH . 'uploads', 0775, true);
+        }
+
+        // =========================================
+        // FUNCION NORMALIZAR
+        // =========================================
+
+        $normalizar = function ($img) {
+
+          $img->setImagePage(0, 0, 0, 0);
+
+          $img->setImageFormat('jpeg');
+
+          $img->stripImage();
+
+          $img->setImageColorspace(
+            \Imagick::COLORSPACE_RGB
+          );
+
+          $img->setImageAlphaChannel(
+            \Imagick::ALPHACHANNEL_REMOVE
+          );
+
+          $img->setBackgroundColor('white');
+
+          $img = $img->mergeImageLayers(
+            \Imagick::LAYERMETHOD_FLATTEN
+          );
+
+          $img->setInterlaceScheme(
+            \Imagick::INTERLACE_NO
+          );
+
+          $img->resizeImage(
+            900,
+            0,
+            \Imagick::FILTER_TRIANGLE,
+            1
+          );
+
+          $img->setImageCompressionQuality(75);
+
+          return $img;
+        };
+
+        // =========================================
         // TIMBRE
-        // =========================
+        // =========================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.6,
@@ -3878,15 +3988,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
           $height * 0.75
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
-
-        $img->setImageCompressionQuality(90);
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/timbre_' . $id_metros . '.jpg'
@@ -3895,11 +3997,11 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         $img->clear();
         $img->destroy();
 
-        // =========================
+        // =========================================
         // ENCABEZADO
-        // =========================
+        // =========================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.9,
@@ -3908,15 +4010,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
           0
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
-
-        $img->setImageCompressionQuality(90);
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/encabezado_' . $id_metros . '.jpg'
@@ -3925,11 +4019,11 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         $img->clear();
         $img->destroy();
 
-        // =========================
+        // =========================================
         // CONSUMO
-        // =========================
+        // =========================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.35,
@@ -3938,15 +4032,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
           $height * 0.44
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
-
-        $img->setImageCompressionQuality(90);
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/consumo_' . $id_metros . '.jpg'
@@ -3955,11 +4041,11 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         $img->clear();
         $img->destroy();
 
-        // =========================
+        // =========================================
         // DETALLE
-        // =========================
+        // =========================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.45,
@@ -3968,15 +4054,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
           $height * 0.44
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
-
-        $img->setImageCompressionQuality(90);
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/detalle_' . $id_metros . '.jpg'
@@ -3985,11 +4063,11 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         $img->clear();
         $img->destroy();
 
-        // =========================
+        // =========================================
         // SOCIO
-        // =========================
+        // =========================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.92,
@@ -3998,15 +4076,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
           $height * 0.13
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
-
-        $img->setImageCompressionQuality(90);
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/socio_' . $id_metros . '.jpg'
@@ -4015,11 +4085,11 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         $img->clear();
         $img->destroy();
 
-        // =========================
+        // =========================================
         // GLOSA
-        // =========================
+        // =========================================
 
-        $img = clone $imagick;
+        $img = clone $pdf;
 
         $img->cropImage(
           $width * 0.60,
@@ -4028,15 +4098,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
           $height * 0.214
         );
 
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
-
-        $img->setImageCompressionQuality(90);
+        $img = $normalizar($img);
 
         $img->writeImage(
           FCPATH . 'uploads/glosa_' . $id_metros . '.jpg'
@@ -4045,16 +4107,15 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         $img->clear();
         $img->destroy();
 
-        $imagick->clear();
-        $imagick->destroy();
-
         // =========================================
         // HTML
         // =========================================
 
-        $logo_encabezado = "uploads/encabezado_" . $id_metros . ".jpg";
+        $logo_encabezado =
+          "uploads/encabezado_" . $id_metros . ".jpg";
 
-        $timbre_sii = "uploads/timbre_" . $id_metros . ".jpg";
+        $timbre_sii =
+          "uploads/timbre_" . $id_metros . ".jpg";
 
         $html = '
 <style>
@@ -4360,7 +4421,6 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 
 </div>
 ';
-
         // =========================================
         // PAGINA
         // =========================================
@@ -4377,22 +4437,78 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         // LIMPIEZA
         // =========================================
 
+        $pdf->clear();
+        $pdf->destroy();
+
         @unlink($tempPdf);
-        $nombre_grafico = 'grafico_' . $id_metros . '.jpg';
-        $nombre_tabla = 'tabla_consumo_' . $id_metros . '.jpg';
-        unlink(realpath(dirname(__FILE__, 4)) . "/public/" . $nombre_grafico);
-        unlink(realpath(dirname(__FILE__, 4)) . "/public/" . $nombre_tabla);
-        @unlink(FCPATH . 'uploads/encabezado_' . $id_metros . '.jpg');
-        @unlink(FCPATH . 'uploads/timbre_' . $id_metros . '.jpg');
-        @unlink(FCPATH . 'uploads/socio_' . $id_metros . '.jpg');
-        @unlink(FCPATH . 'uploads/glosa_' . $id_metros . '.jpg');
-        @unlink(FCPATH . 'uploads/consumo_' . $id_metros . '.jpg');
-        @unlink(FCPATH . 'uploads/detalle_' . $id_metros . '.jpg');
+
+        $nombre_grafico =
+          'grafico_' . $id_metros . '.jpg';
+
+        $nombre_tabla =
+          'tabla_consumo_' . $id_metros . '.jpg';
+
+        @unlink(
+          realpath(dirname(__FILE__, 4))
+            . "/public/"
+            . $nombre_grafico
+        );
+
+        @unlink(
+          realpath(dirname(__FILE__, 4))
+            . "/public/"
+            . $nombre_tabla
+        );
+
+        @unlink(
+          FCPATH
+            . 'uploads/encabezado_'
+            . $id_metros
+            . '.jpg'
+        );
+
+        @unlink(
+          FCPATH
+            . 'uploads/timbre_'
+            . $id_metros
+            . '.jpg'
+        );
+
+        @unlink(
+          FCPATH
+            . 'uploads/socio_'
+            . $id_metros
+            . '.jpg'
+        );
+
+        @unlink(
+          FCPATH
+            . 'uploads/glosa_'
+            . $id_metros
+            . '.jpg'
+        );
+
+        @unlink(
+          FCPATH
+            . 'uploads/consumo_'
+            . $id_metros
+            . '.jpg'
+        );
+
+        @unlink(
+          FCPATH
+            . 'uploads/detalle_'
+            . $id_metros
+            . '.jpg'
+        );
       } catch (\Throwable $e) {
 
         log_message(
           'error',
-          'Error boleta ' . $folio . ': ' . $e->getMessage()
+          'Error boleta '
+            . $folio
+            . ': '
+            . $e->getMessage()
         );
       }
     }
@@ -4776,14 +4892,14 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
   {
     $this->validar_sesion();
 
-    $url = $this->request->getGet('url');
-    $id_metros = $this->request->getGet('id_metros');
-    $id_socio = $this->request->getGet('id_socio');
-    $fecha_ingreso = $this->request->getGet('fecha_ingreso');
-    
-    $partes = explode('-', $fecha_ingreso);
-    $mes_consumo = $partes[1] . '-' . $partes[2];
+    $url             = $this->request->getGet('url');
+    $id_metros       = $this->request->getGet('id_metros');
+    $id_socio        = $this->request->getGet('id_socio');
+    $fecha_ingreso   = $this->request->getGet('fecha_ingreso');
 
+    $partes = explode('-', $fecha_ingreso);
+
+    $mes_consumo = $partes[1] . '-' . $partes[2];
 
     if (!$url) {
       return "URL no válida";
@@ -4791,272 +4907,242 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 
     try {
 
-      $base64_grafico = $this->generarGrafico($id_socio, $mes_consumo,$id_metros);
-      $base64_tabla   = $this->imagenTablaConsumo($id_metros);
-      // 🔹 1. Descargar PDF original
+      $base64_grafico = $this->generarGrafico(
+        $id_socio,
+        $mes_consumo,
+        $id_metros
+      );
+
+      $base64_tabla = $this->imagenTablaConsumo(
+        $id_metros
+      );
+
+      // =====================================================
+      // PDF TEMPORAL
+      // =====================================================
+
       $tempPdf = WRITEPATH . 'uploads/temp_boleta.pdf';
-      file_put_contents($tempPdf, file_get_contents($url));
+
+      file_put_contents(
+        $tempPdf,
+        file_get_contents($url)
+      );
 
       if (!file_exists($tempPdf)) {
-        throw new \Exception("No se pudo descargar el PDF");
+        throw new \Exception(
+          "No se pudo descargar el PDF"
+        );
       }
 
-      // 🔹 2. Convertir PDF a imagen
-      $imagick = new \Imagick();
-      $imagick->setResolution(300, 300);
-      $imagick->readImage($tempPdf . '[0]');
-      $imagick->setImageFormat('jpg'); // 🔥 usar JPG (evita error GD)
+      // =====================================================
+      // LEER PDF UNA SOLA VEZ
+      // =====================================================
 
-      $width  = $imagick->getImageWidth();
-      $height = $imagick->getImageHeight();
+      $pdf = new \Imagick();
 
-      // 🔹 3. Recortar timbre (ajustable)
-      $imagick->cropImage(
-        $width * 0.6,   // ancho (solo lado izquierdo)
-        $height * 0.15,  // alto (solo bloque del timbre)
-        $width * 0.45,   // X (pegado a la izquierda)
-        $height * 0.75  // Y (parte baja donde está el timbre)
-      );
+      $pdf->setResolution(120, 120);
 
-      $imagick->setImagePage(0, 0, 0, 0);
+      $pdf->readImage($tempPdf . '[0]');
 
-      // 🔥 quitar transparencia (clave)
-      $imagick->setImageBackgroundColor('white');
-      $imagick = $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+      $pdf->setImageFormat('jpg');
 
-      $imagick->setImageCompressionQuality(90);
-
-      // 🔹 4. Guardar imagen en public/
-      $timbrePath = FCPATH . 'uploads/timbre_'.$id_metros.'.jpg';
+      $width  = $pdf->getImageWidth();
+      $height = $pdf->getImageHeight();
 
       if (!is_dir(FCPATH . 'uploads')) {
+
         mkdir(FCPATH . 'uploads', 0775, true);
       }
+
+      // =====================================================
+      // FUNCION NORMALIZAR
+      // =====================================================
+
+      $normalizar = function ($img) {
+
+        $img->setImagePage(0, 0, 0, 0);
+
+        $img->setImageFormat('jpeg');
+
+        $img->stripImage();
+
+        $img->setImageColorspace(
+          \Imagick::COLORSPACE_RGB
+        );
+
+        $img->setImageAlphaChannel(
+          \Imagick::ALPHACHANNEL_REMOVE
+        );
+
+        $img->setBackgroundColor('white');
+
+        $img = $img->mergeImageLayers(
+          \Imagick::LAYERMETHOD_FLATTEN
+        );
+
+        $img->setInterlaceScheme(
+          \Imagick::INTERLACE_NO
+        );
+
+        $img->resizeImage(
+          900,
+          0,
+          \Imagick::FILTER_TRIANGLE,
+          1
+        );
+
+        $img->setImageCompressionQuality(75);
+
+        return $img;
+      };
+
+      // =====================================================
+      // TIMBRE
+      // =====================================================
+
+      $imagick = clone $pdf;
+
+      $imagick->cropImage(
+        $width * 0.6,
+        $height * 0.15,
+        $width * 0.45,
+        $height * 0.75
+      );
+
+      $imagick = $normalizar($imagick);
+
+      $timbrePath =
+        FCPATH . 'uploads/timbre_' . $id_metros . '.jpg';
 
       $imagick->writeImage($timbrePath);
 
       $imagick->clear();
       $imagick->destroy();
 
-      if (!file_exists($timbrePath) || filesize($timbrePath) == 0) {
-        throw new \Exception("No se generó correctamente el timbre");
-      }
+      // =====================================================
+      // ENCABEZADO
+      // =====================================================
 
-      // EXTREAER ENCABEZADO
+      $imagick = clone $pdf;
 
-      $imagick = new \Imagick();
-      $imagick->setResolution(250, 250);
-      $imagick->readImage($tempPdf . '[0]');
-      $imagick->setImageFormat('jpg'); // 🔥 usar JPG (evita error GD)
-
-      $width  = $imagick->getImageWidth();
-      $height = $imagick->getImageHeight();
-
-      // 🔹 3. Recortar timbre (ajustable)
       $imagick->cropImage(
-        $width * 0.9,   // ancho (solo lado izquierdo)
-        $height * 0.13,  // alto (solo bloque del timbre)
-        $width * 0.04,   // X (pegado a la izquierda)
-        $height * 0.0  // Y (parte baja donde está el timbre)
+        $width * 0.9,
+        $height * 0.13,
+        $width * 0.04,
+        0
       );
 
-      $imagick->setImagePage(0, 0, 0, 0);
+      $imagick = $normalizar($imagick);
 
-      // 🔥 quitar transparencia (clave)
-      $imagick->setImageBackgroundColor('white');
-      $imagick = $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+      $encabezadoPath =
+        FCPATH . 'uploads/encabezado_' . $id_metros . '.jpg';
 
-      $imagick->setImageCompressionQuality(90);
-
-      // 🔹 4. Guardar imagen en public/
-      $timbrePath = FCPATH . 'uploads/encabezado_'.$id_metros.'.jpg';
-
-      if (!is_dir(FCPATH . 'uploads')) {
-        mkdir(FCPATH . 'uploads', 0775, true);
-      }
-
-      $imagick->writeImage($timbrePath);
+      $imagick->writeImage($encabezadoPath);
 
       $imagick->clear();
       $imagick->destroy();
 
-      if (!file_exists($timbrePath) || filesize($timbrePath) == 0) {
-        throw new \Exception("No se generó correctamente el timbre");
-      }
+      // =====================================================
+      // CONSUMO
+      // =====================================================
 
-      // EXTREAER CONSUMO
+      $imagick = clone $pdf;
 
-      $imagick = new \Imagick();
-      $imagick->setResolution(250, 250);
-      $imagick->readImage($tempPdf . '[0]');
-      $imagick->setImageFormat('jpg'); // 🔥 usar JPG (evita error GD)
-
-      $width  = $imagick->getImageWidth();
-      $height = $imagick->getImageHeight();
-
-      // 🔹 3. Recortar timbre (ajustable)
       $imagick->cropImage(
-        $width * 0.35,   // ancho (solo lado izquierdo)
-        $height * 0.12,  // alto (solo bloque del timbre)
-        $width * 0.04,   // X (pegado a la izquierda)
-        $height * 0.44  // Y (parte baja donde está el timbre)
+        $width * 0.35,
+        $height * 0.12,
+        $width * 0.04,
+        $height * 0.44
       );
 
-      $imagick->setImagePage(0, 0, 0, 0);
+      $imagick = $normalizar($imagick);
 
-      // 🔥 quitar transparencia (clave)
-      $imagick->setImageBackgroundColor('white');
-      $imagick = $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+      $consumoPath =
+        FCPATH . 'uploads/consumo_' . $id_metros . '.jpg';
 
-      $imagick->setImageCompressionQuality(90);
-
-      // 🔹 4. Guardar imagen en public/
-      $timbrePath = FCPATH . 'uploads/consumo_'.$id_metros.'.jpg';
-
-      if (!is_dir(FCPATH . 'uploads')) {
-        mkdir(FCPATH . 'uploads', 0775, true);
-      }
-
-      $imagick->writeImage($timbrePath);
+      $imagick->writeImage($consumoPath);
 
       $imagick->clear();
       $imagick->destroy();
 
-      if (!file_exists($timbrePath) || filesize($timbrePath) == 0) {
-        throw new \Exception("No se generó correctamente el timbre");
-      }
+      // =====================================================
+      // DETALLE
+      // =====================================================
 
-      // EXTREAER DETALLE
+      $imagick = clone $pdf;
 
-      $imagick = new \Imagick();
-      $imagick->setResolution(250, 250);
-      $imagick->readImage($tempPdf . '[0]');
-      $imagick->setImageFormat('jpg'); // 🔥 usar JPG (evita error GD)
-
-      $width  = $imagick->getImageWidth();
-      $height = $imagick->getImageHeight();
-
-      // 🔹 3. Recortar timbre (ajustable)
       $imagick->cropImage(
-        $width * 0.45,   // ancho (solo lado izquierdo)
-        $height * 0.32,  // alto (solo bloque del timbre)
-        $width * 0.52,   // X (pegado a la izquierda)
-        $height * 0.44  // Y (parte baja donde está el timbre)
+        $width * 0.45,
+        $height * 0.32,
+        $width * 0.52,
+        $height * 0.44
       );
 
-      $imagick->setImagePage(0, 0, 0, 0);
+      $imagick = $normalizar($imagick);
 
-      // 🔥 quitar transparencia (clave)
-      $imagick->setImageBackgroundColor('white');
-      $imagick = $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+      $detallePath =
+        FCPATH . 'uploads/detalle_' . $id_metros . '.jpg';
 
-      $imagick->setImageCompressionQuality(90);
-
-      // 🔹 4. Guardar imagen en public/
-      $timbrePath = FCPATH . 'uploads/detalle_'.$id_metros.'.jpg';
-
-      if (!is_dir(FCPATH . 'uploads')) {
-        mkdir(FCPATH . 'uploads', 0775, true);
-      }
-
-      $imagick->writeImage($timbrePath);
+      $imagick->writeImage($detallePath);
 
       $imagick->clear();
       $imagick->destroy();
 
-      if (!file_exists($timbrePath) || filesize($timbrePath) == 0) {
-        throw new \Exception("No se generó correctamente el timbre");
-      }
+      // =====================================================
+      // SOCIO
+      // =====================================================
 
-      // EXTREAER datos socio
+      $imagick = clone $pdf;
 
-      $imagick = new \Imagick();
-      $imagick->setResolution(250, 250);
-      $imagick->readImage($tempPdf . '[0]');
-      $imagick->setImageFormat('jpg'); // 🔥 usar JPG (evita error GD)
-
-      $width  = $imagick->getImageWidth();
-      $height = $imagick->getImageHeight();
-
-      // 🔹 3. Recortar timbre (ajustable)
       $imagick->cropImage(
-        $width * 0.92,   // ancho (solo lado izquierdo)
-        $height * 0.075,  // alto (solo bloque del timbre)
-        $width * 0.03,   // X (pegado a la izquierda)
-        $height * 0.13  // Y (parte baja donde está el timbre)
+        $width * 0.92,
+        $height * 0.075,
+        $width * 0.03,
+        $height * 0.13
       );
 
-      $imagick->setImagePage(0, 0, 0, 0);
+      $imagick = $normalizar($imagick);
 
-      // 🔥 quitar transparencia (clave)
-      $imagick->setImageBackgroundColor('white');
-      $imagick = $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+      $socioPath =
+        FCPATH . 'uploads/socio_' . $id_metros . '.jpg';
 
-      $imagick->setImageCompressionQuality(90);
-
-      // 🔹 4. Guardar imagen en public/
-      $timbrePath = FCPATH . 'uploads/socio_'.$id_metros.'.jpg';
-
-      if (!is_dir(FCPATH . 'uploads')) {
-        mkdir(FCPATH . 'uploads', 0775, true);
-      }
-
-      $imagick->writeImage($timbrePath);
+      $imagick->writeImage($socioPath);
 
       $imagick->clear();
       $imagick->destroy();
 
-      if (!file_exists($timbrePath) || filesize($timbrePath) == 0) {
-        throw new \Exception("No se generó correctamente el timbre");
-      }
+      // =====================================================
+      // GLOSA
+      // =====================================================
 
-      // EXTREAER datos Glosa
+      $imagick = clone $pdf;
 
-      $imagick = new \Imagick();
-      $imagick->setResolution(250, 250);
-      $imagick->readImage($tempPdf . '[0]');
-      $imagick->setImageFormat('jpg'); // 🔥 usar JPG (evita error GD)
-
-      $width  = $imagick->getImageWidth();
-      $height = $imagick->getImageHeight();
-
-      // 🔹 3. Recortar timbre (ajustable)
       $imagick->cropImage(
-        $width * 0.60,   // ancho (solo lado izquierdo)
-        $height * 0.066,  // alto (solo bloque del timbre)
-        $width * 0.36,   // X (pegado a la izquierda)
-        $height * 0.214  // Y (parte baja donde está el timbre)
+        $width * 0.60,
+        $height * 0.066,
+        $width * 0.36,
+        $height * 0.214
       );
 
-      $imagick->setImagePage(0, 0, 0, 0);
+      $imagick = $normalizar($imagick);
 
-      // 🔥 quitar transparencia (clave)
-      $imagick->setImageBackgroundColor('white');
-      $imagick = $imagick->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+      $glosaPath =
+        FCPATH . 'uploads/glosa_' . $id_metros . '.jpg';
 
-      $imagick->setImageCompressionQuality(90);
-
-      // 🔹 4. Guardar imagen en public/
-      $timbrePath = FCPATH . 'uploads/glosa_'.$id_metros.'.jpg';
-
-      if (!is_dir(FCPATH . 'uploads')) {
-        mkdir(FCPATH . 'uploads', 0775, true);
-      }
-
-      $imagick->writeImage($timbrePath);
+      $imagick->writeImage($glosaPath);
 
       $imagick->clear();
       $imagick->destroy();
 
-      if (!file_exists($timbrePath) || filesize($timbrePath) == 0) {
-        throw new \Exception("No se generó correctamente el timbre");
-      }
+      // =====================================================
+      // HTML
+      // =====================================================
 
-      
-      // 🔹 5. HTML del nuevo formato
-      $logo_encabezado = "uploads/encabezado_".$id_metros.".jpg";
-      $timbre_sii = "uploads/timbre_".$id_metros.".jpg";
+      $logo_encabezado =
+        "uploads/encabezado_" . $id_metros . ".jpg";
 
+      $timbre_sii =
+        "uploads/timbre_" . $id_metros . ".jpg";
 
       $html = '
 <style>
@@ -5264,7 +5350,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         </div>
 
         <div class="content compact">
-            <img src="uploads/socio_'. $id_metros.'.jpg" class="img-full">
+            <img src="uploads/socio_' . $id_metros . '.jpg" class="img-full">
         </div>
     </div>
 
@@ -5275,7 +5361,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         </div>
 
         <div class="content compact">
-            <img src="uploads/glosa_'.$id_metros.'.jpg" class="img-full">
+            <img src="uploads/glosa_' . $id_metros . '.jpg" class="img-full">
         </div>
     </div>
 
@@ -5293,7 +5379,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
                 </div>
 
                 <div class="card-body">
-                    <img src="uploads/consumo_'.$id_metros.'.jpg">
+                    <img src="uploads/consumo_' . $id_metros . '.jpg">
                 </div>
 
             </div>
@@ -5306,7 +5392,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
                 </div>
 
                 <div class="card-body">
-                    <img src="tabla_consumo_'.$id_metros.'.jpg">
+                    <img src="tabla_consumo_' . $id_metros . '.jpg">
                 </div>
 
             </div>
@@ -5319,7 +5405,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
                 </div>
 
                 <div class="card-body">
-                    <img src="grafico_'.$id_metros.'.jpg">
+                    <img src="grafico_' . $id_metros . '.jpg">
                 </div>
 
             </div>
@@ -5337,7 +5423,7 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
                 </div>
 
                 <div class="content">
-                    <img src="uploads/detalle_'.$id_metros.'.jpg">
+                    <img src="uploads/detalle_' . $id_metros . '.jpg">
                 </div>
 
             </div>
@@ -5363,46 +5449,56 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 </div>
 ';
 
-      // 🔹 6. Generar PDF con mPDF
+      // =====================================================
+      // MPDF
+      // =====================================================
+
       $mpdf = new \Mpdf\Mpdf([
         'format'  => 'LETTER',
         'tempDir' => WRITEPATH . 'mpdf'
       ]);
 
-      // 🔥 clave para que encuentre imágenes
       $mpdf->SetBasePath(FCPATH);
+
       $mpdf->showImageErrors = true;
 
       $mpdf->WriteHTML($html);
-     
-      $nombre_grafico = 'grafico_' . $id_metros . '.jpg';
-      $nombre_tabla = 'tabla_consumo_' . $id_metros . '.jpg';
-      unlink(realpath(dirname(__FILE__, 4)) . "/public/" . $nombre_grafico);
-      unlink(realpath(dirname(__FILE__, 4)) . "/public/" . $nombre_tabla);
 
-      unlink(realpath(dirname(__FILE__, 4)) . "/public/uploads/encabezado_".$id_metros.'.jpg');
-      unlink(realpath(dirname(__FILE__, 4)) . "/public/uploads/timbre_".$id_metros.'.jpg');
-      unlink(realpath(dirname(__FILE__, 4)) . "/public/uploads/socio_".$id_metros.'.jpg');
-      unlink(realpath(dirname(__FILE__, 4)) . "/public/uploads/glosa_".$id_metros.'.jpg');
-      unlink(realpath(dirname(__FILE__, 4)) . "/public/uploads/consumo_".$id_metros.'.jpg');
-      unlink(realpath(dirname(__FILE__, 4)) . "/public/uploads/detalle_".$id_metros.'.jpg');
+      $pdfContent = $mpdf->Output('', 'S');
 
-      
-      
-      
-      
-      
-      
+      // =====================================================
+      // LIMPIEZA
+      // =====================================================
 
+      $pdf->clear();
+      $pdf->destroy();
 
-      
-      // 🔹 7. Output
+      @unlink(
+        realpath(dirname(__FILE__, 4))
+          . "/public/grafico_" . $id_metros . ".jpg"
+      );
+
+      @unlink(
+        realpath(dirname(__FILE__, 4))
+          . "/public/tabla_consumo_" . $id_metros . ".jpg"
+      );
+
+      @unlink($encabezadoPath);
+      @unlink($timbrePath);
+      @unlink($socioPath);
+      @unlink($glosaPath);
+      @unlink($consumoPath);
+      @unlink($detallePath);
+
+      // =====================================================
+      // OUTPUT
+      // =====================================================
+
       return $this->response
         ->setHeader('Content-Type', 'application/pdf')
-        ->setBody($mpdf->Output('', 'S'));
-
-
+        ->setBody($pdfContent);
     } catch (\Exception $e) {
+
       return "Error: " . $e->getMessage();
     }
   }
