@@ -1,8 +1,9 @@
 <?php
-  session_start();
-  $Bafecta=$_SESSION['Bafecta'];
-  $Fafecta=$_SESSION['Fafecta'];
-  $Fexenta=$_SESSION['Fexenta'];
+session_start();
+$Bafecta = $_SESSION['Bafecta'];
+$Fafecta = $_SESSION['Fafecta'];
+$Fexenta = $_SESSION['Fexenta'];
+$id_apr =  $_SESSION['id_apr_ses'];
 ?>
 <main>
   <div class="container-fluid">
@@ -24,26 +25,27 @@
         </div>
       </div>
       <br>
-    <div class="row">
+      <input type="hidden"  id="id_apr" name="id_apr" value="<?php echo $id_apr; ?>"/>
+      <div class="row">
         <div class="col-md-4">
-            <div class="form-group">
-                <!-- <label class="small mb-1" for="txt_bafecta">Bafecta</label> -->
-                <input type="hidden" class="form-control" id="txt_bafecta" name="txt_bafecta" value="<?php echo $Bafecta; ?>" readonly />
-            </div>
+          <div class="form-group">
+            <!-- <label class="small mb-1" for="txt_bafecta">Bafecta</label> -->
+            <input type="hidden" class="form-control" id="txt_bafecta" name="txt_bafecta" value="<?php echo $Bafecta; ?>" readonly />
+          </div>
         </div>
         <div class="col-md-4">
-            <div class="form-group">
-                <!-- <label class="small mb-1" for="txt_fafecta">Fafecta</label>/ -->
-                <input type="hidden" class="form-control" id="txt_fafecta" name="txt_fafecta" value="<?php echo $Fafecta; ?>" readonly />
-            </div>
+          <div class="form-group">
+            <!-- <label class="small mb-1" for="txt_fafecta">Fafecta</label>/ -->
+            <input type="hidden" class="form-control" id="txt_fafecta" name="txt_fafecta" value="<?php echo $Fafecta; ?>" readonly />
+          </div>
         </div>
         <div class="col-md-4">
-            <div class="form-group">
-                <!-- <label class="small mb-1" for="txt_fexenta">Fexenta</label> -->
-                <input type="hidden" class="form-control" id="txt_fexenta" name="txt_fexenta" value="<?php echo $Fexenta; ?>" readonly />
-            </div>
+          <div class="form-group">
+            <!-- <label class="small mb-1" for="txt_fexenta">Fexenta</label> -->
+            <input type="hidden" class="form-control" id="txt_fexenta" name="txt_fexenta" value="<?php echo $Fexenta; ?>" readonly />
+          </div>
         </div>
-    </div>
+      </div>
 
       <div class="row">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">

@@ -3,6 +3,7 @@ var base_url = $("#txt_base_url").val();
 var txt_bafecta = $("#txt_bafecta").val();
 var txt_fafecta = $("#txt_fafecta").val();
 var txt_fexenta = $("#txt_fexenta").val();
+var id_apr = $("#id_apr").val();
 
 function opciones_anular(idSii, id_metros,id_tipo_documento){
   Swal.fire({
@@ -371,6 +372,60 @@ function enviarMail(){
 
 }
 
+
+function enviarMail_nuevo() {
+
+  var data = $("#grid_boletas").DataTable().rows('.selected').data();
+  var arr_boletas = [];
+
+  $(data).each(function (i, fila) {
+    if (fila.folio_bolect > 0) {
+      arr_boletas.push(fila.id_metros);
+    }
+  });
+
+  if (arr_boletas.length > 0) {
+
+    $.ajax({
+      url: base_url + "/Pagos/Ctrl_boleta_electronica/envia_mail_nuevo/" + arr_boletas,
+      type: "POST",
+      success: function (respuesta) {
+        buscar_boletas();
+        $(".div_sample").JQLoader({
+          theme: "standard",
+          mask: true,
+          background: "#fff",
+          color: "#fff",
+          action: "close"
+        });
+      },
+      error: function (error) {
+        $(".div_sample").JQLoader({
+          theme: "standard",
+          mask: true,
+          background: "#fff",
+          color: "#fff",
+          action: "close"
+        });
+        alerta.error("alerta", "Ha ocurrido un error");
+      }
+    });
+
+  } else {
+    alerta.error("alerta", "Seleccione al menos una boleta, con folio SII")
+    $(".div_sample").JQLoader({
+      theme: "standard",
+      mask: true,
+      background: "#fff",
+      color: "#fff",
+      action: "close"
+    });
+  }
+
+
+}
+
+
 function imprimir_dte () {
   var data = $("#grid_boletas").DataTable().rows('.selected').data();
   var arr_boletas = [];
@@ -382,6 +437,24 @@ function imprimir_dte () {
 
   if (arr_boletas.length > 0) {
     var url = base_url + "/Pagos/Ctrl_boleta_electronica/imprimir_dte_new/" + arr_boletas;
+    window.open(url, "DTE", "width=1200,height=800,location=0,scrollbars=yes");
+  } else {
+    alerta.error("alerta", "Seleccione al menos una boleta, con folio SII")
+  }
+}
+
+function imprimir_dte_nuevo() {
+
+  var data = $("#grid_boletas").DataTable().rows('.selected').data();
+  var arr_boletas = [];
+  $(data).each(function (i, fila) {
+    if (fila.folio_bolect > 0) {
+      arr_boletas.push(fila.id_metros);
+    }
+  });
+
+  if (arr_boletas.length > 0) {
+    var url = base_url + "/Pagos/Ctrl_boleta_electronica/imprimir_dte_new_format/" + arr_boletas;
     window.open(url, "DTE", "width=1200,height=800,location=0,scrollbars=yes");
   } else {
     alerta.error("alerta", "Seleccione al menos una boleta, con folio SII")
@@ -467,14 +540,42 @@ $(document).ready(function () {
 
   $("#btn_enviar_mail").on("click", function () {
 
-    $(".div_sample").JQLoader({
-      theme: "standard",
-      mask: true,
-      background: "#fff",
-      color: "#fff"
+    Swal.fire({
+      title: 'Selecciona una opción',
+      text: '¿Cómo deseas enviar las boletas?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Formato Antiguo',
+      cancelButtonText: 'Nuevo Formato',
+      reverseButtons: true
+    }).then((result) => {
+
+      if (result.isConfirmed) {
+        $(".div_sample").JQLoader({
+          theme: "standard",
+          mask: true,
+          background: "#fff",
+          color: "#fff"
+        });
+
+        enviarMail();
+
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        if (id_apr == 7) {
+          $(".div_sample").JQLoader({
+            theme: "standard",
+            mask: true,
+            background: "#fff",
+            color: "#fff"
+          });
+
+          enviarMail_nuevo();
+        }
+      }
+
     });
 
-    enviarMail();    
+       
   });
 
 
@@ -491,7 +592,28 @@ $(document).ready(function () {
   });
 
   $("#btn_imprimir").on("click", function () {
-    imprimir_dte();
+    
+    Swal.fire({
+      title: 'Selecciona una opción',
+      text: '¿Cómo deseas ver la boleta?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Formato Antiguo',
+      cancelButtonText: 'Nuevo Formato',
+      reverseButtons: true
+    }).then((result) => {
+
+      if (result.isConfirmed) {
+        imprimir_dte();
+
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        if (id_apr == 7) {
+          imprimir_dte_nuevo();
+        } 
+      }
+
+    });
+
   });
 
   $("#btn_aviso_cobranza").on("click", function () {
@@ -546,10 +668,23 @@ $(document).ready(function () {
       },
       {
         "data": "url_boleta",
-        "render": function ( data, type, row ) {
-          if (data!='--'){
-            return "<a href='"+data+"'  target='_blank'>Ver B.</a>";
-          }else{
+        "render": function (data, type, row) {
+
+          if (data !== '--') {
+            return `
+                  <button 
+                      class="btn btn-sm btn-primary btn-boleta"
+
+                      data-url="${data}"
+                      data-id_metros="${row.id_metros}"
+                      data-id_socio="${row.id_socio}"
+                      data-fecha_ingreso="${row.fecha_ingreso}"
+
+                  >
+                      Ver Boleta
+                  </button>
+                  `;
+          } else {
             return 'No Disp.';
           }
 
@@ -637,4 +772,42 @@ $(document).ready(function () {
       }
     }
   });
+});
+
+$(document).on('click', '.btn-boleta', function () {
+
+  let url = $(this).data('url');
+  let metros = $(this).data('id_metros');
+  let id_socio = $(this).data('id_socio');
+  let fecha_ingreso = $(this).data('fecha_ingreso');
+
+  Swal.fire({
+    title: 'Selecciona una opción',
+    text: '¿Cómo deseas ver la boleta?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Formato Original',
+    cancelButtonText: 'Nuevo Formato',
+    reverseButtons: true
+  }).then((result) => {
+
+    if (result.isConfirmed) {
+      // ORIGINAL
+      window.open(url, '_blank');
+
+    } else if (result.dismiss === Swal.DismissReason.cancel) {
+      if (id_apr == 7){
+        // NUEVO FORMATO
+        let nueva = base_url +
+          "/Pagos/Ctrl_boleta_electronica/imprimir_boleta_nueva?" +
+          "url=" + encodeURIComponent(url) +
+          "&id_metros=" + encodeURIComponent(metros) +
+          "&id_socio=" + encodeURIComponent(id_socio) +
+          "&fecha_ingreso=" + encodeURIComponent(fecha_ingreso);
+        window.open(nueva, '_blank');
+      }
+    }
+
+  });
+
 });

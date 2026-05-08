@@ -4,6 +4,8 @@ writable/*
 vendor/*
 .htaccess
 public/boletas/*
+public/boletas_nuevas/*
+public/uploads/boleta/*
 .vscode/*
 public/js/all.min.js
 controlapr/*
