@@ -293,17 +293,21 @@ public function envia_mail($arr_boletas){
 
     $id_apr = $this->sesión->id_apr_ses;
 
-    if (!is_dir(FCPATH . 'boletas_nuevas')) {
-      mkdir(FCPATH . 'boletas_nuevas', 0777, true);
-    }
-
     if (!is_dir(FCPATH . 'uploads')) {
       mkdir(FCPATH . 'uploads', 0775, true);
+    }
+
+    if (!is_dir(FCPATH . 'boletas_nuevas')) {
+      mkdir(FCPATH . 'boletas_nuevas', 0775, true);
     }
 
     foreach ($folios as $folio) {
 
       try {
+
+        // =========================================
+        // DATOS BOLETA
+        // =========================================
 
         $datosMetros = $this->metros
           ->select("
@@ -313,7 +317,8 @@ public function envia_mail($arr_boletas){
                     fecha_ingreso
                 ")
           ->select("
-                    date_format(fecha_ingreso, '%m-%Y') as mes_consumo
+                    date_format(fecha_ingreso, '%m-%Y')
+                    as mes_consumo
                 ")
           ->where("id", $folio)
           ->first();
@@ -328,9 +333,17 @@ public function envia_mail($arr_boletas){
         $mes           = $datosMetros["mes_consumo"];
         $fecha_ingreso = $datosMetros["fecha_ingreso"];
 
+        // =========================================
+        // DATOS SOCIO
+        // =========================================
+
         $datosSocios = $this->socios
           ->select("
-                    concat(socios.rut, '-', socios.dv) as rut_socio
+                    concat(
+                        socios.rut,
+                        '-',
+                        socios.dv
+                    ) as rut_socio
                 ")
           ->select("
                     concat(
@@ -342,235 +355,362 @@ public function envia_mail($arr_boletas){
                     ) as nombre_socio
                 ")
           ->select("
-                    ifnull(socios.email,'--') as email
+                    ifnull(
+                        socios.email,
+                        '--'
+                    ) as email
                 ")
           ->where("socios.id", $id_socio)
           ->first();
 
-        $nombre_socio = $datosSocios['nombre_socio'];
+        $nombre_socio =
+          $datosSocios['nombre_socio'];
 
-        $email_socio = $datosSocios['email'];
+        $email_socio =
+          $datosSocios['email'];
 
-        if ($email_socio == "--" || $email_socio == "") {
+        if (
+          $email_socio == "--"
+          || $email_socio == ""
+        ) {
           continue;
         }
 
-        // ==================================================
-        // GENERAR GRAFICO Y TABLA
-        // ==================================================
+        // =========================================
+        // PDF FINAL CACHE
+        // =========================================
 
-        $partes = explode('-', $fecha_ingreso);
+        $pdf_final =
+          FCPATH .
+          'boletas_nuevas/' .
+          $id_apr .
+          '_' .
+          $folio_sii .
+          '.pdf';
 
-        $mes_consumo = $partes[1] . '-' . $partes[2];
+        // =========================================
+        // SOLO GENERAR SI NO EXISTE
+        // =========================================
 
-        $base64_grafico = $this->generarGrafico(
-          $id_socio,
-          $mes_consumo,
-          $folio
-        );
+        if (!file_exists($pdf_final)) {
 
-        $base64_tabla = $this->imagenTablaConsumo(
-          $folio
-        );
+          // =====================================
+          // GRAFICO Y TABLA
+          // =====================================
 
-        // ==================================================
-        // PDF TEMPORAL
-        // ==================================================
-
-        $tempPdf = WRITEPATH . 'uploads/temp_' . $folio . '.pdf';
-
-        file_put_contents(
-          $tempPdf,
-          file_get_contents($url_boleta)
-        );
-
-        if (!file_exists($tempPdf)) {
-          continue;
-        }
-
-        // ==================================================
-        // LEER PDF UNA SOLA VEZ
-        // ==================================================
-
-        $pdf = new \Imagick();
-
-        $pdf->setResolution(300, 300);
-
-        $pdf->readImage($tempPdf . '[0]');
-
-        $pdf->setImageFormat('jpg');
-
-        $width  = $pdf->getImageWidth();
-        $height = $pdf->getImageHeight();
-
-        // ==================================================
-        // NORMALIZAR
-        // ==================================================
-
-        $normalizar = function ($img) {
-
-          $img->setImagePage(0, 0, 0, 0);
-
-          $img->setImageFormat('jpeg');
-
-          $img->stripImage();
-
-          $img->setImageColorspace(
-            \Imagick::COLORSPACE_RGB
+          $partes = explode(
+            '-',
+            $fecha_ingreso
           );
 
-          $img->setImageAlphaChannel(
-            \Imagick::ALPHACHANNEL_REMOVE
+          $mes_consumo =
+            $partes[1]
+            . '-'
+            . $partes[2];
+
+          $base64_grafico =
+            $this->generarGrafico(
+              $id_socio,
+              $mes_consumo,
+              $folio
+            );
+
+          $base64_tabla =
+            $this->imagenTablaConsumo(
+              $folio
+            );
+
+          // =====================================
+          // PDF TEMP
+          // =====================================
+
+          $tempPdf =
+            WRITEPATH .
+            'uploads/temp_' .
+            $folio .
+            '.pdf';
+
+          file_put_contents(
+            $tempPdf,
+            file_get_contents($url_boleta)
           );
 
-          $img->setBackgroundColor('white');
+          if (!file_exists($tempPdf)) {
+            continue;
+          }
 
-          $img = $img->mergeImageLayers(
-            \Imagick::LAYERMETHOD_FLATTEN
-          );
+          // =====================================
+          // CACHE IMAGENES
+          // =====================================
 
-          $img->setInterlaceScheme(
-            \Imagick::INTERLACE_NO
-          );
+          $encabezadoPath =
+            FCPATH .
+            'uploads/encabezado_' .
+            $folio .
+            '.jpg';
 
-          $img->thumbnailImage(900, 0);
+          $timbrePath =
+            FCPATH .
+            'uploads/timbre_' .
+            $folio .
+            '.jpg';
 
-          $img->setImageCompressionQuality(75);
+          $consumoPath =
+            FCPATH .
+            'uploads/consumo_' .
+            $folio .
+            '.jpg';
 
-          return $img;
-        };
+          $detallePath =
+            FCPATH .
+            'uploads/detalle_' .
+            $folio .
+            '.jpg';
 
-        // ==================================================
-        // TIMBRE
-        // ==================================================
+          $socioPath =
+            FCPATH .
+            'uploads/socio_' .
+            $folio .
+            '.jpg';
 
-        $img = clone $pdf;
+          $glosaPath =
+            FCPATH .
+            'uploads/glosa_' .
+            $folio .
+            '.jpg';
 
-        $img->cropImage(
-          $width * 0.6,
-          $height * 0.15,
-          $width * 0.45,
-          $height * 0.75
-        );
+          $generarImagenes =
+            !file_exists($encabezadoPath)
+            || !file_exists($timbrePath)
+            || !file_exists($consumoPath)
+            || !file_exists($detallePath)
+            || !file_exists($socioPath)
+            || !file_exists($glosaPath);
 
-        $img = $normalizar($img);
+          // =====================================
+          // GENERAR IMAGENES
+          // =====================================
 
-        $img->writeImage(
-          FCPATH . 'uploads/timbre_' . $folio . '.jpg'
-        );
+          if ($generarImagenes) {
 
-        $img->clear();
-        $img->destroy();
+            $pdf = new \Imagick();
 
-        // ==================================================
-        // ENCABEZADO
-        // ==================================================
+            $pdf->setResolution(300, 300);
 
-        $img = clone $pdf;
+            $pdf->readImage(
+              $tempPdf . '[0]'
+            );
 
-        $img->cropImage(
-          $width * 0.9,
-          $height * 0.13,
-          $width * 0.04,
-          0
-        );
+            $pdf->setImageFormat('jpg');
 
-        $img = $normalizar($img);
+            $width =
+              $pdf->getImageWidth();
 
-        $img->writeImage(
-          FCPATH . 'uploads/encabezado_' . $folio . '.jpg'
-        );
+            $height =
+              $pdf->getImageHeight();
 
-        $img->clear();
-        $img->destroy();
+            $normalizar =
+              function ($img) {
 
-        // ==================================================
-        // CONSUMO
-        // ==================================================
+                $img->setImagePage(
+                  0,
+                  0,
+                  0,
+                  0
+                );
 
-        $img = clone $pdf;
+                $img->setImageFormat(
+                  'jpeg'
+                );
 
-        $img->cropImage(
-          $width * 0.35,
-          $height * 0.12,
-          $width * 0.04,
-          $height * 0.44
-        );
+                $img->stripImage();
 
-        $img = $normalizar($img);
+                $img->setImageColorspace(
+                  \Imagick::COLORSPACE_RGB
+                );
 
-        $img->writeImage(
-          FCPATH . 'uploads/consumo_' . $folio . '.jpg'
-        );
+                $img->setImageAlphaChannel(
+                  \Imagick::ALPHACHANNEL_REMOVE
+                );
 
-        $img->clear();
-        $img->destroy();
+                $img->setBackgroundColor(
+                  'white'
+                );
 
-        // ==================================================
-        // DETALLE
-        // ==================================================
+                $img =
+                  $img->mergeImageLayers(
+                    \Imagick::LAYERMETHOD_FLATTEN
+                  );
 
-        $img = clone $pdf;
+                $img->setInterlaceScheme(
+                  \Imagick::INTERLACE_NO
+                );
 
-        $img->cropImage(
-          $width * 0.45,
-          $height * 0.32,
-          $width * 0.52,
-          $height * 0.44
-        );
+                $img->thumbnailImage(
+                  900,
+                  0
+                );
 
-        $img = $normalizar($img);
+                $img->setImageCompressionQuality(
+                  75
+                );
 
-        $img->writeImage(
-          FCPATH . 'uploads/detalle_' . $folio . '.jpg'
-        );
+                return $img;
+              };
 
-        $img->clear();
-        $img->destroy();
+            // =================================
+            // TIMBRE
+            // =================================
 
-        // ==================================================
-        // SOCIO
-        // ==================================================
+            $img = clone $pdf;
 
-        $img = clone $pdf;
+            $img->cropImage(
+              $width * 0.6,
+              $height * 0.15,
+              $width * 0.45,
+              $height * 0.75
+            );
 
-        $img->cropImage(
-          $width * 0.92,
-          $height * 0.075,
-          $width * 0.03,
-          $height * 0.13
-        );
+            $img = $normalizar($img);
 
-        $img = $normalizar($img);
+            $img->writeImage(
+              $timbrePath
+            );
 
-        $img->writeImage(
-          FCPATH . 'uploads/socio_' . $folio . '.jpg'
-        );
+            $img->clear();
+            $img->destroy();
 
-        $img->clear();
-        $img->destroy();
+            // =================================
+            // ENCABEZADO
+            // =================================
 
-        // ==================================================
-        // GLOSA
-        // ==================================================
+            $img = clone $pdf;
 
-        $img = clone $pdf;
+            $img->cropImage(
+              $width * 0.9,
+              $height * 0.13,
+              $width * 0.04,
+              0
+            );
 
-        $img->cropImage(
-          $width * 0.60,
-          $height * 0.066,
-          $width * 0.36,
-          $height * 0.214
-        );
+            $img = $normalizar($img);
 
-        $img = $normalizar($img);
+            $img->writeImage(
+              $encabezadoPath
+            );
 
-        $img->writeImage(
-          FCPATH . 'uploads/glosa_' . $folio . '.jpg'
-        );
+            $img->clear();
+            $img->destroy();
 
-        $img->clear();
-        $img->destroy();
+            // =================================
+            // CONSUMO
+            // =================================
+
+            $img = clone $pdf;
+
+            $img->cropImage(
+              $width * 0.35,
+              $height * 0.12,
+              $width * 0.04,
+              $height * 0.44
+            );
+
+            $img = $normalizar($img);
+
+            $img->writeImage(
+              $consumoPath
+            );
+
+            $img->clear();
+            $img->destroy();
+
+            // =================================
+            // DETALLE
+            // =================================
+
+            $img = clone $pdf;
+
+            $img->cropImage(
+              $width * 0.45,
+              $height * 0.32,
+              $width * 0.52,
+              $height * 0.44
+            );
+
+            $img = $normalizar($img);
+
+            $img->writeImage(
+              $detallePath
+            );
+
+            $img->clear();
+            $img->destroy();
+
+            // =================================
+            // SOCIO
+            // =================================
+
+            $img = clone $pdf;
+
+            $img->cropImage(
+              $width * 0.92,
+              $height * 0.075,
+              $width * 0.03,
+              $height * 0.13
+            );
+
+            $img = $normalizar($img);
+
+            $img->writeImage(
+              $socioPath
+            );
+
+            $img->clear();
+            $img->destroy();
+
+            // =================================
+            // GLOSA
+            // =================================
+
+            $img = clone $pdf;
+
+            $img->cropImage(
+              $width * 0.60,
+              $height * 0.066,
+              $width * 0.36,
+              $height * 0.214
+            );
+
+            $img = $normalizar($img);
+
+            $img->writeImage(
+              $glosaPath
+            );
+
+            $img->clear();
+            $img->destroy();
+
+            // =================================
+            // LIMPIAR PDF BASE
+            // =================================
+
+            $pdf->clear();
+            $pdf->destroy();
+          }
+
+          // =====================================
+          // HTML IMAGENES
+          // =====================================
+
+          $logo_encabezado =
+            "uploads/encabezado_" .
+            $folio .
+            ".jpg";
+
+          $timbre_sii =
+            "uploads/timbre_" .
+            $folio .
+            ".jpg";
 
         // ==================================================
         // HTML
@@ -583,349 +723,357 @@ public function envia_mail($arr_boletas){
           "uploads/timbre_" . $folio . ".jpg";
 
         $html = '
-<style>
+        <style>
 
-    @page{
-        margin:8px;
-    }
+            @page{
+                margin:8px;
+            }
 
-    body{
-        font-family: Arial, Helvetica, sans-serif;
-        font-size:10px;
-        color:#18343b;
-        background:#eef2f3;
-    }
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+                font-size:10px;
+                color:#18343b;
+                background:#eef2f3;
+            }
 
-    .page{
-        width:100%;
-        background:#ffffff;
-        border:1px solid #c8d3d6;
-        padding:6px;
-    }
+            .page{
+                width:100%;
+                background:#ffffff;
+                border:1px solid #c8d3d6;
+                padding:6px;
+            }
 
-    .section{
-        border:1px solid #cfdcdf;
-        border-radius:7px;
-        overflow:hidden;
-        margin-bottom:6px;
-        background:#ffffff;
-    }
+            .section{
+                border:1px solid #cfdcdf;
+                border-radius:7px;
+                overflow:hidden;
+                margin-bottom:6px;
+                background:#ffffff;
+            }
 
-    .title{
-        background:#1f4e5f;
-        border-bottom:1px solid #183c49;
-        padding:5px 8px;
-        font-size:10px;
-        font-weight:bold;
-        text-transform:uppercase;
-        color:#ffffff;
-        letter-spacing:.5px;
-    }
+            .title{
+                background:#1f4e5f;
+                border-bottom:1px solid #183c49;
+                padding:5px 8px;
+                font-size:10px;
+                font-weight:bold;
+                text-transform:uppercase;
+                color:#ffffff;
+                letter-spacing:.5px;
+            }
 
-    .content{
-        padding:4px;
-        background:#fbfcfc;
-    }
+            .content{
+                padding:4px;
+                background:#fbfcfc;
+            }
 
-    .img-full{
-        width:100%;
-        display:block;
-    }
+            .img-full{
+                width:100%;
+                display:block;
+            }
 
-    .row{
-        width:100%;
-        clear:both;
-    }
+            .row{
+                width:100%;
+                clear:both;
+            }
 
-    .left{
-        width:43%;
-        float:left;
-    }
+            .left{
+                width:43%;
+                float:left;
+            }
 
-    .right{
-        width:55%;
-        float:right;
-    }
+            .right{
+                width:55%;
+                float:right;
+            }
 
-    .card{
-        border:1px solid #d5e1e4;
-        border-radius:6px;
-        overflow:hidden;
-        margin-bottom:6px;
-        background:#ffffff;
-    }
+            .card{
+                border:1px solid #d5e1e4;
+                border-radius:6px;
+                overflow:hidden;
+                margin-bottom:6px;
+                background:#ffffff;
+            }
 
-    .card-header{
-        background:#e8f0f2;
-        border-bottom:1px solid #d1dfe3;
-        padding:4px 7px;
-        font-size:9px;
-        font-weight:bold;
-        color:#1f4e5f;
-        letter-spacing:.3px;
-    }
+            .card-header{
+                background:#e8f0f2;
+                border-bottom:1px solid #d1dfe3;
+                padding:4px 7px;
+                font-size:9px;
+                font-weight:bold;
+                color:#1f4e5f;
+                letter-spacing:.3px;
+            }
 
-    .card-body{
-        padding:4px;
-        background:#fcfdfd;
-    }
+            .card-body{
+                padding:4px;
+                background:#fcfdfd;
+            }
 
-    .compact img{
-        transform:scale(0.96);
-        transform-origin:top left;
-    }
+            .compact img{
+                transform:scale(0.96);
+                transform-origin:top left;
+            }
 
-    .detalle img{
-        width:100%;
-        max-height:520px;
-    }
+            .detalle img{
+                width:100%;
+                max-height:520px;
+            }
 
-    .consumo img{
-        width:100%;
-        max-height:170px;
-    }
+            .consumo img{
+                width:100%;
+                max-height:170px;
+            }
 
-    .tabla img{
-        width:100%;
-        max-height:200px;
-    }
+            .tabla img{
+                width:100%;
+                max-height:200px;
+            }
 
-    .grafico img{
-        width:100%;
-        max-height:180px;
-    }
+            .grafico img{
+                width:100%;
+                max-height:180px;
+            }
 
-    .total-box{
-        border:2px solid #1f4e5f;
-        border-radius:8px;
-        padding:7px;
-        margin-top:5px;
-        background:#eef5f7;
-    }
+            .total-box{
+                border:2px solid #1f4e5f;
+                border-radius:8px;
+                padding:7px;
+                margin-top:5px;
+                background:#eef5f7;
+            }
 
-    .total-title{
-        text-align:center;
-        font-size:12px;
-        font-weight:bold;
-        color:#1f4e5f;
-    }
+            .total-title{
+                text-align:center;
+                font-size:12px;
+                font-weight:bold;
+                color:#1f4e5f;
+            }
 
-    .total-value{
-        text-align:center;
-        font-size:24px;
-        font-weight:bold;
-        margin-top:2px;
-        color:#0f2f38;
-    }
+            .total-value{
+                text-align:center;
+                font-size:24px;
+                font-weight:bold;
+                margin-top:2px;
+                color:#0f2f38;
+            }
 
-    .badge{
-        text-align:center;
-        margin-top:4px;
-    }
+            .badge{
+                text-align:center;
+                margin-top:4px;
+            }
 
-    .badge span{
-        background:#1f4e5f;
-        color:#ffffff;
-        padding:4px 10px;
-        border-radius:20px;
-        font-size:8px;
-        font-weight:bold;
-        letter-spacing:.4px;
-    }
+            .badge span{
+                background:#1f4e5f;
+                color:#ffffff;
+                padding:4px 10px;
+                border-radius:20px;
+                font-size:8px;
+                font-weight:bold;
+                letter-spacing:.4px;
+            }
 
-    .timbre-box{
+            .timbre-box{
 
-        margin-top:5px;
+                margin-top:5px;
 
-        border:1px solid #d4dfe2;
-        border-radius:6px;
+                border:1px solid #d4dfe2;
+                border-radius:6px;
 
-        background:#f7fbfc;
+                background:#f7fbfc;
 
-        padding:5px;
+                padding:5px;
 
-        text-align:center;
+                text-align:center;
 
-        page-break-inside: avoid !important;
-    }
+                page-break-inside: avoid !important;
+            }
 
-    .timbre-img{
+            .timbre-img{
 
-        width:100%;
+                width:100%;
 
-        max-height:110px;
+                max-height:110px;
 
-        object-fit:contain;
+                object-fit:contain;
 
-        display:block;
-    }
+                display:block;
+            }
 
-    .clear{
-        clear:both;
-    }
+            .clear{
+                clear:both;
+            }
 
-    .section,
-    .card,
-    .timbre-box{
-        box-shadow:0 1px 2px rgba(15,47,56,0.05);
-    }
+            .section,
+            .card,
+            .timbre-box{
+                box-shadow:0 1px 2px rgba(15,47,56,0.05);
+            }
 
-</style>
+        </style>
 
-<div class="page">
+        <div class="page">
 
-    <!-- ENCABEZADO -->
-    <div class="section">
-        <div class="content">
-            <img src="' . $logo_encabezado . '" class="img-full">
-        </div>
-    </div>
-
-    <!-- SOCIO -->
-    <div class="section">
-        <div class="title">
-            INFORMACIÓN DEL SOCIO
-        </div>
-
-        <div class="content compact">
-            <img src="uploads/socio_' . $folio . '.jpg" class="img-full">
-        </div>
-    </div>
-
-    <!-- GLOSA -->
-    <div class="section">
-        <div class="title">
-            DETALLE FACTURACIÓN
-        </div>
-
-        <div class="content compact">
-            <img src="uploads/glosa_' . $folio . '.jpg" class="img-full">
-        </div>
-    </div>
-
-    <!-- COLUMNAS -->
-    <div class="row">
-
-        <!-- IZQUIERDA -->
-        <div class="left">
-
-            <!-- CONSUMO -->
-            <div class="card consumo">
-
-                <div class="card-header">
-                    RESUMEN CONSUMO
-                </div>
-
-                <div class="card-body">
-                    <img src="uploads/consumo_' . $folio . '.jpg">
-                </div>
-
-            </div>
-
-            <!-- TABLA -->
-            <div class="card tabla">
-
-                <div class="card-header">
-                    DETALLE POR TRAMO
-                </div>
-
-                <div class="card-body">
-                    <img src="tabla_consumo_' . $folio . '.jpg">
-                </div>
-
-            </div>
-
-            <!-- GRAFICO -->
-            <div class="card grafico">
-
-                <div class="card-header">
-                    HISTORIAL CONSUMO
-                </div>
-
-                <div class="card-body">
-                    <img src="grafico_' . $folio . '.jpg">
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- DERECHA -->
-        <div class="right">
-
-            <!-- DETALLE -->
-            <div class="section detalle">
-
-                <div class="title">
-                    ESTADO DE CUENTA
-                </div>
-
+            <!-- ENCABEZADO -->
+            <div class="section">
                 <div class="content">
-                    <img src="uploads/detalle_' . $folio . '.jpg">
+                    <img src="' . $logo_encabezado . '" class="img-full">
+                </div>
+            </div>
+
+            <!-- SOCIO -->
+            <div class="section">
+                <div class="title">
+                    INFORMACIÓN DEL SOCIO
+                </div>
+
+                <div class="content compact">
+                    <img src="uploads/socio_' . $folio . '.jpg" class="img-full">
+                </div>
+            </div>
+
+            <!-- GLOSA -->
+            <div class="section">
+                <div class="title">
+                    DETALLE FACTURACIÓN
+                </div>
+
+                <div class="content compact">
+                    <img src="uploads/glosa_' . $folio . '.jpg" class="img-full">
+                </div>
+            </div>
+
+            <!-- COLUMNAS -->
+            <div class="row">
+
+                <!-- IZQUIERDA -->
+                <div class="left">
+
+                    <!-- CONSUMO -->
+                    <div class="card consumo">
+
+                        <div class="card-header">
+                            RESUMEN CONSUMO
+                        </div>
+
+                        <div class="card-body">
+                            <img src="uploads/consumo_' . $folio . '.jpg">
+                        </div>
+
+                    </div>
+
+                    <!-- TABLA -->
+                    <div class="card tabla">
+
+                        <div class="card-header">
+                            DETALLE POR TRAMO
+                        </div>
+
+                        <div class="card-body">
+                            <img src="tabla_consumo_' . $folio . '.jpg">
+                        </div>
+
+                    </div>
+
+                    <!-- GRAFICO -->
+                    <div class="card grafico">
+
+                        <div class="card-header">
+                            HISTORIAL CONSUMO
+                        </div>
+
+                        <div class="card-body">
+                            <img src="grafico_' . $folio . '.jpg">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- DERECHA -->
+                <div class="right">
+
+                    <!-- DETALLE -->
+                    <div class="section detalle">
+
+                        <div class="title">
+                            ESTADO DE CUENTA
+                        </div>
+
+                        <div class="content">
+                            <img src="uploads/detalle_' . $folio . '.jpg">
+                        </div>
+
+                    </div>
+
+                    <!-- TOTAL -->          
+
+                    <div class="badge">
+                        <span>DOCUMENTO VÁLIDO S.I.I.</span>
+                    </div>
+                    <div class="timbre-box-full">
+
+                      <img src="' . $timbre_sii . '" class="timbre-img-full">
+
+                  </div>
                 </div>
 
             </div>
 
-            <!-- TOTAL -->          
+            <div class="clear"></div>
 
-            <div class="badge">
-                <span>DOCUMENTO VÁLIDO S.I.I.</span>
-            </div>
-            <div class="timbre-box-full">
 
-              <img src="' . $timbre_sii . '" class="timbre-img-full">
 
-          </div>
         </div>
+        ';
 
-    </div>
+  // =====================================
+                // GENERAR PDF FINAL
+                // =====================================
 
-    <div class="clear"></div>
+                $mpdf = new \Mpdf\Mpdf([
+                    'format'  => 'LETTER',
+                    'tempDir' => WRITEPATH . 'mpdf'
+                ]);
 
+                $mpdf->SetBasePath(FCPATH);
 
+                $mpdf->showImageErrors = true;
 
-</div>
-';
+                $mpdf->WriteHTML($html);
 
-        // ==================================================
-        // PDF FINAL
-        // ==================================================
+                $mpdf->Output(
+                    $pdf_final,
+                    'F'
+                );
 
-        $pdf_final = FCPATH .
-          'boletas_nuevas/' .
-          $id_apr .
-          '_' .
-          $folio_sii .
-          '.pdf';
+                // =====================================
+                // LIMPIAR TEMP
+                // =====================================
 
-        $mpdf = new \Mpdf\Mpdf([
-          'format'  => 'LETTER',
-          'tempDir' => WRITEPATH . 'mpdf'
-        ]);
+                @unlink($tempPdf);
+            }
 
-        $mpdf->SetBasePath(FCPATH);
+            // =========================================
+            // EMAIL
+            // =========================================
 
-        $mpdf->showImageErrors = true;
+            $this->email =
+                \Config\Services::email();
 
-        $mpdf->WriteHTML($html);
+            $subject =
+                'Tu boleta de Agua ya está disponible';
 
-        $mpdf->Output($pdf_final, 'F');
-
-        // ==================================================
-        // EMAIL
-        // ==================================================
-
-        $this->email = \Config\Services::email();
-
-        $subject =
-          'Tu boleta de Agua ya está disponible';
-
-        $message = '
+            $message = '
             <p>
-                ¡Hola ' . $nombre_socio . '!<br><br>
+                ¡Hola '
+                . $nombre_socio .
+                '!<br><br>
 
                 Tu Boleta de Agua Potable correspondiente al mes:
-                <b>' . $mes . '</b>
+                <b>'
+                . $mes .
+                '</b>
                 ya está disponible.<br><br>
 
                 Puedes pagar online en:
@@ -934,93 +1082,51 @@ public function envia_mail($arr_boletas){
                 ¡Saludos Cordiales!
             </p>';
 
-        $this->email->setTo($email_socio);
+            $this->email->setTo(
+                $email_socio
+            );
 
-        $this->email->setFrom(
-          "boletas@gestionapr.cl",
-          "Software APR"
-        );
+            $this->email->setFrom(
+                "boletas@gestionapr.cl",
+                "Software APR"
+            );
 
-        $this->email->setSubject($subject);
+            $this->email->setSubject(
+                $subject
+            );
 
-        $this->email->setMessage($message);
+            $this->email->setMessage(
+                $message
+            );
 
-        $this->email->attach($pdf_final);
+            $this->email->attach(
+                $pdf_final
+            );
 
-        if ($this->email->send()) {
+            if ($this->email->send()) {
 
-          $this->metros->save([
-            "id" => $folio,
-            "estado_mail" => "OK"
-          ]);
+                $this->metros->save([
+                    "id" => $folio,
+                    "estado_mail" => "OK"
+                ]);
+            }
+
+            $this->email->clear(true);
+
+        } catch (\Throwable $e) {
+
+            log_message(
+                'error',
+                'Error mail boleta '
+                . $folio
+                . ': '
+                . $e->getMessage()
+            );
         }
-
-        $this->email->clear(true);
-
-        // ==================================================
-        // LIMPIEZA
-        // ==================================================
-
-        $pdf->clear();
-        $pdf->destroy();
-
-        @unlink($tempPdf);
-
-        $nombre_grafico =
-          'grafico_' . $folio . '.jpg';
-
-        $nombre_tabla =
-          'tabla_consumo_' . $folio . '.jpg';
-
-        @unlink(
-          realpath(dirname(__FILE__, 4))
-            . "/public/"
-            . $nombre_grafico
-        );
-
-        @unlink(
-          realpath(dirname(__FILE__, 4))
-            . "/public/"
-            . $nombre_tabla
-        );
-
-        @unlink(
-          FCPATH . 'uploads/timbre_' . $folio . '.jpg'
-        );
-
-        @unlink(
-          FCPATH . 'uploads/encabezado_' . $folio . '.jpg'
-        );
-
-        @unlink(
-          FCPATH . 'uploads/consumo_' . $folio . '.jpg'
-        );
-
-        @unlink(
-          FCPATH . 'uploads/detalle_' . $folio . '.jpg'
-        );
-
-        @unlink(
-          FCPATH . 'uploads/socio_' . $folio . '.jpg'
-        );
-
-        @unlink(
-          FCPATH . 'uploads/glosa_' . $folio . '.jpg'
-        );
-      } catch (\Throwable $e) {
-
-        log_message(
-          'error',
-          'Error mail boleta '
-            . $folio
-            . ': '
-            . $e->getMessage()
-        );
-      }
     }
 
     return "OK";
-  }
+}
 public function valida_token($TokenObtenido){
    ini_set("soap.wsdl_cache_enabled", "0"); 
    $Tvalido='NO';
@@ -3825,8 +3931,6 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
     echo $mpdf->Output();
     exit();
   }
-
-
   public function imprimir_dte_new_format($arr_boletas)
   {
     ini_set('max_execution_time', 480);
@@ -3839,6 +3943,10 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 
     if (!is_dir(WRITEPATH . 'mpdf')) {
       mkdir(WRITEPATH . 'mpdf', 0777, true);
+    }
+
+    if (!is_dir(FCPATH . 'uploads')) {
+      mkdir(FCPATH . 'uploads', 0775, true);
     }
 
     $mpdf = new \Mpdf\Mpdf([
@@ -3855,6 +3963,10 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
     foreach ($folios as $folio) {
 
       try {
+
+        // =========================================
+        // DATOS
+        // =========================================
 
         $datos = $this->metros
           ->select("
@@ -3897,7 +4009,11 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         // PDF TEMPORAL
         // =========================================
 
-        $tempPdf = WRITEPATH . 'uploads/temp_' . $id_metros . '.pdf';
+        $tempPdf =
+          WRITEPATH .
+          'uploads/temp_' .
+          $id_metros .
+          '.pdf';
 
         file_put_contents(
           $tempPdf,
@@ -3909,194 +4025,244 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         }
 
         // =========================================
-        // LEER PDF UNA SOLA VEZ
+        // CACHE IMAGENES
         // =========================================
 
-        $pdf = new \Imagick();
+        $encabezadoPath =
+          FCPATH .
+          'uploads/encabezado_' .
+          $id_metros .
+          '.jpg';
 
-        $pdf->setResolution(300, 300);
+        $timbrePath =
+          FCPATH .
+          'uploads/timbre_' .
+          $id_metros .
+          '.jpg';
 
-        $pdf->readImage($tempPdf . '[0]');
+        $consumoPath =
+          FCPATH .
+          'uploads/consumo_' .
+          $id_metros .
+          '.jpg';
 
-        $pdf->setImageFormat('jpg');
+        $detallePath =
+          FCPATH .
+          'uploads/detalle_' .
+          $id_metros .
+          '.jpg';
 
-        $width  = $pdf->getImageWidth();
-        $height = $pdf->getImageHeight();
+        $socioPath =
+          FCPATH .
+          'uploads/socio_' .
+          $id_metros .
+          '.jpg';
 
-        if (!is_dir(FCPATH . 'uploads')) {
+        $glosaPath =
+          FCPATH .
+          'uploads/glosa_' .
+          $id_metros .
+          '.jpg';
 
-          mkdir(FCPATH . 'uploads', 0775, true);
+        $generarImagenes =
+          !file_exists($encabezadoPath)
+          || !file_exists($timbrePath)
+          || !file_exists($consumoPath)
+          || !file_exists($detallePath)
+          || !file_exists($socioPath)
+          || !file_exists($glosaPath);
+
+        // =========================================
+        // SOLO GENERAR SI NO EXISTEN
+        // =========================================
+
+        if ($generarImagenes) {
+
+          $pdf = new \Imagick();
+
+          $pdf->setResolution(300, 300);
+
+          $pdf->readImage($tempPdf . '[0]');
+
+          $pdf->setImageFormat('jpg');
+
+          $width  = $pdf->getImageWidth();
+          $height = $pdf->getImageHeight();
+
+          $normalizar = function ($img) {
+
+            $img->setImagePage(0, 0, 0, 0);
+
+            $img->setImageFormat('jpeg');
+
+            $img->stripImage();
+
+            $img->setImageColorspace(
+              \Imagick::COLORSPACE_RGB
+            );
+
+            $img->setImageAlphaChannel(
+              \Imagick::ALPHACHANNEL_REMOVE
+            );
+
+            $img->setBackgroundColor('white');
+
+            $img = $img->mergeImageLayers(
+              \Imagick::LAYERMETHOD_FLATTEN
+            );
+
+            $img->setInterlaceScheme(
+              \Imagick::INTERLACE_NO
+            );
+
+            $img->thumbnailImage(900, 0);
+
+            $img->setImageCompressionQuality(75);
+
+            return $img;
+          };
+
+          // =========================================
+          // TIMBRE
+          // =========================================
+
+          $img = clone $pdf;
+
+          $img->cropImage(
+            $width * 0.6,
+            $height * 0.15,
+            $width * 0.45,
+            $height * 0.75
+          );
+
+          $img = $normalizar($img);
+
+          $img->writeImage($timbrePath);
+
+          $img->clear();
+          $img->destroy();
+
+          // =========================================
+          // ENCABEZADO
+          // =========================================
+
+          $img = clone $pdf;
+
+          $img->cropImage(
+            $width * 0.9,
+            $height * 0.13,
+            $width * 0.04,
+            0
+          );
+
+          $img = $normalizar($img);
+
+          $img->writeImage($encabezadoPath);
+
+          $img->clear();
+          $img->destroy();
+
+          // =========================================
+          // CONSUMO
+          // =========================================
+
+          $img = clone $pdf;
+
+          $img->cropImage(
+            $width * 0.35,
+            $height * 0.12,
+            $width * 0.04,
+            $height * 0.44
+          );
+
+          $img = $normalizar($img);
+
+          $img->writeImage($consumoPath);
+
+          $img->clear();
+          $img->destroy();
+
+          // =========================================
+          // DETALLE
+          // =========================================
+
+          $img = clone $pdf;
+
+          $img->cropImage(
+            $width * 0.45,
+            $height * 0.32,
+            $width * 0.52,
+            $height * 0.44
+          );
+
+          $img = $normalizar($img);
+
+          $img->writeImage($detallePath);
+
+          $img->clear();
+          $img->destroy();
+
+          // =========================================
+          // SOCIO
+          // =========================================
+
+          $img = clone $pdf;
+
+          $img->cropImage(
+            $width * 0.92,
+            $height * 0.075,
+            $width * 0.03,
+            $height * 0.13
+          );
+
+          $img = $normalizar($img);
+
+          $img->writeImage($socioPath);
+
+          $img->clear();
+          $img->destroy();
+
+          // =========================================
+          // GLOSA
+          // =========================================
+
+          $img = clone $pdf;
+
+          $img->cropImage(
+            $width * 0.60,
+            $height * 0.066,
+            $width * 0.36,
+            $height * 0.214
+          );
+
+          $img = $normalizar($img);
+
+          $img->writeImage($glosaPath);
+
+          $img->clear();
+          $img->destroy();
+
+          // =========================================
+          // LIMPIAR PDF BASE
+          // =========================================
+
+          $pdf->clear();
+          $pdf->destroy();
         }
 
         // =========================================
-        // FUNCION NORMALIZAR
+        // HTML IMAGENES
         // =========================================
 
-        $normalizar = function ($img) {
+        $logo_encabezado =
+          "uploads/encabezado_" .
+          $id_metros .
+          ".jpg";
 
-          $img->setImagePage(0, 0, 0, 0);
-
-          $img->setImageFormat('jpeg');
-
-          $img->stripImage();
-
-          $img->setImageColorspace(
-            \Imagick::COLORSPACE_RGB
-          );
-
-          $img->setImageAlphaChannel(
-            \Imagick::ALPHACHANNEL_REMOVE
-          );
-
-          $img->setBackgroundColor('white');
-
-          $img = $img->mergeImageLayers(
-            \Imagick::LAYERMETHOD_FLATTEN
-          );
-
-          $img->setInterlaceScheme(
-            \Imagick::INTERLACE_NO
-          );
-
-          $img->thumbnailImage(900, 0);
-
-          $img->setImageCompressionQuality(75);
-
-          return $img;
-        };
-
-        // =========================================
-        // TIMBRE
-        // =========================================
-
-        $img = clone $pdf;
-
-        $img->cropImage(
-          $width * 0.6,
-          $height * 0.15,
-          $width * 0.45,
-          $height * 0.75
-        );
-
-        $img = $normalizar($img);
-
-        $img->writeImage(
-          FCPATH . 'uploads/timbre_' . $id_metros . '.jpg'
-        );
-
-        $img->clear();
-        $img->destroy();
-
-        // =========================================
-        // ENCABEZADO
-        // =========================================
-
-        $img = clone $pdf;
-
-        $img->cropImage(
-          $width * 0.9,
-          $height * 0.13,
-          $width * 0.04,
-          0
-        );
-
-        $img = $normalizar($img);
-
-        $img->writeImage(
-          FCPATH . 'uploads/encabezado_' . $id_metros . '.jpg'
-        );
-
-        $img->clear();
-        $img->destroy();
-
-        // =========================================
-        // CONSUMO
-        // =========================================
-
-        $img = clone $pdf;
-
-        $img->cropImage(
-          $width * 0.35,
-          $height * 0.12,
-          $width * 0.04,
-          $height * 0.44
-        );
-
-        $img = $normalizar($img);
-
-        $img->writeImage(
-          FCPATH . 'uploads/consumo_' . $id_metros . '.jpg'
-        );
-
-        $img->clear();
-        $img->destroy();
-
-        // =========================================
-        // DETALLE
-        // =========================================
-
-        $img = clone $pdf;
-
-        $img->cropImage(
-          $width * 0.45,
-          $height * 0.32,
-          $width * 0.52,
-          $height * 0.44
-        );
-
-        $img = $normalizar($img);
-
-        $img->writeImage(
-          FCPATH . 'uploads/detalle_' . $id_metros . '.jpg'
-        );
-
-        $img->clear();
-        $img->destroy();
-
-        // =========================================
-        // SOCIO
-        // =========================================
-
-        $img = clone $pdf;
-
-        $img->cropImage(
-          $width * 0.92,
-          $height * 0.075,
-          $width * 0.03,
-          $height * 0.13
-        );
-
-        $img = $normalizar($img);
-
-        $img->writeImage(
-          FCPATH . 'uploads/socio_' . $id_metros . '.jpg'
-        );
-
-        $img->clear();
-        $img->destroy();
-
-        // =========================================
-        // GLOSA
-        // =========================================
-
-        $img = clone $pdf;
-
-        $img->cropImage(
-          $width * 0.60,
-          $height * 0.066,
-          $width * 0.36,
-          $height * 0.214
-        );
-
-        $img = $normalizar($img);
-
-        $img->writeImage(
-          FCPATH . 'uploads/glosa_' . $id_metros . '.jpg'
-        );
-
-        $img->clear();
-        $img->destroy();
-
+        $timbre_sii =
+          "uploads/timbre_" .
+          $id_metros .
+          ".jpg";
         // =========================================
         // HTML
         // =========================================
@@ -4108,311 +4274,311 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
           "uploads/timbre_" . $id_metros . ".jpg";
 
         $html = '
-<style>
+        <style>
 
-    @page{
-        margin:8px;
-    }
+            @page{
+                margin:8px;
+            }
 
-    body{
-        font-family: Arial, Helvetica, sans-serif;
-        font-size:10px;
-        color:#18343b;
-        background:#eef2f3;
-    }
+            body{
+                font-family: Arial, Helvetica, sans-serif;
+                font-size:10px;
+                color:#18343b;
+                background:#eef2f3;
+            }
 
-    .page{
-        width:100%;
-        background:#ffffff;
-        border:1px solid #c8d3d6;
-        padding:6px;
-    }
+            .page{
+                width:100%;
+                background:#ffffff;
+                border:1px solid #c8d3d6;
+                padding:6px;
+            }
 
-    .section{
-        border:1px solid #cfdcdf;
-        border-radius:7px;
-        overflow:hidden;
-        margin-bottom:6px;
-        background:#ffffff;
-    }
+            .section{
+                border:1px solid #cfdcdf;
+                border-radius:7px;
+                overflow:hidden;
+                margin-bottom:6px;
+                background:#ffffff;
+            }
 
-    .title{
-        background:#1f4e5f;
-        border-bottom:1px solid #183c49;
-        padding:5px 8px;
-        font-size:10px;
-        font-weight:bold;
-        text-transform:uppercase;
-        color:#ffffff;
-        letter-spacing:.5px;
-    }
+            .title{
+                background:#1f4e5f;
+                border-bottom:1px solid #183c49;
+                padding:5px 8px;
+                font-size:10px;
+                font-weight:bold;
+                text-transform:uppercase;
+                color:#ffffff;
+                letter-spacing:.5px;
+            }
 
-    .content{
-        padding:4px;
-        background:#fbfcfc;
-    }
+            .content{
+                padding:4px;
+                background:#fbfcfc;
+            }
 
-    .img-full{
-        width:100%;
-        display:block;
-    }
+            .img-full{
+                width:100%;
+                display:block;
+            }
 
-    .row{
-        width:100%;
-        clear:both;
-    }
+            .row{
+                width:100%;
+                clear:both;
+            }
 
-    .left{
-        width:43%;
-        float:left;
-    }
+            .left{
+                width:43%;
+                float:left;
+            }
 
-    .right{
-        width:55%;
-        float:right;
-    }
+            .right{
+                width:55%;
+                float:right;
+            }
 
-    .card{
-        border:1px solid #d5e1e4;
-        border-radius:6px;
-        overflow:hidden;
-        margin-bottom:6px;
-        background:#ffffff;
-    }
+            .card{
+                border:1px solid #d5e1e4;
+                border-radius:6px;
+                overflow:hidden;
+                margin-bottom:6px;
+                background:#ffffff;
+            }
 
-    .card-header{
-        background:#e8f0f2;
-        border-bottom:1px solid #d1dfe3;
-        padding:4px 7px;
-        font-size:9px;
-        font-weight:bold;
-        color:#1f4e5f;
-        letter-spacing:.3px;
-    }
+            .card-header{
+                background:#e8f0f2;
+                border-bottom:1px solid #d1dfe3;
+                padding:4px 7px;
+                font-size:9px;
+                font-weight:bold;
+                color:#1f4e5f;
+                letter-spacing:.3px;
+            }
 
-    .card-body{
-        padding:4px;
-        background:#fcfdfd;
-    }
+            .card-body{
+                padding:4px;
+                background:#fcfdfd;
+            }
 
-    .compact img{
-        transform:scale(0.96);
-        transform-origin:top left;
-    }
+            .compact img{
+                transform:scale(0.96);
+                transform-origin:top left;
+            }
 
-    .detalle img{
-        width:100%;
-        max-height:520px;
-    }
+            .detalle img{
+                width:100%;
+                max-height:520px;
+            }
 
-    .consumo img{
-        width:100%;
-        max-height:170px;
-    }
+            .consumo img{
+                width:100%;
+                max-height:170px;
+            }
 
-    .tabla img{
-        width:100%;
-        max-height:200px;
-    }
+            .tabla img{
+                width:100%;
+                max-height:200px;
+            }
 
-    .grafico img{
-        width:100%;
-        max-height:180px;
-    }
+            .grafico img{
+                width:100%;
+                max-height:180px;
+            }
 
-    .total-box{
-        border:2px solid #1f4e5f;
-        border-radius:8px;
-        padding:7px;
-        margin-top:5px;
-        background:#eef5f7;
-    }
+            .total-box{
+                border:2px solid #1f4e5f;
+                border-radius:8px;
+                padding:7px;
+                margin-top:5px;
+                background:#eef5f7;
+            }
 
-    .total-title{
-        text-align:center;
-        font-size:12px;
-        font-weight:bold;
-        color:#1f4e5f;
-    }
+            .total-title{
+                text-align:center;
+                font-size:12px;
+                font-weight:bold;
+                color:#1f4e5f;
+            }
 
-    .total-value{
-        text-align:center;
-        font-size:24px;
-        font-weight:bold;
-        margin-top:2px;
-        color:#0f2f38;
-    }
+            .total-value{
+                text-align:center;
+                font-size:24px;
+                font-weight:bold;
+                margin-top:2px;
+                color:#0f2f38;
+            }
 
-    .badge{
-        text-align:center;
-        margin-top:4px;
-    }
+            .badge{
+                text-align:center;
+                margin-top:4px;
+            }
 
-    .badge span{
-        background:#1f4e5f;
-        color:#ffffff;
-        padding:4px 10px;
-        border-radius:20px;
-        font-size:8px;
-        font-weight:bold;
-        letter-spacing:.4px;
-    }
+            .badge span{
+                background:#1f4e5f;
+                color:#ffffff;
+                padding:4px 10px;
+                border-radius:20px;
+                font-size:8px;
+                font-weight:bold;
+                letter-spacing:.4px;
+            }
 
-    .timbre-box{
+            .timbre-box{
 
-        margin-top:5px;
+                margin-top:5px;
 
-        border:1px solid #d4dfe2;
-        border-radius:6px;
+                border:1px solid #d4dfe2;
+                border-radius:6px;
 
-        background:#f7fbfc;
+                background:#f7fbfc;
 
-        padding:5px;
+                padding:5px;
 
-        text-align:center;
+                text-align:center;
 
-        page-break-inside: avoid !important;
-    }
+                page-break-inside: avoid !important;
+            }
 
-    .timbre-img{
+            .timbre-img{
 
-        width:100%;
+                width:100%;
 
-        max-height:110px;
+                max-height:110px;
 
-        object-fit:contain;
+                object-fit:contain;
 
-        display:block;
-    }
+                display:block;
+            }
 
-    .clear{
-        clear:both;
-    }
+            .clear{
+                clear:both;
+            }
 
-    .section,
-    .card,
-    .timbre-box{
-        box-shadow:0 1px 2px rgba(15,47,56,0.05);
-    }
+            .section,
+            .card,
+            .timbre-box{
+                box-shadow:0 1px 2px rgba(15,47,56,0.05);
+            }
 
-</style>
+        </style>
 
-<div class="page">
+        <div class="page">
 
-    <!-- ENCABEZADO -->
-    <div class="section">
-        <div class="content">
-            <img src="' . $logo_encabezado . '" class="img-full">
-        </div>
-    </div>
-
-    <!-- SOCIO -->
-    <div class="section">
-        <div class="title">
-            INFORMACIÓN DEL SOCIO
-        </div>
-
-        <div class="content compact">
-            <img src="uploads/socio_' . $id_metros . '.jpg" class="img-full">
-        </div>
-    </div>
-
-    <!-- GLOSA -->
-    <div class="section">
-        <div class="title">
-            DETALLE FACTURACIÓN
-        </div>
-
-        <div class="content compact">
-            <img src="uploads/glosa_' . $id_metros . '.jpg" class="img-full">
-        </div>
-    </div>
-
-    <!-- COLUMNAS -->
-    <div class="row">
-
-        <!-- IZQUIERDA -->
-        <div class="left">
-
-            <!-- CONSUMO -->
-            <div class="card consumo">
-
-                <div class="card-header">
-                    RESUMEN CONSUMO
-                </div>
-
-                <div class="card-body">
-                    <img src="uploads/consumo_' . $id_metros . '.jpg">
-                </div>
-
-            </div>
-
-            <!-- TABLA -->
-            <div class="card tabla">
-
-                <div class="card-header">
-                    DETALLE POR TRAMO
-                </div>
-
-                <div class="card-body">
-                    <img src="tabla_consumo_' . $id_metros . '.jpg">
-                </div>
-
-            </div>
-
-            <!-- GRAFICO -->
-            <div class="card grafico">
-
-                <div class="card-header">
-                    HISTORIAL CONSUMO
-                </div>
-
-                <div class="card-body">
-                    <img src="grafico_' . $id_metros . '.jpg">
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- DERECHA -->
-        <div class="right">
-
-            <!-- DETALLE -->
-            <div class="section detalle">
-
-                <div class="title">
-                    ESTADO DE CUENTA
-                </div>
-
+            <!-- ENCABEZADO -->
+            <div class="section">
                 <div class="content">
-                    <img src="uploads/detalle_' . $id_metros . '.jpg">
+                    <img src="' . $logo_encabezado . '" class="img-full">
+                </div>
+            </div>
+
+            <!-- SOCIO -->
+            <div class="section">
+                <div class="title">
+                    INFORMACIÓN DEL SOCIO
+                </div>
+
+                <div class="content compact">
+                    <img src="uploads/socio_' . $id_metros . '.jpg" class="img-full">
+                </div>
+            </div>
+
+            <!-- GLOSA -->
+            <div class="section">
+                <div class="title">
+                    DETALLE FACTURACIÓN
+                </div>
+
+                <div class="content compact">
+                    <img src="uploads/glosa_' . $id_metros . '.jpg" class="img-full">
+                </div>
+            </div>
+
+            <!-- COLUMNAS -->
+            <div class="row">
+
+                <!-- IZQUIERDA -->
+                <div class="left">
+
+                    <!-- CONSUMO -->
+                    <div class="card consumo">
+
+                        <div class="card-header">
+                            RESUMEN CONSUMO
+                        </div>
+
+                        <div class="card-body">
+                            <img src="uploads/consumo_' . $id_metros . '.jpg">
+                        </div>
+
+                    </div>
+
+                    <!-- TABLA -->
+                    <div class="card tabla">
+
+                        <div class="card-header">
+                            DETALLE POR TRAMO
+                        </div>
+
+                        <div class="card-body">
+                            <img src="tabla_consumo_' . $id_metros . '.jpg">
+                        </div>
+
+                    </div>
+
+                    <!-- GRAFICO -->
+                    <div class="card grafico">
+
+                        <div class="card-header">
+                            HISTORIAL CONSUMO
+                        </div>
+
+                        <div class="card-body">
+                            <img src="grafico_' . $id_metros . '.jpg">
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- DERECHA -->
+                <div class="right">
+
+                    <!-- DETALLE -->
+                    <div class="section detalle">
+
+                        <div class="title">
+                            ESTADO DE CUENTA
+                        </div>
+
+                        <div class="content">
+                            <img src="uploads/detalle_' . $id_metros . '.jpg">
+                        </div>
+
+                    </div>
+
+                    <!-- TOTAL -->          
+
+                    <div class="badge">
+                        <span>DOCUMENTO VÁLIDO S.I.I.</span>
+                    </div>
+                    <div class="timbre-box-full">
+
+                      <img src="' . $timbre_sii . '" class="timbre-img-full">
+
+                  </div>
                 </div>
 
             </div>
 
-            <!-- TOTAL -->          
+            <div class="clear"></div>
 
-            <div class="badge">
-                <span>DOCUMENTO VÁLIDO S.I.I.</span>
-            </div>
-            <div class="timbre-box-full">
 
-              <img src="' . $timbre_sii . '" class="timbre-img-full">
 
-          </div>
         </div>
-
-    </div>
-
-    <div class="clear"></div>
-
-
-
-</div>
-';
+        ';
         // =========================================
-        // PAGINA
+        // PAGINA NUEVA
         // =========================================
 
         if (!$primera) {
@@ -4424,73 +4590,10 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         $mpdf->WriteHTML($html);
 
         // =========================================
-        // LIMPIEZA
+        // LIMPIAR TEMP
         // =========================================
 
-        $pdf->clear();
-        $pdf->destroy();
-
         @unlink($tempPdf);
-
-        $nombre_grafico =
-          'grafico_' . $id_metros . '.jpg';
-
-        $nombre_tabla =
-          'tabla_consumo_' . $id_metros . '.jpg';
-
-        @unlink(
-          realpath(dirname(__FILE__, 4))
-            . "/public/"
-            . $nombre_grafico
-        );
-
-        @unlink(
-          realpath(dirname(__FILE__, 4))
-            . "/public/"
-            . $nombre_tabla
-        );
-
-        @unlink(
-          FCPATH
-            . 'uploads/encabezado_'
-            . $id_metros
-            . '.jpg'
-        );
-
-        @unlink(
-          FCPATH
-            . 'uploads/timbre_'
-            . $id_metros
-            . '.jpg'
-        );
-
-        @unlink(
-          FCPATH
-            . 'uploads/socio_'
-            . $id_metros
-            . '.jpg'
-        );
-
-        @unlink(
-          FCPATH
-            . 'uploads/glosa_'
-            . $id_metros
-            . '.jpg'
-        );
-
-        @unlink(
-          FCPATH
-            . 'uploads/consumo_'
-            . $id_metros
-            . '.jpg'
-        );
-
-        @unlink(
-          FCPATH
-            . 'uploads/detalle_'
-            . $id_metros
-            . '.jpg'
-        );
       } catch (\Throwable $e) {
 
         log_message(
@@ -4897,6 +5000,10 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 
     try {
 
+      // =========================================
+      // GRAFICO Y TABLA
+      // =========================================
+
       $base64_grafico = $this->generarGrafico(
         $id_socio,
         $mes_consumo,
@@ -4907,9 +5014,9 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         $id_metros
       );
 
-      // =====================================================
+      // =========================================
       // PDF TEMPORAL
-      // =====================================================
+      // =========================================
 
       $tempPdf = WRITEPATH . 'uploads/temp_boleta.pdf';
 
@@ -4919,205 +5026,234 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
       );
 
       if (!file_exists($tempPdf)) {
+
         throw new \Exception(
           "No se pudo descargar el PDF"
         );
       }
-
-      // =====================================================
-      // LEER PDF UNA SOLA VEZ
-      // =====================================================
-
-      $pdf = new \Imagick();
-
-      $pdf->setResolution(280, 280);
-
-      $pdf->readImage($tempPdf . '[0]');
-
-      $pdf->setImageFormat('jpg');
-
-      $width  = $pdf->getImageWidth();
-      $height = $pdf->getImageHeight();
 
       if (!is_dir(FCPATH . 'uploads')) {
 
         mkdir(FCPATH . 'uploads', 0775, true);
       }
 
-      // =====================================================
-      // FUNCION NORMALIZAR
-      // =====================================================
-
-      $normalizar = function ($img) {
-
-        $img->setImagePage(0, 0, 0, 0);
-
-        $img->setImageFormat('jpeg');
-
-        $img->stripImage();
-
-        $img->setImageColorspace(
-          \Imagick::COLORSPACE_RGB
-        );
-
-        $img->setImageAlphaChannel(
-          \Imagick::ALPHACHANNEL_REMOVE
-        );
-
-        $img->setBackgroundColor('white');
-
-        $img = $img->mergeImageLayers(
-          \Imagick::LAYERMETHOD_FLATTEN
-        );
-
-        $img->setInterlaceScheme(
-          \Imagick::INTERLACE_NO
-        );
-
-        $img->thumbnailImage(900, 0);
-
-        $img->setImageCompressionQuality(75);
-
-        return $img;
-      };
-
-      // =====================================================
-      // TIMBRE
-      // =====================================================
-
-      $imagick = clone $pdf;
-
-      $imagick->cropImage(
-        $width * 0.6,
-        $height * 0.15,
-        $width * 0.45,
-        $height * 0.75
-      );
-
-      $imagick = $normalizar($imagick);
-
-      $timbrePath =
-        FCPATH . 'uploads/timbre_' . $id_metros . '.jpg';
-
-      $imagick->writeImage($timbrePath);
-
-      $imagick->clear();
-      $imagick->destroy();
-
-      // =====================================================
-      // ENCABEZADO
-      // =====================================================
-
-      $imagick = clone $pdf;
-
-      $imagick->cropImage(
-        $width * 0.9,
-        $height * 0.13,
-        $width * 0.04,
-        0
-      );
-
-      $imagick = $normalizar($imagick);
+      // =========================================
+      // CACHE IMAGENES
+      // =========================================
 
       $encabezadoPath =
         FCPATH . 'uploads/encabezado_' . $id_metros . '.jpg';
 
-      $imagick->writeImage($encabezadoPath);
-
-      $imagick->clear();
-      $imagick->destroy();
-
-      // =====================================================
-      // CONSUMO
-      // =====================================================
-
-      $imagick = clone $pdf;
-
-      $imagick->cropImage(
-        $width * 0.35,
-        $height * 0.12,
-        $width * 0.04,
-        $height * 0.44
-      );
-
-      $imagick = $normalizar($imagick);
+      $timbrePath =
+        FCPATH . 'uploads/timbre_' . $id_metros . '.jpg';
 
       $consumoPath =
         FCPATH . 'uploads/consumo_' . $id_metros . '.jpg';
 
-      $imagick->writeImage($consumoPath);
-
-      $imagick->clear();
-      $imagick->destroy();
-
-      // =====================================================
-      // DETALLE
-      // =====================================================
-
-      $imagick = clone $pdf;
-
-      $imagick->cropImage(
-        $width * 0.45,
-        $height * 0.32,
-        $width * 0.52,
-        $height * 0.44
-      );
-
-      $imagick = $normalizar($imagick);
-
       $detallePath =
         FCPATH . 'uploads/detalle_' . $id_metros . '.jpg';
-
-      $imagick->writeImage($detallePath);
-
-      $imagick->clear();
-      $imagick->destroy();
-
-      // =====================================================
-      // SOCIO
-      // =====================================================
-
-      $imagick = clone $pdf;
-
-      $imagick->cropImage(
-        $width * 0.92,
-        $height * 0.075,
-        $width * 0.03,
-        $height * 0.13
-      );
-
-      $imagick = $normalizar($imagick);
 
       $socioPath =
         FCPATH . 'uploads/socio_' . $id_metros . '.jpg';
 
-      $imagick->writeImage($socioPath);
-
-      $imagick->clear();
-      $imagick->destroy();
-
-      // =====================================================
-      // GLOSA
-      // =====================================================
-
-      $imagick = clone $pdf;
-
-      $imagick->cropImage(
-        $width * 0.60,
-        $height * 0.066,
-        $width * 0.36,
-        $height * 0.214
-      );
-
-      $imagick = $normalizar($imagick);
-
       $glosaPath =
         FCPATH . 'uploads/glosa_' . $id_metros . '.jpg';
 
-      $imagick->writeImage($glosaPath);
+      $generarImagenes =
+        !file_exists($encabezadoPath)
+        || !file_exists($timbrePath)
+        || !file_exists($consumoPath)
+        || !file_exists($detallePath)
+        || !file_exists($socioPath)
+        || !file_exists($glosaPath);
 
-      $imagick->clear();
-      $imagick->destroy();
+      // =========================================
+      // SOLO GENERAR SI NO EXISTEN
+      // =========================================
+
+      if ($generarImagenes) {
+
+        $pdf = new \Imagick();
+
+        $pdf->setResolution(300, 300);
+
+        $pdf->readImage($tempPdf . '[0]');
+
+        $pdf->setImageFormat('jpg');
+
+        $width  = $pdf->getImageWidth();
+        $height = $pdf->getImageHeight();
+
+        $normalizar = function ($img) {
+
+          $img->setImagePage(0, 0, 0, 0);
+
+          $img->setImageFormat('jpeg');
+
+          $img->stripImage();
+
+          $img->setImageColorspace(
+            \Imagick::COLORSPACE_RGB
+          );
+
+          $img->setImageAlphaChannel(
+            \Imagick::ALPHACHANNEL_REMOVE
+          );
+
+          $img->setBackgroundColor('white');
+
+          $img = $img->mergeImageLayers(
+            \Imagick::LAYERMETHOD_FLATTEN
+          );
+
+          $img->setInterlaceScheme(
+            \Imagick::INTERLACE_NO
+          );
+
+          $img->thumbnailImage(900, 0);
+
+          $img->setImageCompressionQuality(75);
+
+          return $img;
+        };
+
+        // =========================================
+        // TIMBRE
+        // =========================================
+
+        $img = clone $pdf;
+
+        $img->cropImage(
+          $width * 0.6,
+          $height * 0.15,
+          $width * 0.45,
+          $height * 0.75
+        );
+
+        $img = $normalizar($img);
+
+        $img->writeImage($timbrePath);
+
+        $img->clear();
+        $img->destroy();
+
+        // =========================================
+        // ENCABEZADO
+        // =========================================
+
+        $img = clone $pdf;
+
+        $img->cropImage(
+          $width * 0.9,
+          $height * 0.13,
+          $width * 0.04,
+          0
+        );
+
+        $img = $normalizar($img);
+
+        $img->writeImage($encabezadoPath);
+
+        $img->clear();
+        $img->destroy();
+
+        // =========================================
+        // CONSUMO
+        // =========================================
+
+        $img = clone $pdf;
+
+        $img->cropImage(
+          $width * 0.35,
+          $height * 0.12,
+          $width * 0.04,
+          $height * 0.44
+        );
+
+        $img = $normalizar($img);
+
+        $img->writeImage($consumoPath);
+
+        $img->clear();
+        $img->destroy();
+
+        // =========================================
+        // DETALLE
+        // =========================================
+
+        $img = clone $pdf;
+
+        $img->cropImage(
+          $width * 0.45,
+          $height * 0.32,
+          $width * 0.52,
+          $height * 0.44
+        );
+
+        $img = $normalizar($img);
+
+        $img->writeImage($detallePath);
+
+        $img->clear();
+        $img->destroy();
+
+        // =========================================
+        // SOCIO
+        // =========================================
+
+        $img = clone $pdf;
+
+        $img->cropImage(
+          $width * 0.92,
+          $height * 0.075,
+          $width * 0.03,
+          $height * 0.13
+        );
+
+        $img = $normalizar($img);
+
+        $img->writeImage($socioPath);
+
+        $img->clear();
+        $img->destroy();
+
+        // =========================================
+        // GLOSA
+        // =========================================
+
+        $img = clone $pdf;
+
+        $img->cropImage(
+          $width * 0.60,
+          $height * 0.066,
+          $width * 0.36,
+          $height * 0.214
+        );
+
+        $img = $normalizar($img);
+
+        $img->writeImage($glosaPath);
+
+        $img->clear();
+        $img->destroy();
+
+        // =========================================
+        // LIMPIAR PDF BASE
+        // =========================================
+
+        $pdf->clear();
+        $pdf->destroy();
+      }
+
+      // =========================================
+      // RUTAS HTML
+      // =========================================
+
+      $logo_encabezado =
+        "uploads/encabezado_" . $id_metros . ".jpg";
+
+      $timbre_sii =
+        "uploads/timbre_" . $id_metros . ".jpg";
 
       // =====================================================
       // HTML
@@ -5130,313 +5266,313 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
         "uploads/timbre_" . $id_metros . ".jpg";
 
       $html = '
-<style>
+      <style>
 
-    @page{
-        margin:8px;
-    }
+          @page{
+              margin:8px;
+          }
 
-    body{
-        font-family: Arial, Helvetica, sans-serif;
-        font-size:10px;
-        color:#18343b;
-        background:#eef2f3;
-    }
+          body{
+              font-family: Arial, Helvetica, sans-serif;
+              font-size:10px;
+              color:#18343b;
+              background:#eef2f3;
+          }
 
-    .page{
-        width:100%;
-        background:#ffffff;
-        border:1px solid #c8d3d6;
-        padding:6px;
-    }
+          .page{
+              width:100%;
+              background:#ffffff;
+              border:1px solid #c8d3d6;
+              padding:6px;
+          }
 
-    .section{
-        border:1px solid #cfdcdf;
-        border-radius:7px;
-        overflow:hidden;
-        margin-bottom:6px;
-        background:#ffffff;
-    }
+          .section{
+              border:1px solid #cfdcdf;
+              border-radius:7px;
+              overflow:hidden;
+              margin-bottom:6px;
+              background:#ffffff;
+          }
 
-    .title{
-        background:#1f4e5f;
-        border-bottom:1px solid #183c49;
-        padding:5px 8px;
-        font-size:10px;
-        font-weight:bold;
-        text-transform:uppercase;
-        color:#ffffff;
-        letter-spacing:.5px;
-    }
+          .title{
+              background:#1f4e5f;
+              border-bottom:1px solid #183c49;
+              padding:5px 8px;
+              font-size:10px;
+              font-weight:bold;
+              text-transform:uppercase;
+              color:#ffffff;
+              letter-spacing:.5px;
+          }
 
-    .content{
-        padding:4px;
-        background:#fbfcfc;
-    }
+          .content{
+              padding:4px;
+              background:#fbfcfc;
+          }
 
-    .img-full{
-        width:100%;
-        display:block;
-    }
+          .img-full{
+              width:100%;
+              display:block;
+          }
 
-    .row{
-        width:100%;
-        clear:both;
-    }
+          .row{
+              width:100%;
+              clear:both;
+          }
 
-    .left{
-        width:43%;
-        float:left;
-    }
+          .left{
+              width:43%;
+              float:left;
+          }
 
-    .right{
-        width:55%;
-        float:right;
-    }
+          .right{
+              width:55%;
+              float:right;
+          }
 
-    .card{
-        border:1px solid #d5e1e4;
-        border-radius:6px;
-        overflow:hidden;
-        margin-bottom:6px;
-        background:#ffffff;
-    }
+          .card{
+              border:1px solid #d5e1e4;
+              border-radius:6px;
+              overflow:hidden;
+              margin-bottom:6px;
+              background:#ffffff;
+          }
 
-    .card-header{
-        background:#e8f0f2;
-        border-bottom:1px solid #d1dfe3;
-        padding:4px 7px;
-        font-size:9px;
-        font-weight:bold;
-        color:#1f4e5f;
-        letter-spacing:.3px;
-    }
+          .card-header{
+              background:#e8f0f2;
+              border-bottom:1px solid #d1dfe3;
+              padding:4px 7px;
+              font-size:9px;
+              font-weight:bold;
+              color:#1f4e5f;
+              letter-spacing:.3px;
+          }
 
-    .card-body{
-        padding:4px;
-        background:#fcfdfd;
-    }
+          .card-body{
+              padding:4px;
+              background:#fcfdfd;
+          }
 
-    .compact img{
-        transform:scale(0.96);
-        transform-origin:top left;
-    }
+          .compact img{
+              transform:scale(0.96);
+              transform-origin:top left;
+          }
 
-    .detalle img{
-        width:100%;
-        max-height:520px;
-    }
+          .detalle img{
+              width:100%;
+              max-height:520px;
+          }
 
-    .consumo img{
-        width:100%;
-        max-height:170px;
-    }
+          .consumo img{
+              width:100%;
+              max-height:170px;
+          }
 
-    .tabla img{
-        width:100%;
-        max-height:200px;
-    }
+          .tabla img{
+              width:100%;
+              max-height:200px;
+          }
 
-    .grafico img{
-        width:100%;
-        max-height:180px;
-    }
+          .grafico img{
+              width:100%;
+              max-height:180px;
+          }
 
-    .total-box{
-        border:2px solid #1f4e5f;
-        border-radius:8px;
-        padding:7px;
-        margin-top:5px;
-        background:#eef5f7;
-    }
+          .total-box{
+              border:2px solid #1f4e5f;
+              border-radius:8px;
+              padding:7px;
+              margin-top:5px;
+              background:#eef5f7;
+          }
 
-    .total-title{
-        text-align:center;
-        font-size:12px;
-        font-weight:bold;
-        color:#1f4e5f;
-    }
+          .total-title{
+              text-align:center;
+              font-size:12px;
+              font-weight:bold;
+              color:#1f4e5f;
+          }
 
-    .total-value{
-        text-align:center;
-        font-size:24px;
-        font-weight:bold;
-        margin-top:2px;
-        color:#0f2f38;
-    }
+          .total-value{
+              text-align:center;
+              font-size:24px;
+              font-weight:bold;
+              margin-top:2px;
+              color:#0f2f38;
+          }
 
-    .badge{
-        text-align:center;
-        margin-top:4px;
-    }
+          .badge{
+              text-align:center;
+              margin-top:4px;
+          }
 
-    .badge span{
-        background:#1f4e5f;
-        color:#ffffff;
-        padding:4px 10px;
-        border-radius:20px;
-        font-size:8px;
-        font-weight:bold;
-        letter-spacing:.4px;
-    }
+          .badge span{
+              background:#1f4e5f;
+              color:#ffffff;
+              padding:4px 10px;
+              border-radius:20px;
+              font-size:8px;
+              font-weight:bold;
+              letter-spacing:.4px;
+          }
 
-    .timbre-box{
+          .timbre-box{
 
-        margin-top:5px;
+              margin-top:5px;
 
-        border:1px solid #d4dfe2;
-        border-radius:6px;
+              border:1px solid #d4dfe2;
+              border-radius:6px;
 
-        background:#f7fbfc;
+              background:#f7fbfc;
 
-        padding:5px;
+              padding:5px;
 
-        text-align:center;
+              text-align:center;
 
-        page-break-inside: avoid !important;
-    }
+              page-break-inside: avoid !important;
+          }
 
-    .timbre-img{
+          .timbre-img{
 
-        width:100%;
+              width:100%;
 
-        max-height:110px;
+              max-height:110px;
 
-        object-fit:contain;
+              object-fit:contain;
 
-        display:block;
-    }
+              display:block;
+          }
 
-    .clear{
-        clear:both;
-    }
+          .clear{
+              clear:both;
+          }
 
-    .section,
-    .card,
-    .timbre-box{
-        box-shadow:0 1px 2px rgba(15,47,56,0.05);
-    }
+          .section,
+          .card,
+          .timbre-box{
+              box-shadow:0 1px 2px rgba(15,47,56,0.05);
+          }
 
-</style>
+      </style>
 
-<div class="page">
+      <div class="page">
 
-    <!-- ENCABEZADO -->
-    <div class="section">
-        <div class="content">
-            <img src="' . $logo_encabezado . '" class="img-full">
-        </div>
-    </div>
+          <!-- ENCABEZADO -->
+          <div class="section">
+              <div class="content">
+                  <img src="' . $logo_encabezado . '" class="img-full">
+              </div>
+          </div>
 
-    <!-- SOCIO -->
-    <div class="section">
-        <div class="title">
-            INFORMACIÓN DEL SOCIO
-        </div>
+          <!-- SOCIO -->
+          <div class="section">
+              <div class="title">
+                  INFORMACIÓN DEL SOCIO
+              </div>
 
-        <div class="content compact">
-            <img src="uploads/socio_' . $id_metros . '.jpg" class="img-full">
-        </div>
-    </div>
+              <div class="content compact">
+                  <img src="uploads/socio_' . $id_metros . '.jpg" class="img-full">
+              </div>
+          </div>
 
-    <!-- GLOSA -->
-    <div class="section">
-        <div class="title">
-            DETALLE FACTURACIÓN
-        </div>
+          <!-- GLOSA -->
+          <div class="section">
+              <div class="title">
+                  DETALLE FACTURACIÓN
+              </div>
 
-        <div class="content compact">
-            <img src="uploads/glosa_' . $id_metros . '.jpg" class="img-full">
-        </div>
-    </div>
+              <div class="content compact">
+                  <img src="uploads/glosa_' . $id_metros . '.jpg" class="img-full">
+              </div>
+          </div>
 
-    <!-- COLUMNAS -->
-    <div class="row">
+          <!-- COLUMNAS -->
+          <div class="row">
 
-        <!-- IZQUIERDA -->
-        <div class="left">
+              <!-- IZQUIERDA -->
+              <div class="left">
 
-            <!-- CONSUMO -->
-            <div class="card consumo">
+                  <!-- CONSUMO -->
+                  <div class="card consumo">
 
-                <div class="card-header">
-                    RESUMEN CONSUMO
+                      <div class="card-header">
+                          RESUMEN CONSUMO
+                      </div>
+
+                      <div class="card-body">
+                          <img src="uploads/consumo_' . $id_metros . '.jpg">
+                      </div>
+
+                  </div>
+
+                  <!-- TABLA -->
+                  <div class="card tabla">
+
+                      <div class="card-header">
+                          DETALLE POR TRAMO
+                      </div>
+
+                      <div class="card-body">
+                          <img src="tabla_consumo_' . $id_metros . '.jpg">
+                      </div>
+
+                  </div>
+
+                  <!-- GRAFICO -->
+                  <div class="card grafico">
+
+                      <div class="card-header">
+                          HISTORIAL CONSUMO
+                      </div>
+
+                      <div class="card-body">
+                          <img src="grafico_' . $id_metros . '.jpg">
+                      </div>
+
+                  </div>
+
+              </div>
+
+              <!-- DERECHA -->
+              <div class="right">
+
+                  <!-- DETALLE -->
+                  <div class="section detalle">
+
+                      <div class="title">
+                          ESTADO DE CUENTA
+                      </div>
+
+                      <div class="content">
+                          <img src="uploads/detalle_' . $id_metros . '.jpg">
+                      </div>
+
+                  </div>
+
+                  <!-- TOTAL -->          
+
+                  <div class="badge">
+                      <span>DOCUMENTO VÁLIDO S.I.I.</span>
+                  </div>
+                  <div class="timbre-box-full">
+
+                    <img src="' . $timbre_sii . '" class="timbre-img-full">
+
                 </div>
-
-                <div class="card-body">
-                    <img src="uploads/consumo_' . $id_metros . '.jpg">
-                </div>
-
-            </div>
-
-            <!-- TABLA -->
-            <div class="card tabla">
-
-                <div class="card-header">
-                    DETALLE POR TRAMO
-                </div>
-
-                <div class="card-body">
-                    <img src="tabla_consumo_' . $id_metros . '.jpg">
-                </div>
-
-            </div>
-
-            <!-- GRAFICO -->
-            <div class="card grafico">
-
-                <div class="card-header">
-                    HISTORIAL CONSUMO
-                </div>
-
-                <div class="card-body">
-                    <img src="grafico_' . $id_metros . '.jpg">
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- DERECHA -->
-        <div class="right">
-
-            <!-- DETALLE -->
-            <div class="section detalle">
-
-                <div class="title">
-                    ESTADO DE CUENTA
-                </div>
-
-                <div class="content">
-                    <img src="uploads/detalle_' . $id_metros . '.jpg">
-                </div>
-
-            </div>
-
-            <!-- TOTAL -->          
-
-            <div class="badge">
-                <span>DOCUMENTO VÁLIDO S.I.I.</span>
-            </div>
-            <div class="timbre-box-full">
-
-              <img src="' . $timbre_sii . '" class="timbre-img-full">
+              </div>
 
           </div>
-        </div>
 
-    </div>
-
-    <div class="clear"></div>
+          <div class="clear"></div>
 
 
 
-</div>
-';
+      </div>
+      ';
 
-      // =====================================================
+      // =========================================
       // MPDF
-      // =====================================================
+      // =========================================
 
       $mpdf = new \Mpdf\Mpdf([
         'format'  => 'LETTER',
@@ -5451,33 +5587,11 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 
       $pdfContent = $mpdf->Output('', 'S');
 
-      // =====================================================
-      // LIMPIEZA
-      // =====================================================
+      // =========================================
+      // LIMPIAR TEMP
+      // =========================================
 
-      $pdf->clear();
-      $pdf->destroy();
-
-      @unlink(
-        realpath(dirname(__FILE__, 4))
-          . "/public/grafico_" . $id_metros . ".jpg"
-      );
-
-      @unlink(
-        realpath(dirname(__FILE__, 4))
-          . "/public/tabla_consumo_" . $id_metros . ".jpg"
-      );
-
-      @unlink($encabezadoPath);
-      @unlink($timbrePath);
-      @unlink($socioPath);
-      @unlink($glosaPath);
-      @unlink($consumoPath);
-      @unlink($detallePath);
-
-      // =====================================================
-      // OUTPUT
-      // =====================================================
+      @unlink($tempPdf);
 
       return $this->response
         ->setHeader('Content-Type', 'application/pdf')

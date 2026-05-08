@@ -16,3 +16,6 @@ panel.gestionapr.cl
 panel.gestionapr.cl/*
 acuaria.cl/*
 acuaria.cl
+public/uploads/*
+public/grafico_*
+public/tabla_consumo_*
