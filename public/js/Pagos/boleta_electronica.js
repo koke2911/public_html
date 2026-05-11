@@ -570,6 +570,8 @@ $(document).ready(function () {
           });
 
           enviarMail_nuevo();
+        }else{
+          alert("Formato aún no disponible");
         }
       }
 
@@ -609,7 +611,9 @@ $(document).ready(function () {
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         if (id_apr == 7) {
           imprimir_dte_nuevo();
-        } 
+        }else{
+          alert("Formato aún no disponible");
+        }
       }
 
     });
@@ -805,6 +809,8 @@ $(document).on('click', '.btn-boleta', function () {
           "&id_socio=" + encodeURIComponent(id_socio) +
           "&fecha_ingreso=" + encodeURIComponent(fecha_ingreso);
         window.open(nueva, '_blank');
+      }else{
+        alert("Formato aún no disponible");
       }
     }
 
