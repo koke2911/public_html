@@ -561,7 +561,7 @@ $(document).ready(function () {
         enviarMail();
 
       } else if (result.dismiss === Swal.DismissReason.cancel) {
-        if (id_apr == 7) {
+        // if (id_apr == 7) {
           $(".div_sample").JQLoader({
             theme: "standard",
             mask: true,
@@ -570,9 +570,9 @@ $(document).ready(function () {
           });
 
           enviarMail_nuevo();
-        }else{
-          alert("Formato aún no disponible");
-        }
+        // }else{
+          // alert("Formato aún no disponible");
+        // }
       }
 
     });
@@ -609,11 +609,11 @@ $(document).ready(function () {
         imprimir_dte();
 
       } else if (result.dismiss === Swal.DismissReason.cancel) {
-        if (id_apr == 7) {
+        // if (id_apr == 7) {
           imprimir_dte_nuevo();
-        }else{
-          alert("Formato aún no disponible");
-        }
+        // }else{
+          // alert("Formato aún no disponible");
+        // }
       }
 
     });
@@ -800,7 +800,7 @@ $(document).on('click', '.btn-boleta', function () {
       window.open(url, '_blank');
 
     } else if (result.dismiss === Swal.DismissReason.cancel) {
-      if (id_apr == 7){
+      // if (id_apr == 7){
         // NUEVO FORMATO
         let nueva = base_url +
           "/Pagos/Ctrl_boleta_electronica/imprimir_boleta_nueva/" +
@@ -808,9 +808,9 @@ $(document).on('click', '.btn-boleta', function () {
           id_socio + "/" +
           fecha_ingreso;
         window.open(nueva, '_blank');
-      }else{
-        alert("Formato aún no disponible");
-      }
+      // }else{
+      //   alert("Formato aún no disponible");
+      // }
     }
 
   });

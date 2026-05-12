@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use App\Models\Consumo\Md_metros;
 
 class GenerarBoletasCache extends BaseCommand
 {
@@ -67,11 +68,10 @@ class GenerarBoletasCache extends BaseCommand
         );
 
         // =====================================
-        // MODELOS
+        // MODELO
         // =====================================
 
-        $metrosModel =
-            model('App\Models\MetrosModel');
+        $metrosModel = new Md_metros();
 
         // =====================================
         // OBTENER BOLETAS
@@ -80,6 +80,9 @@ class GenerarBoletasCache extends BaseCommand
         $boletas = $metrosModel
             ->select("
                 id,
+                id_apr,
+                id_socio,
+                fecha_ingreso,
                 url_boleta,
                 folio_bolect
             ")
@@ -122,12 +125,6 @@ class GenerarBoletasCache extends BaseCommand
 
             try {
 
-                $folio =
-                    $b["id"];
-
-                $url =
-                    $b["url_boleta"];
-
                 $folio_sii =
                     $b["folio_bolect"];
 
@@ -142,9 +139,18 @@ class GenerarBoletasCache extends BaseCommand
                 // =====================================
 
                 $controller->imprimir_boleta_nueva(
-                    $url,
-                    $folio,
-                    true
+
+                    $b["id"],
+
+                    $b["id_socio"],
+
+                    $b["fecha_ingreso"],
+
+                    $b["url_boleta"],
+
+                    true,
+
+                    $b["id_apr"]
                 );
 
                 $ok++;
@@ -166,10 +172,20 @@ class GenerarBoletasCache extends BaseCommand
                 CLI::error(
                     $e->getMessage()
                 );
+
+                CLI::error(
+                    $e->getFile()
+                );
+
+                CLI::error(
+                    'LINEA: '
+                        . $e->getLine()
+                );
             }
         }
 
         CLI::write('');
+
         CLI::write(
             '====================================',
             'yellow'
