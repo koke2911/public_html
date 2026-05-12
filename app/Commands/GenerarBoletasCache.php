@@ -52,6 +52,7 @@ class GenerarBoletasCache extends BaseCommand
         }
 
         CLI::write('');
+
         CLI::write(
             '====================================',
             'yellow'
@@ -120,6 +121,7 @@ class GenerarBoletasCache extends BaseCommand
 
         $ok = 0;
         $error = 0;
+        $omitidas = 0;
 
         foreach ($boletas as $b) {
 
@@ -127,6 +129,35 @@ class GenerarBoletasCache extends BaseCommand
 
                 $folio_sii =
                     $b["folio_bolect"];
+
+                // =====================================
+                // PDF FINAL
+                // =====================================
+
+                $pdf_final =
+                    FCPATH .
+                    'boletas_nuevas/' .
+                    $b["id_apr"] .
+                    '_' .
+                    $b["id"] .
+                    '.pdf';
+
+                // =====================================
+                // YA EXISTE
+                // =====================================
+
+                if (file_exists($pdf_final)) {
+
+                    $omitidas++;
+
+                    CLI::write(
+                        'YA EXISTE: '
+                            . $folio_sii,
+                        'blue'
+                    );
+
+                    continue;
+                }
 
                 CLI::write(
                     'Generando: '
@@ -199,6 +230,11 @@ class GenerarBoletasCache extends BaseCommand
         CLI::write(
             'OK: ' . $ok,
             'green'
+        );
+
+        CLI::write(
+            'OMITIDAS: ' . $omitidas,
+            'blue'
         );
 
         CLI::write(
