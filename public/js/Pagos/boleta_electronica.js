@@ -387,7 +387,7 @@ function enviarMail_nuevo() {
   if (arr_boletas.length > 0) {
 
     $.ajax({
-      url: base_url + "/Pagos/Ctrl_boleta_electronica/envia_mail_nuevo/" + arr_boletas,
+      url: base_url + "/Pagos/Ctrl_boleta_electronica/envia_mail_nuevo2/" + arr_boletas,
       type: "POST",
       success: function (respuesta) {
         buscar_boletas();
@@ -454,7 +454,7 @@ function imprimir_dte_nuevo() {
   });
 
   if (arr_boletas.length > 0) {
-    var url = base_url + "/Pagos/Ctrl_boleta_electronica/imprimir_dte_new_format/" + arr_boletas;
+    var url = base_url + "/Pagos/Ctrl_boleta_electronica/imprimir_dte_new_format2/" + arr_boletas;
     window.open(url, "DTE", "width=1200,height=800,location=0,scrollbars=yes");
   } else {
     alerta.error("alerta", "Seleccione al menos una boleta, con folio SII")
@@ -803,11 +803,10 @@ $(document).on('click', '.btn-boleta', function () {
       if (id_apr == 7){
         // NUEVO FORMATO
         let nueva = base_url +
-          "/Pagos/Ctrl_boleta_electronica/imprimir_boleta_nueva?" +
-          "url=" + encodeURIComponent(url) +
-          "&id_metros=" + encodeURIComponent(metros) +
-          "&id_socio=" + encodeURIComponent(id_socio) +
-          "&fecha_ingreso=" + encodeURIComponent(fecha_ingreso);
+          "/Pagos/Ctrl_boleta_electronica/imprimir_boleta_nueva/" +
+          metros + "/" +
+          id_socio + "/" +
+          fecha_ingreso;
         window.open(nueva, '_blank');
       }else{
         alert("Formato aún no disponible");

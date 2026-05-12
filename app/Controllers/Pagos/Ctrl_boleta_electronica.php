@@ -281,8 +281,8 @@ public function envia_mail($arr_boletas){
 }
 
 
-  public function envia_mail_nuevo($arr_boletas)
-  {
+public function envia_mail_nuevo($arr_boletas)
+{
     ini_set('max_execution_time', 480);
     ini_set('max_input_time', 480);
     ini_set('memory_limit', '4096M');
@@ -294,58 +294,197 @@ public function envia_mail($arr_boletas){
     $id_apr = $this->sesión->id_apr_ses;
 
     if (!is_dir(FCPATH . 'uploads')) {
-      mkdir(FCPATH . 'uploads', 0775, true);
+        mkdir(FCPATH . 'uploads', 0775, true);
     }
 
     if (!is_dir(FCPATH . 'boletas_nuevas')) {
-      mkdir(FCPATH . 'boletas_nuevas', 0775, true);
+        mkdir(FCPATH . 'boletas_nuevas', 0775, true);
     }
+
+    // =========================================
+    // CSS SOLO UNA VEZ
+    // =========================================
+
+    $css = '
+    <style>
+
+        @page{
+            margin:8px;
+        }
+
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size:10px;
+            color:#18343b;
+            background:#eef2f3;
+        }
+
+        .page{
+            width:100%;
+            background:#ffffff;
+            border:1px solid #c8d3d6;
+            padding:6px;
+        }
+
+        .section{
+            border:1px solid #cfdcdf;
+            border-radius:7px;
+            overflow:hidden;
+            margin-bottom:6px;
+            background:#ffffff;
+        }
+
+        .title{
+            background:#1f4e5f;
+            border-bottom:1px solid #183c49;
+            padding:5px 8px;
+            font-size:10px;
+            font-weight:bold;
+            text-transform:uppercase;
+            color:#ffffff;
+            letter-spacing:.5px;
+        }
+
+        .content{
+            padding:4px;
+            background:#fbfcfc;
+        }
+
+        .img-full{
+            width:100%;
+            display:block;
+        }
+
+        .row{
+            width:100%;
+            clear:both;
+        }
+
+        .left{
+            width:43%;
+            float:left;
+        }
+
+        .right{
+            width:55%;
+            float:right;
+        }
+
+        .card{
+            border:1px solid #d5e1e4;
+            border-radius:6px;
+            overflow:hidden;
+            margin-bottom:6px;
+            background:#ffffff;
+        }
+
+        .card-header{
+            background:#e8f0f2;
+            border-bottom:1px solid #d1dfe3;
+            padding:4px 7px;
+            font-size:9px;
+            font-weight:bold;
+            color:#1f4e5f;
+            letter-spacing:.3px;
+        }
+
+        .card-body{
+            padding:4px;
+            background:#fcfdfd;
+        }
+
+        .compact img{
+            transform:scale(0.96);
+            transform-origin:top left;
+        }
+
+        .detalle img{
+            width:100%;
+            max-height:520px;
+        }
+
+        .consumo img{
+            width:100%;
+            max-height:170px;
+        }
+
+        .tabla img{
+            width:100%;
+            max-height:200px;
+        }
+
+        .grafico img{
+            width:100%;
+            max-height:180px;
+        }
+
+        .badge{
+            text-align:center;
+            margin-top:4px;
+        }
+
+        .badge span{
+            background:#1f4e5f;
+            color:#ffffff;
+            padding:4px 10px;
+            border-radius:20px;
+            font-size:8px;
+            font-weight:bold;
+            letter-spacing:.4px;
+        }
+
+        .timbre-img-full{
+            width:100%;
+            max-height:110px;
+            object-fit:contain;
+            display:block;
+        }
+
+        .clear{
+            clear:both;
+        }
+
+    </style>
+    ';
 
     foreach ($folios as $folio) {
 
-      try {
+        try {
 
-        // =========================================
-        // DATOS BOLETA
-        // =========================================
+            // =========================================
+            // DATOS BOLETA
+            // =========================================
 
-        $datosMetros = $this->metros
-          ->select("
+            $datosMetros = $this->metros
+                ->select("
                     folio_bolect,
                     id_socio,
                     url_boleta,
                     fecha_ingreso
                 ")
-          ->select("
+                ->select("
                     date_format(fecha_ingreso, '%m-%Y')
                     as mes_consumo
                 ")
-          ->where("id", $folio)
-          ->first();
+                ->where("id", $folio)
+                ->first();
 
-        if (!$datosMetros) {
-          continue;
-        }
+            if (!$datosMetros) {
+                continue;
+            }
 
-        $folio_sii     = $datosMetros["folio_bolect"];
-        $url_boleta    = $datosMetros["url_boleta"];
-        $id_socio      = $datosMetros["id_socio"];
-        $mes           = $datosMetros["mes_consumo"];
-        $fecha_ingreso = $datosMetros["fecha_ingreso"];
+            $folio_sii     = $datosMetros["folio_bolect"];
+            $url_boleta    = $datosMetros["url_boleta"];
+            $id_socio      = $datosMetros["id_socio"];
+            $mes           = $datosMetros["mes_consumo"];
+            $fecha_ingreso = $datosMetros["fecha_ingreso"];
 
-        // =========================================
-        // DATOS SOCIO
-        // =========================================
+            // =========================================
+            // DATOS SOCIO
+            // =========================================
 
-        $datosSocios = $this->socios
-          ->select("
-                    concat(
-                        socios.rut,
-                        '-',
-                        socios.dv
-                    ) as rut_socio
-                ")
-          ->select("
+            $datosSocios = $this->socios
+                ->select("
                     concat(
                         socios.nombres,
                         ' ',
@@ -354,681 +493,409 @@ public function envia_mail($arr_boletas){
                         socios.ape_mat
                     ) as nombre_socio
                 ")
-          ->select("
+                ->select("
                     ifnull(
                         socios.email,
                         '--'
                     ) as email
                 ")
-          ->where("socios.id", $id_socio)
-          ->first();
+                ->where("socios.id", $id_socio)
+                ->first();
 
-        $nombre_socio =
-          $datosSocios['nombre_socio'];
+            $nombre_socio =
+                $datosSocios['nombre_socio'];
 
-        $email_socio =
-          $datosSocios['email'];
+            $email_socio =
+                $datosSocios['email'];
 
-        if (
-          $email_socio == "--"
-          || $email_socio == ""
-        ) {
-          continue;
-        }
+            if (
+                $email_socio == "--"
+                || $email_socio == ""
+            ) {
+                continue;
+            }
 
-        // =========================================
-        // PDF FINAL CACHE
-        // =========================================
+            // =========================================
+            // PDF FINAL
+            // =========================================
 
-        $pdf_final =
-          FCPATH .
-          'boletas_nuevas/' .
-          $id_apr .
-          '_' .
-          $folio_sii .
-          '.pdf';
+            $pdf_final =
+                FCPATH .
+                'boletas_nuevas/' .
+                $id_apr .
+                '_' .
+                $folio_sii .
+                '.pdf';
 
-        // =========================================
-        // SOLO GENERAR SI NO EXISTE
-        // =========================================
+            // =========================================
+            // SOLO GENERAR SI NO EXISTE
+            // =========================================
 
-        if (!file_exists($pdf_final)) {
+            if (!file_exists($pdf_final)) {
 
-          // =====================================
-          // GRAFICO Y TABLA
-          // =====================================
-
-          $partes = explode(
-            '-',
-            $fecha_ingreso
-          );
-
-          $mes_consumo =
-            $partes[1]
-            . '-'
-            . $partes[2];
-
-          $base64_grafico =
-            $this->generarGrafico(
-              $id_socio,
-              $mes_consumo,
-              $folio
-            );
-
-          $base64_tabla =
-            $this->imagenTablaConsumo(
-              $folio
-            );
-
-          // =====================================
-          // PDF TEMP
-          // =====================================
-
-          $tempPdf =
-            WRITEPATH .
-            'uploads/temp_' .
-            $folio .
-            '.pdf';
-
-          file_put_contents(
-            $tempPdf,
-            file_get_contents($url_boleta)
-          );
-
-          if (!file_exists($tempPdf)) {
-            continue;
-          }
-
-          // =====================================
-          // CACHE IMAGENES
-          // =====================================
-
-          $encabezadoPath =
-            FCPATH .
-            'uploads/encabezado_' .
-            $folio .
-            '.jpg';
-
-          $timbrePath =
-            FCPATH .
-            'uploads/timbre_' .
-            $folio .
-            '.jpg';
-
-          $consumoPath =
-            FCPATH .
-            'uploads/consumo_' .
-            $folio .
-            '.jpg';
-
-          $detallePath =
-            FCPATH .
-            'uploads/detalle_' .
-            $folio .
-            '.jpg';
-
-          $socioPath =
-            FCPATH .
-            'uploads/socio_' .
-            $folio .
-            '.jpg';
-
-          $glosaPath =
-            FCPATH .
-            'uploads/glosa_' .
-            $folio .
-            '.jpg';
-
-          $generarImagenes =
-            !file_exists($encabezadoPath)
-            || !file_exists($timbrePath)
-            || !file_exists($consumoPath)
-            || !file_exists($detallePath)
-            || !file_exists($socioPath)
-            || !file_exists($glosaPath);
-
-          // =====================================
-          // GENERAR IMAGENES
-          // =====================================
-
-          if ($generarImagenes) {
-
-            $pdf = new \Imagick();
-
-            $pdf->setResolution(250, 250);
-
-            $pdf->readImage(
-              $tempPdf . '[0]'
-            );
-
-            $pdf->setImageFormat('jpg');
-
-            $width =
-              $pdf->getImageWidth();
-
-            $height =
-              $pdf->getImageHeight();
-
-            $normalizar =
-              function ($img) {
-
-                $img->setImagePage(
-                  0,
-                  0,
-                  0,
-                  0
+                $partes = explode(
+                    '-',
+                    $fecha_ingreso
                 );
 
-                $img->setImageFormat(
-                  'jpeg'
+                $mes_consumo =
+                    $partes[1]
+                    . '-'
+                    . $partes[2];
+
+                // =====================================
+                // GRAFICO Y TABLA
+                // =====================================
+
+                $this->generarGrafico(
+                    $id_socio,
+                    $mes_consumo,
+                    $folio
                 );
 
-                $img->stripImage();
-
-                $img->setImageColorspace(
-                  \Imagick::COLORSPACE_RGB
+                $this->imagenTablaConsumo(
+                    $folio
                 );
 
-                $img->setImageAlphaChannel(
-                  \Imagick::ALPHACHANNEL_REMOVE
+                // =====================================
+                // PDF TEMP
+                // =====================================
+
+                $tempPdf =
+                    WRITEPATH .
+                    'uploads/temp_' .
+                    $folio .
+                    '.pdf';
+
+                file_put_contents(
+                    $tempPdf,
+                    file_get_contents($url_boleta)
                 );
 
-                $img->setBackgroundColor(
-                  'white'
-                );
-
-                $img =
-                  $img->mergeImageLayers(
-                    \Imagick::LAYERMETHOD_FLATTEN
-                  );
-
-                $img->setInterlaceScheme(
-                  \Imagick::INTERLACE_NO
-                );
-
-                $img->thumbnailImage(
-                  900,
-                  0
-                );
-
-                $img->setImageCompressionQuality(
-                  75
-                );
-
-                return $img;
-              };
-
-            // =================================
-            // TIMBRE
-            // =================================
-
-            $img = clone $pdf;
-
-            $img->cropImage(
-              $width * 0.6,
-              $height * 0.15,
-              $width * 0.45,
-              $height * 0.75
-            );
-
-            $img = $normalizar($img);
-
-            $img->writeImage(
-              $timbrePath
-            );
-
-            $img->clear();
-            $img->destroy();
-
-            // =================================
-            // ENCABEZADO
-            // =================================
-
-            $img = clone $pdf;
-
-            $img->cropImage(
-              $width * 0.9,
-              $height * 0.13,
-              $width * 0.04,
-              0
-            );
-
-            $img = $normalizar($img);
-
-            $img->writeImage(
-              $encabezadoPath
-            );
-
-            $img->clear();
-            $img->destroy();
-
-            // =================================
-            // CONSUMO
-            // =================================
-
-            $img = clone $pdf;
-
-            $img->cropImage(
-              $width * 0.35,
-              $height * 0.12,
-              $width * 0.04,
-              $height * 0.44
-            );
-
-            $img = $normalizar($img);
-
-            $img->writeImage(
-              $consumoPath
-            );
-
-            $img->clear();
-            $img->destroy();
-
-            // =================================
-            // DETALLE
-            // =================================
-
-            $img = clone $pdf;
-
-            $img->cropImage(
-              $width * 0.45,
-              $height * 0.32,
-              $width * 0.52,
-              $height * 0.44
-            );
-
-            $img = $normalizar($img);
-
-            $img->writeImage(
-              $detallePath
-            );
-
-            $img->clear();
-            $img->destroy();
-
-            // =================================
-            // SOCIO
-            // =================================
-
-            $img = clone $pdf;
-
-            $img->cropImage(
-              $width * 0.92,
-              $height * 0.075,
-              $width * 0.03,
-              $height * 0.13
-            );
-
-            $img = $normalizar($img);
-
-            $img->writeImage(
-              $socioPath
-            );
-
-            $img->clear();
-            $img->destroy();
-
-            // =================================
-            // GLOSA
-            // =================================
-
-            $img = clone $pdf;
-
-            $img->cropImage(
-              $width * 0.60,
-              $height * 0.066,
-              $width * 0.36,
-              $height * 0.214
-            );
-
-            $img = $normalizar($img);
-
-            $img->writeImage(
-              $glosaPath
-            );
-
-            $img->clear();
-            $img->destroy();
-
-            // =================================
-            // LIMPIAR PDF BASE
-            // =================================
-
-            $pdf->clear();
-            $pdf->destroy();
-          }
-
-          // =====================================
-          // HTML IMAGENES
-          // =====================================
-
-          $logo_encabezado =
-            "uploads/encabezado_" .
-            $folio .
-            ".jpg";
-
-          $timbre_sii =
-            "uploads/timbre_" .
-            $folio .
-            ".jpg";
-
-        // ==================================================
-        // HTML
-        // ==================================================
-
-        $logo_encabezado =
-          "uploads/encabezado_" . $folio . ".jpg";
-
-        $timbre_sii =
-          "uploads/timbre_" . $folio . ".jpg";
-
-        $html = '
-        <style>
-
-            @page{
-                margin:8px;
-            }
-
-            body{
-                font-family: Arial, Helvetica, sans-serif;
-                font-size:10px;
-                color:#18343b;
-                background:#eef2f3;
-            }
-
-            .page{
-                width:100%;
-                background:#ffffff;
-                border:1px solid #c8d3d6;
-                padding:6px;
-            }
-
-            .section{
-                border:1px solid #cfdcdf;
-                border-radius:7px;
-                overflow:hidden;
-                margin-bottom:6px;
-                background:#ffffff;
-            }
-
-            .title{
-                background:#1f4e5f;
-                border-bottom:1px solid #183c49;
-                padding:5px 8px;
-                font-size:10px;
-                font-weight:bold;
-                text-transform:uppercase;
-                color:#ffffff;
-                letter-spacing:.5px;
-            }
-
-            .content{
-                padding:4px;
-                background:#fbfcfc;
-            }
-
-            .img-full{
-                width:100%;
-                display:block;
-            }
-
-            .row{
-                width:100%;
-                clear:both;
-            }
-
-            .left{
-                width:43%;
-                float:left;
-            }
-
-            .right{
-                width:55%;
-                float:right;
-            }
-
-            .card{
-                border:1px solid #d5e1e4;
-                border-radius:6px;
-                overflow:hidden;
-                margin-bottom:6px;
-                background:#ffffff;
-            }
-
-            .card-header{
-                background:#e8f0f2;
-                border-bottom:1px solid #d1dfe3;
-                padding:4px 7px;
-                font-size:9px;
-                font-weight:bold;
-                color:#1f4e5f;
-                letter-spacing:.3px;
-            }
-
-            .card-body{
-                padding:4px;
-                background:#fcfdfd;
-            }
-
-            .compact img{
-                transform:scale(0.96);
-                transform-origin:top left;
-            }
-
-            .detalle img{
-                width:100%;
-                max-height:520px;
-            }
-
-            .consumo img{
-                width:100%;
-                max-height:170px;
-            }
-
-            .tabla img{
-                width:100%;
-                max-height:200px;
-            }
-
-            .grafico img{
-                width:100%;
-                max-height:180px;
-            }
-
-            .total-box{
-                border:2px solid #1f4e5f;
-                border-radius:8px;
-                padding:7px;
-                margin-top:5px;
-                background:#eef5f7;
-            }
-
-            .total-title{
-                text-align:center;
-                font-size:12px;
-                font-weight:bold;
-                color:#1f4e5f;
-            }
-
-            .total-value{
-                text-align:center;
-                font-size:24px;
-                font-weight:bold;
-                margin-top:2px;
-                color:#0f2f38;
-            }
-
-            .badge{
-                text-align:center;
-                margin-top:4px;
-            }
-
-            .badge span{
-                background:#1f4e5f;
-                color:#ffffff;
-                padding:4px 10px;
-                border-radius:20px;
-                font-size:8px;
-                font-weight:bold;
-                letter-spacing:.4px;
-            }
-
-            .timbre-box{
-
-                margin-top:5px;
-
-                border:1px solid #d4dfe2;
-                border-radius:6px;
-
-                background:#f7fbfc;
-
-                padding:5px;
-
-                text-align:center;
-
-                page-break-inside: avoid !important;
-            }
-
-            .timbre-img{
-
-                width:100%;
-
-                max-height:110px;
-
-                object-fit:contain;
-
-                display:block;
-            }
-
-            .clear{
-                clear:both;
-            }
-
-            .section,
-            .card,
-            .timbre-box{
-                box-shadow:0 1px 2px rgba(15,47,56,0.05);
-            }
-
-        </style>
-
-        <div class="page">
-
-            <!-- ENCABEZADO -->
-            <div class="section">
-                <div class="content">
-                    <img src="' . $logo_encabezado . '" class="img-full">
-                </div>
-            </div>
-
-            <!-- SOCIO -->
-            <div class="section">
-                <div class="title">
-                    INFORMACIÓN DEL SOCIO
-                </div>
-
-                <div class="content compact">
-                    <img src="uploads/socio_' . $folio . '.jpg" class="img-full">
-                </div>
-            </div>
-
-            <!-- GLOSA -->
-            <div class="section">
-                <div class="title">
-                    DETALLE FACTURACIÓN
-                </div>
-
-                <div class="content compact">
-                    <img src="uploads/glosa_' . $folio . '.jpg" class="img-full">
-                </div>
-            </div>
-
-            <!-- COLUMNAS -->
-            <div class="row">
-
-                <!-- IZQUIERDA -->
-                <div class="left">
-
-                    <!-- CONSUMO -->
-                    <div class="card consumo">
-
-                        <div class="card-header">
-                            RESUMEN CONSUMO
+                if (!file_exists($tempPdf)) {
+                    continue;
+                }
+
+                // =====================================
+                // PATHS
+                // =====================================
+
+                $encabezadoPath =
+                    FCPATH .
+                    'uploads/encabezado_' .
+                    $folio .
+                    '.jpg';
+
+                $timbrePath =
+                    FCPATH .
+                    'uploads/timbre_' .
+                    $folio .
+                    '.jpg';
+
+                $consumoPath =
+                    FCPATH .
+                    'uploads/consumo_' .
+                    $folio .
+                    '.jpg';
+
+                $detallePath =
+                    FCPATH .
+                    'uploads/detalle_' .
+                    $folio .
+                    '.jpg';
+
+                $socioPath =
+                    FCPATH .
+                    'uploads/socio_' .
+                    $folio .
+                    '.jpg';
+
+                $glosaPath =
+                    FCPATH .
+                    'uploads/glosa_' .
+                    $folio .
+                    '.jpg';
+
+                // =====================================
+                // CACHE IMAGENES
+                // =====================================
+
+                $generarImagenes =
+                    !file_exists($encabezadoPath)
+                    || !file_exists($timbrePath)
+                    || !file_exists($consumoPath)
+                    || !file_exists($detallePath)
+                    || !file_exists($socioPath)
+                    || !file_exists($glosaPath);
+
+                // =====================================
+                // GENERAR IMAGENES
+                // =====================================
+
+                if ($generarImagenes) {
+
+                    $pdf = new \Imagick();
+
+                    $pdf->setResolution(250, 250);
+
+                    $pdf->readImage(
+                        $tempPdf . '[0]'
+                    );
+
+                    $pdf->setImageFormat('jpg');
+
+                    $width =
+                        $pdf->getImageWidth();
+
+                    $height =
+                        $pdf->getImageHeight();
+
+                    $normalizar =
+                        function ($img) {
+
+                        $img->setImagePage(
+                            0,
+                            0,
+                            0,
+                            0
+                        );
+
+                        $img->setImageFormat(
+                            'jpeg'
+                        );
+
+                        $img->stripImage();
+
+                        $img->setImageColorspace(
+                            \Imagick::COLORSPACE_RGB
+                        );
+
+                        $img->setImageAlphaChannel(
+                            \Imagick::ALPHACHANNEL_REMOVE
+                        );
+
+                        $img->setBackgroundColor(
+                            'white'
+                        );
+
+                        $img =
+                            $img->mergeImageLayers(
+                                \Imagick::LAYERMETHOD_FLATTEN
+                            );
+
+                        $img->setInterlaceScheme(
+                            \Imagick::INTERLACE_NO
+                        );
+
+                        $img->thumbnailImage(
+                            900,
+                            0
+                        );
+
+                        $img->setImageCompressionQuality(
+                            75
+                        );
+
+                        return $img;
+                    };
+
+                    // TIMBRE
+                    $img = clone $pdf;
+                    $img->cropImage(
+                        $width * 0.6,
+                        $height * 0.15,
+                        $width * 0.45,
+                        $height * 0.75
+                    );
+                    $img = $normalizar($img);
+                    $img->writeImage($timbrePath);
+                    $img->clear();
+                    $img->destroy();
+
+                    // ENCABEZADO
+                    $img = clone $pdf;
+                    $img->cropImage(
+                        $width * 0.9,
+                        $height * 0.13,
+                        $width * 0.04,
+                        0
+                    );
+                    $img = $normalizar($img);
+                    $img->writeImage($encabezadoPath);
+                    $img->clear();
+                    $img->destroy();
+
+                    // CONSUMO
+                    $img = clone $pdf;
+                    $img->cropImage(
+                        $width * 0.35,
+                        $height * 0.12,
+                        $width * 0.04,
+                        $height * 0.44
+                    );
+                    $img = $normalizar($img);
+                    $img->writeImage($consumoPath);
+                    $img->clear();
+                    $img->destroy();
+
+                    // DETALLE
+                    $img = clone $pdf;
+                    $img->cropImage(
+                        $width * 0.45,
+                        $height * 0.32,
+                        $width * 0.52,
+                        $height * 0.44
+                    );
+                    $img = $normalizar($img);
+                    $img->writeImage($detallePath);
+                    $img->clear();
+                    $img->destroy();
+
+                    // SOCIO
+                    $img = clone $pdf;
+                    $img->cropImage(
+                        $width * 0.92,
+                        $height * 0.075,
+                        $width * 0.03,
+                        $height * 0.13
+                    );
+                    $img = $normalizar($img);
+                    $img->writeImage($socioPath);
+                    $img->clear();
+                    $img->destroy();
+
+                    // GLOSA
+                    $img = clone $pdf;
+                    $img->cropImage(
+                        $width * 0.60,
+                        $height * 0.066,
+                        $width * 0.36,
+                        $height * 0.214
+                    );
+                    $img = $normalizar($img);
+                    $img->writeImage($glosaPath);
+                    $img->clear();
+                    $img->destroy();
+
+                    $pdf->clear();
+                    $pdf->destroy();
+                }
+
+                // =====================================
+                // HTML
+                // =====================================
+
+                $html = '
+
+                <div class="page">
+
+                    <div class="section">
+                        <div class="content">
+                            <img src="uploads/encabezado_' . $folio . '.jpg" class="img-full">
                         </div>
-
-                        <div class="card-body">
-                            <img src="uploads/consumo_' . $folio . '.jpg">
-                        </div>
-
                     </div>
 
-                    <!-- TABLA -->
-                    <div class="card tabla">
-
-                        <div class="card-header">
-                            DETALLE POR TRAMO
-                        </div>
-
-                        <div class="card-body">
-                            <img src="tabla_consumo_' . $folio . '.jpg">
-                        </div>
-
-                    </div>
-
-                    <!-- GRAFICO -->
-                    <div class="card grafico">
-
-                        <div class="card-header">
-                            HISTORIAL CONSUMO
-                        </div>
-
-                        <div class="card-body">
-                            <img src="grafico_' . $folio . '.jpg">
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <!-- DERECHA -->
-                <div class="right">
-
-                    <!-- DETALLE -->
-                    <div class="section detalle">
+                    <div class="section">
 
                         <div class="title">
-                            ESTADO DE CUENTA
+                            INFORMACIÓN DEL SOCIO
                         </div>
 
-                        <div class="content">
-                            <img src="uploads/detalle_' . $folio . '.jpg">
+                        <div class="content compact">
+                            <img src="uploads/socio_' . $folio . '.jpg" class="img-full">
                         </div>
 
                     </div>
 
-                    <!-- TOTAL -->          
+                    <div class="section">
 
-                    <div class="badge">
-                        <span>DOCUMENTO VÁLIDO S.I.I.</span>
+                        <div class="title">
+                            DETALLE FACTURACIÓN
+                        </div>
+
+                        <div class="content compact">
+                            <img src="uploads/glosa_' . $folio . '.jpg" class="img-full">
+                        </div>
+
                     </div>
-                    <div class="timbre-box-full">
 
-                      <img src="' . $timbre_sii . '" class="timbre-img-full">
+                    <div class="row">
 
-                  </div>
+                        <div class="left">
+
+                            <div class="card consumo">
+
+                                <div class="card-header">
+                                    RESUMEN CONSUMO
+                                </div>
+
+                                <div class="card-body">
+                                    <img src="uploads/consumo_' . $folio . '.jpg">
+                                </div>
+
+                            </div>
+
+                            <div class="card tabla">
+
+                                <div class="card-header">
+                                    DETALLE POR TRAMO
+                                </div>
+
+                                <div class="card-body">
+                                    <img src="tabla_consumo_' . $folio . '.jpg">
+                                </div>
+
+                            </div>
+
+                            <div class="card grafico">
+
+                                <div class="card-header">
+                                    HISTORIAL CONSUMO
+                                </div>
+
+                                <div class="card-body">
+                                    <img src="grafico_' . $folio . '.jpg">
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="right">
+
+                            <div class="section detalle">
+
+                                <div class="title">
+                                    ESTADO DE CUENTA
+                                </div>
+
+                                <div class="content">
+                                    <img src="uploads/detalle_' . $folio . '.jpg">
+                                </div>
+
+                            </div>
+
+                            <div class="badge">
+                                <span>DOCUMENTO VÁLIDO S.I.I.</span>
+                            </div>
+
+                            <div class="timbre-box-full">
+
+                                <img src="uploads/timbre_' . $folio . '.jpg" class="timbre-img-full">
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="clear"></div>
+
                 </div>
+                ';
 
-            </div>
-
-            <div class="clear"></div>
-
-
-
-        </div>
-        ';
-
-  // =====================================
-                // GENERAR PDF FINAL
+                // =====================================
+                // MPDF
                 // =====================================
 
                 $mpdf = new \Mpdf\Mpdf([
@@ -1040,16 +907,14 @@ public function envia_mail($arr_boletas){
 
                 $mpdf->showImageErrors = true;
 
-                $mpdf->WriteHTML($html);
+                $mpdf->WriteHTML($css, 1);
+
+                $mpdf->WriteHTML($html, 2);
 
                 $mpdf->Output(
                     $pdf_final,
                     'F'
                 );
-
-                // =====================================
-                // LIMPIAR TEMP
-                // =====================================
 
                 @unlink($tempPdf);
             }
@@ -2352,6 +2217,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
        ->select("iva")
        ->select("cargo_fijo")
        ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
+       ->select("date_format(fecha_ingreso, '%d-%m-%Y') as fecha_ingreso")
        ->select("date_format(fecha_vencimiento, '%Y-%m-%d') as fecha_vencimiento")
        ->select("ifnull(elt(field(tipo_facturacion, 1, 2), 'NORMAL', 'TÉRMINO MEDIO'), 'NO REGISTRADO') as tipo_facturacion")
        ->where("id", $folio)
@@ -2377,6 +2243,7 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
       $fecha_vencimiento = $datosMetros["fecha_vencimiento"];
       $id_socio          = $datosMetros["id_socio"];
       $cargo_fijo        = $datosMetros["cargo_fijo"];
+      $fecha_ingreso        = $datosMetros["fecha_ingreso"];
       
 
     
@@ -2779,6 +2646,9 @@ public function procesa_dte($TokenObtenido,$folio,$f_sii){
                   
 
                   if ($this->metros->save($datosMetrosSave)) {
+
+                   $this->imprimir_boleta_nueva($folio ,$id_socio ,$fecha_ingreso ,$url_pdf,true );
+
                     $fecha      = date("Y-m-d H:i:s");
                     $id_usuario = $this->sesión->id_usuario_ses;
                     $estado     = ASIGNA_FOLIO_BOLECT;
@@ -4884,14 +4754,29 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
     }
   }
 
-  public function imprimir_boleta_nueva()
+  public function imprimir_boleta_nueva(
+      $id_metros = null,
+      $id_socio = null,
+      $fecha_ingreso = null,
+      $url=null,
+      $guardar_cache = false
+    )
   {
     $this->validar_sesion();
 
-    $url             = $this->request->getGet('url');
-    $id_metros       = $this->request->getGet('id_metros');
-    $id_socio        = $this->request->getGet('id_socio');
-    $fecha_ingreso   = $this->request->getGet('fecha_ingreso');
+    if(!$url){
+      
+      $datos = $this->metros
+      ->select("url_boleta")
+      ->where("id", $id_metros)
+      ->first();      
+      $url = $datos["url_boleta"];
+    }
+
+    // $url             = $this->request->getGet('url');
+    // $id_metros       = $this->request->getGet('id_metros');
+    // $id_socio        = $this->request->getGet('id_socio');
+    // $fecha_ingreso   = $this->request->getGet('fecha_ingreso');
 
     $partes = explode('-', $fecha_ingreso);
 
@@ -5488,20 +5373,406 @@ public function procesa_NC($TokenObtenido, $folio, $f_sii){
 
       $mpdf->WriteHTML($html);
 
+      // =========================================
+      // PDF STRING
+      // =========================================
+
       $pdfContent = $mpdf->Output('', 'S');
 
       // =========================================
-      // LIMPIAR TEMP
+      // GUARDAR EN CACHE
       // =========================================
+
+      $id_apr = $this->sesión->id_apr_ses;
+
+      
+      if (!is_dir(FCPATH . 'boletas_nuevas')) {
+
+        mkdir(
+          FCPATH . 'boletas_nuevas',
+          0775,
+          true
+        );
+      }
+      
+      $id_apr =
+      $this->sesión->id_apr_ses;
+      
+      $pdf_final =
+      FCPATH .
+      'boletas_nuevas/' .
+      $id_apr .
+      '_' .
+      $id_metros .
+      '.pdf';
+      
+      file_put_contents(
+        $pdf_final,
+        $pdfContent
+      );
+      
+      @unlink($tempPdf);
+      
+      if ($guardar_cache) {
+
+        return true;
+      }
+
+      // =====================================
+      // RESPONSE NORMAL
+      // =====================================
 
       @unlink($tempPdf);
 
       return $this->response
-        ->setHeader('Content-Type', 'application/pdf')
+        ->setHeader(
+          'Content-Type',
+          'application/pdf'
+        )
         ->setBody($pdfContent);
     } catch (\Exception $e) {
 
       return "Error: " . $e->getMessage();
     }
+  }
+
+  public function imprimir_dte_new_format2($arr_boletas)
+  {
+    ini_set('max_execution_time', 0);
+
+    ini_set('memory_limit', '4096M');
+
+    $this->validar_sesion();
+
+    $folios = explode(",", $arr_boletas);
+
+    $id_apr =
+      $this->sesión->id_apr_ses;
+
+    $mpdf = new \Mpdf\Mpdf([
+
+      'tempDir' => WRITEPATH . 'mpdf',
+
+      'margin_left'   => 0,
+      'margin_right'  => 0,
+      'margin_top'    => 0,
+      'margin_bottom' => 0
+    ]);
+
+    foreach ($folios as $folio) {
+
+      try {
+
+        // =====================================
+        // PDF CACHEADO
+        // =====================================
+
+        $archivo =
+          FCPATH .
+          'boletas_nuevas/' .
+          $id_apr .
+          '_' .
+          $folio .
+          '.pdf';
+
+        // =====================================
+        // VALIDAR EXISTENCIA
+        // =====================================
+
+        if (!file_exists($archivo)) {
+
+          log_message(
+            'error',
+            'No existe PDF cacheado: '
+              . $archivo
+          );
+
+          continue;
+        }
+
+        // =====================================
+        // IMPORTAR PDF
+        // =====================================
+
+        $pagecount =
+          $mpdf->SetSourceFile(
+            $archivo
+          );
+
+        for (
+          $i = 1;
+          $i <= $pagecount;
+          $i++
+        ) {
+
+          // =====================================
+          // IMPORT PAGE
+          // =====================================
+
+          $tplId =
+            $mpdf->ImportPage($i);
+
+          // =====================================
+          // OBTENER TAMAÑO ORIGINAL
+          // =====================================
+
+          $size =
+            $mpdf->getTemplateSize(
+              $tplId
+            );
+
+          // =====================================
+          // CREAR PAGINA EXACTA
+          // =====================================
+
+          $mpdf->AddPageByArray([
+
+            'orientation' =>
+            $size['orientation'],
+
+            'margin-left'   => 0,
+            'margin-right'  => 0,
+            'margin-top'    => 0,
+            'margin-bottom' => 0,
+
+            'sheet-size' => [
+              $size['width'],
+              $size['height']
+            ]
+          ]);
+
+          // =====================================
+          // INSERTAR PDF
+          // =====================================
+
+          $mpdf->UseTemplate(
+            $tplId
+          );
+        }
+      } catch (\Throwable $e) {
+
+        log_message(
+          'error',
+          'Error merge PDF: '
+            . $e->getMessage()
+        );
+      }
+    }
+
+    // =====================================
+    // OUTPUT FINAL
+    // =====================================
+
+    return $this->response
+      ->setHeader(
+        'Content-Type',
+        'application/pdf'
+      )
+      ->setBody(
+        $mpdf->Output('', 'S')
+      );
+  }
+
+  public function envia_mail_nuevo2($arr_boletas)
+  {
+    ini_set('max_execution_time', 0);
+
+    ini_set('memory_limit', '4096M');
+
+    $this->validar_sesion();
+
+    $folios = explode(",", $arr_boletas);
+
+    $id_apr =
+      $this->sesión->id_apr_ses;
+
+    foreach ($folios as $folio) {
+
+      try {
+
+        // =====================================
+        // DATOS BOLETA
+        // =====================================
+
+        $datosMetros = $this->metros
+          ->select("
+                    folio_bolect,
+                    id_socio,
+                    fecha_ingreso
+                ")
+          ->select("
+                    date_format(
+                        fecha_ingreso,
+                        '%m-%Y'
+                    ) as mes_consumo
+                ")
+          ->where("id", $folio)
+          ->first();
+
+        if (!$datosMetros) {
+          continue;
+        }
+
+        $folio_sii =
+          $datosMetros["folio_bolect"];
+
+        $id_socio =
+          $datosMetros["id_socio"];
+
+        $mes =
+          $datosMetros["mes_consumo"];
+
+        // =====================================
+        // DATOS SOCIO
+        // =====================================
+
+        $datosSocios = $this->socios
+          ->select("
+                    concat(
+                        socios.nombres,
+                        ' ',
+                        socios.ape_pat,
+                        ' ',
+                        socios.ape_mat
+                    ) as nombre_socio
+                ")
+          ->select("
+                    ifnull(
+                        socios.email,
+                        '--'
+                    ) as email
+                ")
+          ->where(
+            "socios.id",
+            $id_socio
+          )
+          ->first();
+
+        if (!$datosSocios) {
+          continue;
+        }
+
+        $nombre_socio =
+          $datosSocios["nombre_socio"];
+
+        $email_socio =
+          $datosSocios["email"];
+
+        // =====================================
+        // VALIDAR EMAIL
+        // =====================================
+
+        if (
+          $email_socio == "--"
+          || empty($email_socio)
+        ) {
+          continue;
+        }
+
+        // =====================================
+        // PDF CACHEADO
+        // =====================================
+
+        $archivo =
+          FCPATH .
+          'boletas_nuevas/' .
+          $id_apr .
+          '_' .
+          $folio .
+          '.pdf';
+
+        if (!file_exists($archivo)) {
+
+          log_message(
+            'error',
+            'No existe PDF cacheado: '
+              . $archivo
+          );
+
+          continue;
+        }
+
+        // =====================================
+        // EMAIL
+        // =====================================
+
+        $this->email =
+          \Config\Services::email();
+
+        $subject =
+          'Tu boleta de Agua ya está disponible';
+
+        $message = '
+            <p>
+                ¡Hola '
+          . $nombre_socio .
+          '!<br><br>
+
+                Tu Boleta de Agua Potable,
+                correspondiente al mes:
+                <b>'
+          . $mes .
+          '</b>
+                ya está disponible.<br><br>
+
+                Puedes pagar online en:
+                <b>www.puntoblue.cl</b>
+
+                <br><br>
+
+                ¡Saludos Cordiales!
+            </p>';
+
+        $this->email->setTo(
+          $email_socio
+        );
+
+        $this->email->setFrom(
+          "boletas@gestionapr.cl",
+          "Software APR"
+        );
+
+        $this->email->setSubject(
+          $subject
+        );
+
+        $this->email->setMessage(
+          $message
+        );
+
+        // =====================================
+        // ADJUNTAR PDF CACHEADO
+        // =====================================
+
+        $this->email->attach(
+          $archivo
+        );
+
+        // =====================================
+        // ENVIAR
+        // =====================================
+
+        if ($this->email->send()) {
+
+          $this->metros->save([
+
+            "id" => $folio,
+
+            "estado_mail" => "OK"
+          ]);
+        }
+
+        $this->email->clear(true);
+      } catch (\Throwable $e) {
+
+        log_message(
+          'error',
+          'Error envia_mail_nuevo2: '
+            . $e->getMessage()
+        );
+      }
+    }
+
+    return "OK";
   }
 }
