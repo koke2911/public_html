@@ -80,7 +80,7 @@ class Ctrl_metros extends BaseController {
      ->join("socios soc", "metros.id_socio = soc.id")
      ->join("arranques a", "a.id_socio = soc.id")
      ->join("sectores sec", "a.id_sector = sec.id")
-     ->join("subsidios sub", "sub.id_socio = soc.id", "left")
+     ->join("subsidios sub", "sub.id_socio = soc.id and sub.estado = 1", "left")
      ->join("porcentajes p", "sub.id_porcentaje = p.id", "left")
      ->join("usuarios u", "metros.id_usuario = u.id")
      ->join("medidores med", "a.id_medidor = med.id")
