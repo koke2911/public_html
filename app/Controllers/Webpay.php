@@ -865,5 +865,67 @@
 	}
 
 
+	public function His_boleta_electronica()
+	{
+
+		// echo 'aqui';
+		$token = ($this->request->getHeader("Authorization") != null) ? $this->request->getHeader("Authorization")->getValue() : "";
+		if ($this->validateToken($token) == true) {
+			if ($this->request->getMethod() == "post") {
+				$id_socio = $this->request->getPost('id_socio');
+
+				// echo $id_socio;
+
+				$consulta = "SELECT date_format(fecha_ingreso,'%Y-%m') as consumo ,
+								folio_bolect,
+								url_boleta,
+								concat(id_apr,'_',id,'.pdf') boleta_nueva from metros where id_socio=? order by fecha_ingreso desc";
+
+
+				$query = $this->db->query($consulta, [$id_socio]);
+				$datosSocios = $query->getResultArray();
+
+				// print_r($datosSocios);
+				// exit();
+
+				if (empty($datosSocios)) {
+					$respuesta = [
+						"message" => "No hay datos",
+						"estado" => "-1",
+						"datos" => ""
+					];
+
+					return $this->respond($respuesta, 401);
+				} else {
+					$salida = array('data' => $datosSocios);
+
+					$respuesta = [
+						"message" => "Hay datos",
+						"estado" => "1",
+						"datos" => $salida
+					];
+
+					return $this->respond($respuesta, 200);
+				}
+			} else {
+				$respuesta = [
+					"message" => "No hay datos enviados por post",
+					"estado" => "-1",
+					"datos" => ""
+				];
+
+				return $this->respond($respuesta, 401);
+			}
+		} else {
+			$respuesta = [
+				"message" => "Token Inválido",
+				"estado" => "-1",
+				"datos" => ""
+			];
+
+			return $this->respond($respuesta, 401);
+		}
+	}
+
 	}
 ?>
