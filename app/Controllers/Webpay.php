@@ -879,7 +879,9 @@
 				$consulta = "SELECT date_format(fecha_ingreso,'%Y-%m') as consumo ,
 								folio_bolect,
 								url_boleta,
-								concat(id_apr,'_',id,'.pdf') boleta_nueva from metros where id_socio=? order by fecha_ingreso desc";
+								concat(id_apr,'_',id,'.pdf') boleta_nueva from metros where id_socio=? 
+								and folio_bolect is not null
+								order by fecha_ingreso desc";
 
 
 				$query = $this->db->query($consulta, [$id_socio]);
