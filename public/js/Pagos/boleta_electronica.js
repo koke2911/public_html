@@ -570,24 +570,22 @@ $(document).ready(function () {
         return;
       }
 
-      // Paso 2: Seleccionar el horario de envío offline
+      // Paso 2: Preguntar el modo de ejecución
       Swal.fire({
-        title: 'Programar Envío Offline',
-        text: 'Selecciona la hora de ejecución del servidor:',
-        input: 'select',
-        inputOptions: {
-          '04:00': '04:00 AM (Recomendado)',
-          '02:00': '02:00 AM',
-          '06:00': '06:00 AM',
-          '23:00': '11:00 PM'
-        },
-        inputValue: '04:00',
+        title: 'Modo de Envío',
+        text: '¿Deseas enviar las boletas inmediatamente o programarlas?',
+        icon: 'question',
+        showDenyButton: true,
         showCancelButton: true,
-        confirmButtonText: 'Programar Envío',
-        cancelButtonText: 'Cancelar'
-      }).then((timeResult) => {
-        if (timeResult.isConfirmed) {
-          let horaProgramada = timeResult.value;
+        confirmButtonText: '🚀 Enviar Ahora',
+        denyButtonText: '⏰ Programar Hora',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#3085d6',
+        denyButtonColor: '#28a745'
+      }).then((modoResult) => {
+
+        // OPCIÓN A: ENVIAR AHORA (Ejecuta lo que hacía antes en vivo)
+        if (modoResult.isConfirmed) {
 
           $(".div_sample").JQLoader({
             theme: "standard",
@@ -596,29 +594,66 @@ $(document).ready(function () {
             color: "#fff"
           });
 
-          $.ajax({
-            url: base_url + "/Pagos/Ctrl_boleta_electronica/programar_envio",
-            type: "POST",
-            data: {
-              arr_boletas: arr_boletas.join(","),
-              formato: formato,
-              hora_programada: horaProgramada
+          if (formato === 'antiguo') {
+            enviarMail();
+          } else {
+            enviarMail_nuevo();
+          }
+
+          // OPCIÓN B: PROGRAMAR EN LA COLA (Offline / Cron)
+        } else if (modoResult.isDenied) {
+
+          Swal.fire({
+            title: 'Programar Envío Offline',
+            text: 'Selecciona la hora de ejecución:',
+            input: 'select',
+            inputOptions: {
+              '04:00': '04:00 AM (Recomendado)',
+              '02:00': '02:00 AM',
+              '06:00': '06:00 AM',
+              '23:00': '11:00 PM'
             },
-            dataType: "json",
-            success: function (respuesta) {
-              $(".div_sample").JQLoader({ action: "close" });
-              if (respuesta.status === 'success') {
-                Swal.fire('¡Programado!', respuesta.message, 'success');
-                buscar_boletas();
-              } else {
-                alerta.error("alerta", respuesta.message);
-              }
-            },
-            error: function () {
-              $(".div_sample").JQLoader({ action: "close" });
-              alerta.error("alerta", "Ha ocurrido un error al programar");
+            inputValue: '04:00',
+            showCancelButton: true,
+            confirmButtonText: 'Confirmar Programación',
+            cancelButtonText: 'Cancelar'
+          }).then((timeResult) => {
+            if (timeResult.isConfirmed) {
+
+              $(".div_sample").JQLoader({
+                theme: "standard",
+                mask: true,
+                background: "#fff",
+                color: "#fff"
+              });
+
+              $.ajax({
+                url: base_url + "/Pagos/Ctrl_boleta_electronica/programar_envio",
+                type: "POST",
+                data: {
+                  arr_boletas: arr_boletas.join(","),
+                  formato: formato,
+                  hora_programada: timeResult.value
+                },
+                dataType: "json",
+                success: function (respuesta) {
+                  $(".div_sample").JQLoader({ action: "close" });
+                  if (respuesta.status === 'success') {
+                    Swal.fire('¡Programado!', respuesta.message, 'success');
+                    buscar_boletas();
+                  } else {
+                    alerta.error("alerta", respuesta.message);
+                  }
+                },
+                error: function () {
+                  $(".div_sample").JQLoader({ action: "close" });
+                  alerta.error("alerta", "Ha ocurrido un error al programar");
+                }
+              });
+
             }
           });
+
         }
       });
     });
