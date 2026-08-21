@@ -539,9 +539,23 @@ $(document).ready(function () {
   });
 
   $("#btn_enviar_mail").on("click", function () {
+    var data = $("#grid_boletas").DataTable().rows('.selected').data();
+    var arr_boletas = [];
 
+    $(data).each(function (i, fila) {
+      if (fila.folio_bolect > 0) {
+        arr_boletas.push(fila.id_metros);
+      }
+    });
+
+    if (arr_boletas.length === 0) {
+      alerta.error("alerta", "Seleccione al menos una boleta con folio SII");
+      return;
+    }
+
+    // Paso 1: Seleccionar el formato
     Swal.fire({
-      title: 'Selecciona una opción',
+      title: 'Selecciona formato',
       text: '¿Cómo deseas enviar las boletas?',
       icon: 'question',
       showCancelButton: true,
@@ -549,19 +563,32 @@ $(document).ready(function () {
       cancelButtonText: 'Nuevo Formato',
       reverseButtons: true
     }).then((result) => {
+      let formato = 'antiguo';
+      if (result.dismiss === Swal.DismissReason.cancel) {
+        formato = 'nuevo';
+      } else if (!result.isConfirmed) {
+        return;
+      }
 
-      if (result.isConfirmed) {
-        $(".div_sample").JQLoader({
-          theme: "standard",
-          mask: true,
-          background: "#fff",
-          color: "#fff"
-        });
+      // Paso 2: Seleccionar el horario de envío offline
+      Swal.fire({
+        title: 'Programar Envío Offline',
+        text: 'Selecciona la hora de ejecución del servidor:',
+        input: 'select',
+        inputOptions: {
+          '04:00': '04:00 AM (Recomendado)',
+          '02:00': '02:00 AM',
+          '06:00': '06:00 AM',
+          '23:00': '11:00 PM'
+        },
+        inputValue: '04:00',
+        showCancelButton: true,
+        confirmButtonText: 'Programar Envío',
+        cancelButtonText: 'Cancelar'
+      }).then((timeResult) => {
+        if (timeResult.isConfirmed) {
+          let horaProgramada = timeResult.value;
 
-        enviarMail();
-
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        // if (id_apr == 7) {
           $(".div_sample").JQLoader({
             theme: "standard",
             mask: true,
@@ -569,15 +596,32 @@ $(document).ready(function () {
             color: "#fff"
           });
 
-          enviarMail_nuevo();
-        // }else{
-          // alert("Formato aún no disponible");
-        // }
-      }
-
+          $.ajax({
+            url: base_url + "/Pagos/Ctrl_boleta_electronica/programar_envio",
+            type: "POST",
+            data: {
+              arr_boletas: arr_boletas.join(","),
+              formato: formato,
+              hora_programada: horaProgramada
+            },
+            dataType: "json",
+            success: function (respuesta) {
+              $(".div_sample").JQLoader({ action: "close" });
+              if (respuesta.status === 'success') {
+                Swal.fire('¡Programado!', respuesta.message, 'success');
+                buscar_boletas();
+              } else {
+                alerta.error("alerta", respuesta.message);
+              }
+            },
+            error: function () {
+              $(".div_sample").JQLoader({ action: "close" });
+              alerta.error("alerta", "Ha ocurrido un error al programar");
+            }
+          });
+        }
+      });
     });
-
-       
   });
 
 

@@ -15,6 +15,7 @@ use App\Models\Formularios\Md_medidores;
 use App\Models\Configuracion\Md_comunas;
 use App\Models\Formularios\Md_repactaciones;
 use App\Models\Configuracion\Md_observaciones_dte;
+use App\Models\Pagos\Md_cola_emails;
 //use App\Libraries\Ejemplolibreria;
 
 class Ctrl_boleta_electronica extends BaseController
@@ -34,6 +35,7 @@ class Ctrl_boleta_electronica extends BaseController
   protected $sesión;
   protected $db;
   protected $error = "";
+  protected $cola_emails;
 
   public function __construct()
   {
@@ -48,6 +50,7 @@ class Ctrl_boleta_electronica extends BaseController
     $this->repactaciones     = new Md_repactaciones();
     $this->observaciones_dte = new Md_observaciones_dte();
     $this->caja              = new Md_caja();
+    $this->cola_emails       = new Md_cola_emails();
     $this->sesión            = session();
     $this->db                = \Config\Database::connect();
   }
@@ -5831,4 +5834,78 @@ $Totales["porcdescuento_exento"]="0";
 
     return "OK";
   }
+
+  public function programar_envio()
+{
+    $this->validar_sesion();
+
+    $folios         = $this->request->getPost("arr_boletas");
+    $formato        = $this->request->getPost("formato"); // 'antiguo' o 'nuevo'
+    $horaProgramada = $this->request->getPost("hora_programada"); // Ej: '04:00'
+
+    if (empty($folios)) {
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Sin boletas seleccionadas']);
+    }
+
+    $arr_folios = explode(",", $folios);
+    $id_apr     = $this->sesión->id_apr_ses;
+
+    // ---------------------------------------------------------------------
+    // EVITAR DUPLICADOS: Buscar qué folios ya están en la cola pendientes/procesando
+    // ---------------------------------------------------------------------
+    $existentesEnCola = $this->cola_emails->select('id_metro')
+        ->whereIn('id_metro', $arr_folios)
+        ->whereIn('estado', ['PENDIENTE', 'PROCESANDO'])
+        ->findAll();
+
+    // Extraer solo los IDs de los que ya existen
+    $idsExistentes = array_column($existentesEnCola, 'id_metro');
+
+    // Filtrar el array dejando solo los folios que NO están en la cola
+    $foliosValidos = array_diff($arr_folios, $idsExistentes);
+
+    // Si todos ya estaban programados
+    if (empty($foliosValidos)) {
+        return $this->response->setJSON([
+            'status'  => 'warning',
+            'message' => 'Todas las boletas seleccionadas ya se encuentran programadas en la cola.'
+        ]);
+    }
+
+    // ---------------------------------------------------------------------
+    // Determinar la fecha y hora de ejecución
+    // ---------------------------------------------------------------------
+    $fechaActual = date('Y-m-d');
+    $datetimeProgramado = $fechaActual . ' ' . $horaProgramada . ':00';
+
+    // Si la hora elegida ya pasó el día de hoy, se programa para el día siguiente
+    if (strtotime($datetimeProgramado) <= time()) {
+        $datetimeProgramado = date('Y-m-d H:i:s', strtotime($datetimeProgramado . ' +1 day'));
+    }
+
+    $dataInsert = [];
+
+    // Iterar únicamente con los folios válidos (no duplicados)
+    foreach ($foliosValidos as $id_metro) {
+        $dataInsert[] = [
+            'id_metro'        => $id_metro,
+            'id_apr'          => $id_apr,
+            'formato'         => $formato,
+            'estado'          => 'PENDIENTE',
+            'programado_para' => $datetimeProgramado
+        ];
+    }
+
+    if (!empty($dataInsert)) {
+        $this->cola_emails->insertBatch($dataInsert);
+    }
+
+    $ignorados = count($arr_folios) - count($foliosValidos);
+    $msgIgnorados = $ignorados > 0 ? " ($ignorados boletas omitidas por estar ya programadas)" : "";
+
+    return $this->response->setJSON([
+        'status'  => 'success',
+        'message' => 'Boletas programadas exitosamente para las ' . $datetimeProgramado . $msgIgnorados
+    ]);
+}
 }
