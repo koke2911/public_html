@@ -16,6 +16,8 @@ use App\Models\Configuracion\Md_comunas;
 use App\Models\Formularios\Md_repactaciones;
 use App\Models\Configuracion\Md_observaciones_dte;
 use App\Models\Pagos\Md_cola_emails;
+use App\Models\Formularios\Md_convenios;
+use App\Models\Formularios\Md_convenio_detalle;
 //use App\Libraries\Ejemplolibreria;
 
 class Ctrl_boleta_electronica extends BaseController
@@ -36,6 +38,8 @@ class Ctrl_boleta_electronica extends BaseController
   protected $db;
   protected $error = "";
   protected $cola_emails;
+  protected $convenios;
+  protected $convenio_detalle;
 
   public function __construct()
   {
@@ -53,6 +57,8 @@ class Ctrl_boleta_electronica extends BaseController
     $this->cola_emails       = new Md_cola_emails();
     $this->sesión            = session();
     $this->db                = \Config\Database::connect();
+    $this->convenios        = new Md_convenios();
+    $this->convenio_detalle = new Md_convenio_detalle();
   }
 
   public function validar_sesion()
@@ -2628,8 +2634,27 @@ $Totales["porcdescuento_exento"]="0";
       }
 
       if (intval($total_servicios) > 0 || intval($otros) > 0) {
+
+        
+        $datosConvenio = $this->convenios         
+          ->select("convenios.numero_cuotas as total_cuotas")
+          ->select("convenio_detalle.numero_cuota as cuota_actual")         
+          ->join("convenio_detalle","convenio_detalle.id_convenio = convenios.id")
+          ->where("convenios.estado", 1)
+          ->where("date_format(convenio_detalle.fecha_pago, '%m-%Y')",$datosMetros["fecha_vencimiento"])
+          ->where("convenios.id_socio", $id_socio)
+          ->first();
+
         $otr = $total_servicios + $otros;
-        $total_servicio = 'Otros servicios : $' . $otr;
+        
+        if (!empty($datosConvenio)) {
+          $cuota_actual = $datosConvenio["cuota_actual"];
+          $total_cuotas = $datosConvenio["total_cuotas"];
+
+          $total_servicio = 'Otros servicios ' . $cuota_actual . '/' . $total_cuotas . ' : $' . number_format($otr, 0, ',', '.');
+        } else {
+          $total_servicio = 'Otros servicios : $' . number_format($otr, 0, ',', '.');
+        }
       }
 
       if (intval($cuota_socio) > 0) {
@@ -4813,6 +4838,222 @@ $Totales["porcdescuento_exento"]="0";
       }
     }
   }
+
+  public function enviar_aviso_cobranza($arr_boletas)
+{
+    $this->validar_sesion();
+
+    $folios = explode(",", $arr_boletas);
+    $id_apr = $this->sesión->id_apr_ses;
+
+    // Obtener datos del APR
+    $datosApr = $this->apr->select("nombre")
+        ->select("concat(rut, '-', dv) as rut")
+        ->select("ifnull(resto_direccion, 'Sin Registro') direccion")
+        ->select("ifnull(fono, 'Sin Registro') as fono")
+        ->where("id", $id_apr)
+        ->first();
+
+    $nombre_apr    = $datosApr["nombre"];
+    $rut_apr       = $datosApr["rut"];
+    $fono_apr      = $datosApr["fono"];
+    $direccion_apr = $datosApr["direccion"];
+
+    $enviados = 0;
+    $errores  = 0;
+
+    foreach ($folios as $folio) {
+        // 1. Obtener datos de la lectura
+        $datosMetros = $this->metros->select("id_socio")
+            ->select("consumo_anterior")
+            ->select("consumo_actual")
+            ->select("metros")
+            ->select("subtotal")
+            ->select("total_mes")
+            ->select("monto_subsidio")
+            ->select("multa")
+            ->select("date_format(fecha, '%d-%m-%Y') as fecha_emision")
+            ->select("date_format(fecha_vencimiento, '%d-%m-%Y') as fecha_vencimiento")
+            ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
+            ->where("id", $folio)
+            ->first();
+
+        if (!$datosMetros) {
+            continue;
+        }
+
+        $id_socio          = $datosMetros["id_socio"];
+        $consumo_anterior  = $datosMetros["consumo_anterior"];
+        $consumo_actual    = $datosMetros["consumo_actual"];
+        $consumo_metros    = $datosMetros["metros"];
+        $subtotal          = $datosMetros["subtotal"];
+        $monto_subsidio    = $datosMetros["monto_subsidio"];
+        $multa             = $datosMetros["multa"];
+        $total_mes         = $datosMetros["total_mes"];
+        $fecha_emision     = $datosMetros["fecha_emision"];
+        $fecha_vencimiento = $datosMetros["fecha_vencimiento"];
+        $mes               = $datosMetros["mes_consumo"];
+
+        // 2. Obtener datos del Socio
+        $datosSocio = $this->socios->select("case when socios.rut is null then 'Sin RUT registrado' else concat(socios.rut, '-', socios.dv) end as rut_socio")
+            ->select("concat(socios.nombres, ' ', socios.ape_pat, ' ', socios.ape_mat) as nombre_socio")
+            ->select("concat(socios.calle, ', ', socios.numero, ', ', socios.resto_direccion) as direccion_socio")
+            ->select("socios.rol as codigo_socio")
+            ->select('socios.ruta')
+            ->select("ifnull(socios.email,'--') as email")
+            ->select("cf.cargo_fijo")
+            ->join("arranques a", "a.id_socio = socios.id")
+            ->join("sectores s", "a.id_sector = s.id")
+            ->join("medidores m", "a.id_medidor = m.id")
+            ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro = m.id_diametro")
+            ->where("socios.id", $id_socio)
+            ->first();
+
+        $email_socio = $datosSocio["email"];
+
+        // Validar si el socio tiene un correo válido registrado
+        if ($email_socio != "--" && filter_var($email_socio, FILTER_VALIDATE_EMAIL)) {
+
+            $rut_socio       = $datosSocio["rut_socio"];
+            $nombre_socio    = $datosSocio["nombre_socio"];
+            $direccion_socio = $datosSocio["direccion_socio"];
+            $codigo_socio    = $datosSocio["codigo_socio"];
+            $cargo_fijo      = $datosSocio["cargo_fijo"];
+            $monto_metros    = intval($subtotal) - intval($cargo_fijo);
+
+            // Saldo Anterior
+            $query = $this->db->query("SELECT total_mes as saldo_anterior FROM metros WHERE id = (SELECT MAX(id) FROM metros WHERE id_socio = $id_socio AND estado = 1 AND id < $folio)");
+            $datosConsumoAnterior = $query->getRow();
+            $saldo_anterior = ($datosConsumoAnterior && $datosConsumoAnterior->saldo_anterior != "") ? $datosConsumoAnterior->saldo_anterior : 0;
+            $total_pagar = $total_mes + $saldo_anterior;
+
+            // Medidor
+            $datosArranque = $this->arranques->select("id_medidor")->where("id_socio", $id_socio)->first();
+            $datosMedidor  = $this->medidores->select("numero")->where("id", $datosArranque["id_medidor"])->first();
+            $numero_medidor = $datosMedidor["numero"];
+
+            // 3. Generar el PDF con mPDF en memoria
+            $mpdf = new \Mpdf\Mpdf([
+                'mode'          => 'utf-8',
+                'format'        => 'letter',
+                'margin_bottom' => 1
+            ]);
+
+            $pagecount = $mpdf->SetSourceFile("005.pdf");
+            $tplId     = $mpdf->ImportPage($pagecount);
+            $mpdf->AddPage();
+            $mpdf->UseTemplate($tplId);
+
+            // Logo y datos APR
+            $mpdf->SetXY(5, 5);
+            $mpdf->WriteHTML('<img src="' . base_url() . '/' . $id_apr . '.png" width="250">');
+
+            $mpdf->SetXY(120, 10);
+            $mpdf->Cell(0, 0, $nombre_apr, 0, 1, 'L');
+            $mpdf->SetXY(120, 15);
+            $mpdf->Cell(0, 0, 'RUT: ' . $rut_apr, 0, 1, 'L');
+            $mpdf->SetXY(120, 20);
+            $mpdf->Cell(0, 0, 'CAPTACIÓN, PURIFICACIÓN Y DIST. DE AGUA ', 0, 1, 'L');
+            $mpdf->SetXY(120, 25);
+            $mpdf->Cell(0, 0, $direccion_apr, 0, 1, 'L');
+            $mpdf->SetXY(120, 30);
+            $mpdf->Cell(0, 0, 'FONO: ' . $fono_apr, 0, 1, 'L');
+            $mpdf->SetXY(120, 35);
+            $mpdf->Cell(0, 0, 'N° ' . $folio, 0, 1, 'L');
+            $mpdf->SetXY(120, 40);
+            $mpdf->Cell(0, 0, 'AVISO DE COBRANZA', 0, 1, 'L');
+            $mpdf->SetXY(120, 45);
+            $mpdf->Cell(0, 0, 'NO AFECTAS O EXENTAS DE IVA', 0, 1, 'L');
+
+            // Datos Socio
+            $x = 15;
+            $mpdf->SetXY($x, 90);
+            $mpdf->Cell(0, 0, 'RUT SOCIO: ' . $rut_socio, 0, 1, 'L');
+            $mpdf->SetXY($x, 95);
+            $mpdf->Cell(0, 0, 'NOMBRE SOCIO: ' . $nombre_socio, 0, 1, 'L');
+            $mpdf->SetXY($x, 100);
+            $mpdf->Cell(0, 0, 'DIRECCION: ' . $direccion_socio, 0, 1, 'L');
+            $mpdf->SetXY($x, 105);
+            $mpdf->Cell(0, 0, 'N° SOCIO: ' . $codigo_socio, 0, 1, 'L');
+            $mpdf->SetXY($x, 110);
+            $mpdf->Cell(0, 0, 'N° MEDIDOR: ' . $numero_medidor, 0, 1, 'L');
+
+            // Lecturas y Consumos
+            $mpdf->SetXY(15, 145);
+            $mpdf->Cell(0, 0, $consumo_anterior . ' M3', 0, 1, 'L');
+            $mpdf->SetXY(70, 145);
+            $mpdf->Cell(0, 0, $consumo_actual . ' M3', 0, 1, 'L');
+            $mpdf->SetXY(123, 142);
+            $mpdf->Cell(0, 0, $consumo_metros . ' M3', 0, 1, 'L');
+            $mpdf->SetXY(123, 147);
+            $mpdf->Cell(0, 0, 'Cargo fijo $' . $cargo_fijo . ', ' . $consumo_metros . ' Mt3 $' . $monto_metros, 0, 1, 'L');
+
+            // Totales
+            $mpdf->SetXY(70, 167);
+            $mpdf->Cell(0, 0, '$' . number_format($subtotal, 0, ",", "."), 0, 1, 'L');
+            $mpdf->SetXY(70, 182);
+            $mpdf->Cell(0, 0, '$' . number_format($saldo_anterior, 0, ",", "."), 0, 1, 'L');
+            $mpdf->SetXY(70, 197);
+            $mpdf->Cell(0, 0, '$' . number_format($monto_subsidio, 0, ",", "."), 0, 1, 'L');
+
+            $mpdf->SetXY(150, 181);
+            $mpdf->Cell(0, 0, '$' . number_format($multa, 0, ",", "."), 0, 1, 'L');
+
+            // Fechas
+            $mpdf->SetXY(33, 220);
+            $mpdf->Cell(0, 0, $fecha_emision, 0, 1, 'L');
+            $mpdf->SetXY(93, 220);
+            $mpdf->Cell(0, 0, $fecha_vencimiento, 0, 1, 'L');
+            $mpdf->SetXY(163, 220);
+            $mpdf->Cell(0, 0, '$' . number_format($total_pagar, 0, ",", "."), 0, 1, 'L');
+
+            // Guardar temporalmente el PDF generado en disco
+            if (!is_dir('avisos_temp')) {
+                mkdir('avisos_temp', 0777, true);
+            }
+            $nombre_archivo_pdf = 'avisos_temp/Aviso_Cobranza_' . $folio . '.pdf';
+            $mpdf->Output($nombre_archivo_pdf, 'F'); // 'F' guarda el archivo localmente
+
+            // 4. Enviar Correo Electrónico
+            $this->email = \Config\Services::email();
+
+            $subject = 'Aviso de Cobranza - ' . $nombre_apr;
+            $message = '<p>Estimado(a) ' . $nombre_socio . ',<br><br>
+                        Junto con saludar, adjuntamos su <strong>Aviso de Cobranza</strong> correspondiente al mes: <b>' . $mes . '</b>.<br>
+                        Puedes realizar el pago de forma "online" a través de <a href="https://www.puntoblue.cl">www.puntoblue.cl</a>.<br><br>
+                        ¡Saludos Cordiales!</p>';
+
+            $this->email->setTo($email_socio);
+            $this->email->setFrom("boletas@gestionapr.cl", "Software APR");
+            $this->email->setSubject($subject);
+            $this->email->setMessage($message);
+
+            // Adjuntar el aviso de cobranza recién creado
+            $this->email->attach($nombre_archivo_pdf);
+
+            if ($this->email->send()) {
+                // Actualizar estado en BD
+                $this->metros->save([
+                    "id"          => $folio,
+                    "estado_mail" => "OK"
+                ]);
+                $enviados++;
+            } else {
+                $errores++;
+            }
+
+            // Limpiar configuración de Email
+            $this->email->clear(TRUE);
+
+            // Borrar el PDF temporal para no saturar el servidor
+            if (file_exists($nombre_archivo_pdf)) {
+                unlink($nombre_archivo_pdf);
+            }
+        }
+    }
+
+    echo "Proceso finalizado. Enviados: {$enviados}, Sin correo/Error: {$errores}";
+}
 
   public function imprimir_boleta_nueva(
     $id_metros = null,

@@ -441,6 +441,18 @@ class Ctrl_menu extends BaseController {
     echo view('Consumo/lecturas_sector_mobil');
   }
 
+  public function banco()
+  {
+    $this->validar_sesion();
+    echo view('Finanzas/banco');
+  }
+
+  public function deudores_det()
+  {
+    $this->validar_sesion();
+    echo view('Informes/deudores_det');
+  }
+
 
   
 }

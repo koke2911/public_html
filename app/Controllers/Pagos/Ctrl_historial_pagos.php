@@ -10,6 +10,7 @@ use App\Models\Pagos\Md_caja_detalle;
 use App\Models\Formularios\Md_socios;
 use App\Models\Consumo\Md_metros_traza;
 use App\Models\Formularios\Md_socios_traza;
+use App\Models\Finanzas\Md_transacciones;
 class Ctrl_historial_pagos extends BaseController {
 
   protected $metros;
@@ -21,6 +22,7 @@ class Ctrl_historial_pagos extends BaseController {
   protected $sesión;
   protected $db;
   protected $socios_traza;
+  protected $transacciones;
   
   public function __construct() {
     $this->metros       = new Md_metros();
@@ -32,6 +34,7 @@ class Ctrl_historial_pagos extends BaseController {
     $this->sesión       = session();
     $this->db           = \Config\Database::connect();
     $this->socios_traza     = new Md_socios_traza();
+    $this->transacciones       = new Md_transacciones();
   }
 
   public function validar_sesion() {
@@ -69,7 +72,8 @@ class Ctrl_historial_pagos extends BaseController {
     echo $this->caja_traza->datatable_pago_traza($this->db, $id_caja);
   }
 
-  public function anular_pago() {
+  public function anular_pago()
+  {
     $this->validar_sesion();
 
     define("ANULADO", 0);
@@ -81,88 +85,202 @@ class Ctrl_historial_pagos extends BaseController {
     $id_caja    = $this->request->getPost("id_caja");
     $fecha      = date("Y-m-d H:i:s");
     $id_usuario = $this->sesión->id_usuario_ses;
+    $id_apr     = $this->sesión->id_apr_ses;
 
 
+    /*
+     * ==========================================================
+     * ANULAR PAGO
+     * ==========================================================
+     */
 
     $datosPago = [
-     "id"         => $id_caja,
-     "estado"     => ANULADO,
-     "id_usuario" => $id_usuario,
-     "fecha"      => $fecha
+      "id"         => $id_caja,
+      "estado"     => ANULADO,
+      "id_usuario" => $id_usuario,
+      "fecha"      => $fecha
     ];
 
+
     if ($this->caja->save($datosPago)) {
+
+      /*
+         * ======================================================
+         * TRAZA DEL PAGO
+         * ======================================================
+         */
+
       $datosPagoTraza = [
-       "id_caja"    => $id_caja,
-       "estado"     => ANULADO_TRAZA,
-       "id_usuario" => $id_usuario,
-       "fecha"      => $fecha
+        "id_caja"    => $id_caja,
+        "estado"     => ANULADO_TRAZA,
+        "id_usuario" => $id_usuario,
+        "fecha"      => $fecha
       ];
 
       if (!$this->caja_traza->save($datosPagoTraza)) {
         echo "Error al registrar la traza del pago";
+        return;
       }
 
-      $datosPagoDetalle = $this->caja_detalle->select("*")
-                                             ->where("id_caja", $id_caja)
-                                             ->findAll();
-      
+
+      /*
+         * ======================================================
+         * VOLVER MEDIDORES A PENDIENTE
+         * ======================================================
+         */
+
+      $datosPagoDetalle = $this->caja_detalle
+        ->select("*")
+        ->where("id_caja", $id_caja)
+        ->findAll();
+
 
       foreach ($datosPagoDetalle as $key) {
+
         $datosMetros = [
-         "id"         => $key["id_metros"],
-         "estado"     => PENDIENTE,
-         "id_usuario" => $id_usuario,
-         "fecha"      => $fecha
+          "id"         => $key["id_metros"],
+          "estado"     => PENDIENTE,
+          "id_usuario" => $id_usuario,
+          "fecha"      => $fecha
         ];
 
+
         if ($this->metros->save($datosMetros)) {
+
           $datosMetrosTraza = [
-           "id_metros"  => $key["id_metros"],
-           "estado"     => PAGO_ANULADO,
-           "id_usuario" => $id_usuario,
-           "fecha"      => $fecha
+            "id_metros"  => $key["id_metros"],
+            "estado"     => PAGO_ANULADO,
+            "id_usuario" => $id_usuario,
+            "fecha"      => $fecha
           ];
 
           if (!$this->metros_traza->save($datosMetrosTraza)) {
-            echo "Error al registrar traza al registro de metros";
-          }else{
-            
 
+            echo "Error al registrar traza al registro de metros";
+            return;
           }
         }
       }
 
-      $datosSocios = $this->socios->select("socios.id,socios.abono,c.abono as abono_caja")
+
+      /*
+         * ======================================================
+         * RESTAURAR ABONO DEL SOCIO
+         * ======================================================
+         */
+
+      $datosSocios = $this->socios
+        ->select("socios.id,socios.abono,c.abono as abono_caja")
         ->join("caja c", "c.id_socio=socios.id")
         ->where("c.id", $id_caja)
         ->findAll();
-      $id_socio = $datosSocios[0]['id'];
-      $abono_socio = $datosSocios[0]['abono'];
-      $abono_caja = $datosSocios[0]['abono_caja'];
 
-      $anula_abono = $abono_socio + $abono_caja;
 
-      $datosSocios = [
-        "id"         => $id_socio,
-        "abono"      => $anula_abono,
-        "id_usuario" => $id_usuario,
-        "fecha"      => $fecha
-      ];
+      if ($datosSocios != null) {
 
-      $this->socios->save($datosSocios);
+        $id_socio   = $datosSocios[0]["id"];
+        $abono_socio = $datosSocios[0]["abono"];
+        $abono_caja  = $datosSocios[0]["abono_caja"];
 
-      $datosSociosTraza = [
-        "id_socio"   => $id_socio,
-        "estado"     => 8,
-        "id_usuario" => $id_usuario,
-        "fecha"      => $fecha
-      ];
+        $anula_abono = $abono_socio + $abono_caja;
 
-      $this->socios_traza->save($datosSociosTraza);
+
+        $datosSocioSave = [
+          "id"         => $id_socio,
+          "abono"      => $anula_abono,
+          "id_usuario" => $id_usuario,
+          "fecha"      => $fecha
+        ];
+
+        $this->socios->save($datosSocioSave);
+
+
+        $datosSociosTraza = [
+          "id_socio"   => $id_socio,
+          "estado"     => 8,
+          "id_usuario" => $id_usuario,
+          "fecha"      => $fecha
+        ];
+
+        $this->socios_traza->save(
+          $datosSociosTraza
+        );
+      }
+
+
+      /*
+         * ======================================================
+         * ANULAR TRANSACCIÓN ASOCIADA AL PAGO
+         * ======================================================
+         *
+         * La glosa guardada es:
+         *
+         * Pago modulo Caja: Transferencia XXXXX Caja N° 123
+         *
+         * Buscamos específicamente la transacción cuyo concepto
+         * termina con "Caja N° {id_caja}".
+         * ======================================================
+         */
+
+      $movimientosTransferencia = $this->transacciones
+        ->select("id, id_cuenta")
+        ->where("id_apr", $id_apr)
+        ->where("estado", 1)        
+        ->like(
+          "concepto",
+          "Caja N° " . $id_caja,
+          "before"
+        )
+        ->findAll();
+
+
+      /*
+         * Si el pago fue transferencia debería existir
+         * un movimiento asociado.
+         *
+         * Si fue efectivo u otra forma de pago,
+         * simplemente no encontrará ninguno.
+         */
+      if ($movimientosTransferencia != null) {
+
+        $cuentasRecalcular = [];
+
+
+        foreach ($movimientosTransferencia as $movimiento) {
+
+          /*
+                 * Marcar transacción como anulada.
+                 */
+          $datosMovimiento = [
+            "id"         => $movimiento["id"],
+            "estado"     => 0,
+            "id_usuario" => $id_usuario,
+            "fecha"      => $fecha
+          ];
+
+
+          if (!$this->transacciones->save($datosMovimiento)) {
+
+            echo "Error al anular la transacción bancaria";
+            return;
+          }
+
+          $cuentasRecalcular[$movimiento["id_cuenta"]] = $movimiento["id_cuenta"];
+        }
+
+        foreach ($cuentasRecalcular as $id_cuenta) {
+
+          $this->transacciones->recalcular_saldos_cuenta(
+            $id_cuenta,
+            $this->sesión->id_apr_ses
+          );
+        }
+      }
+
 
       echo OK;
     } else {
+
       echo "Error al anular el pago";
     }
   }

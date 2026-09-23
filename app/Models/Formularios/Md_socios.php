@@ -32,7 +32,8 @@ class Md_socios extends Model {
    'ruta',
    'abono',
    'email',
-   'fono'
+   'fono',
+   
   ];
 
   public function datatable_socios($db, $id_apr) {
@@ -237,7 +238,8 @@ class Md_socios extends Model {
        "resto_direccion"  => $key["resto_direccion"],
        "comuna"           => $key["comuna"],
        "ruta"             => $key["ruta"],
-       "estado"           => $key["estado"]
+       "estado"           => $key["estado"],
+        
       ];
 
       $data[] = $row;
@@ -341,5 +343,24 @@ class Md_socios extends Model {
     $data     = $query->getResultArray();
 
     return $data[0];
+  }
+
+  public function obtener_total_socios_activos($db, $id_apr)
+  {
+    $consulta = "SELECT 
+                    COUNT(*) as total_activos,
+                    SUM(CASE WHEN MONTH(fecha_entrada) = MONTH(CURRENT_DATE()) 
+                             AND YEAR(fecha_entrada) = YEAR(CURRENT_DATE()) 
+                             THEN 1 ELSE 0 END) as nuevos_mes
+                 FROM socios 
+                 WHERE id_apr = ? AND estado = 1";
+
+    $query = $db->query($consulta, [$id_apr]);
+    $resultado = $query->getRowArray();
+
+    return [
+      'total_activos' => intval($resultado['total_activos'] ?? 0),
+      'nuevos_mes'    => intval($resultado['nuevos_mes'] ?? 0)
+    ];
   }
 }

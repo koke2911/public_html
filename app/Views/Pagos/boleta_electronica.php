@@ -17,7 +17,7 @@ $id_apr =  $_SESSION['id_apr_ses'];
             <center>
               <button type="button" name="btn_emitir" id="btn_emitir" class="btn btn-success"><i class="fas fa-receipt"></i> Emitir DTE</button>
               <button type="button" name="btn_imprimir" id="btn_imprimir" class="btn btn-primary"><i class="fas fa-print"></i> Imprimir DTE</button>
-              <button type="button" name="btn_aviso_cobranza" id="btn_aviso_cobranza" class="btn btn-info"><i class="fas fa-print"></i> Imprimir Aviso de Cobranza</button>
+              <button type="button" name="btn_aviso_cobranza" id="btn_aviso_cobranza" class="btn btn-info"><i class="fas fa-print"></i> Aviso de Cobranza</button>
               <button type="button" name="btn_enviar_mail" id="btn_enviar_mail" class="btn btn-info"><i class="fas fa-print"></i> Enviar Email</button>
               <button type="button" name="btn_punto_blue" id="btn_punto_blue" class="btn btn-info"><i class="fas fa-paper-plane"></i> PuntoBlue</button>
             </center>

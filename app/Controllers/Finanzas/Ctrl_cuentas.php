@@ -38,8 +38,10 @@ class Ctrl_cuentas extends BaseController {
     echo $this->cuentas->datatable_cuentas($this->db, $this->sesión->id_apr_ses);
   }
 
-  public function guardar_cuenta() {
+  public function guardar_cuenta()
+  {
     $this->validar_sesion();
+
     define("CREAR_CUENTA", 1);
     define("MODIFICAR_CUENTA", 2);
 
@@ -59,31 +61,48 @@ class Ctrl_cuentas extends BaseController {
     $nombre_cuenta  = $this->request->getPost("nombre_cuenta");
     $email_cuenta   = $this->request->getPost("email_cuenta");
 
+    /*
+     * Aseguramos que siempre sean 0 o 1
+     */
+    $webpay = $this->request->getPost("webpay") == 1 ? 1 : 0;
+    $caja   = $this->request->getPost("caja") == 1 ? 1 : 0;
+
     if ($email_cuenta == "") {
       $email_cuenta = NULL;
     }
 
     $rut_completo = explode("-", $rut_cuenta);
-    $rut          = $rut_completo[0];
-    $dv           = $rut_completo[1];
+    $rut = $rut_completo[0];
+    $dv  = $rut_completo[1];
 
-    if ($this->cuentas->existe_cuenta($rut, $id_banco, $id_tipo_cuenta, $n_cuenta, $this->sesión->id_apr_ses) and $id_cuenta == "") {
+    if (
+      $this->cuentas->existe_cuenta(
+        $rut,
+        $id_banco,
+        $id_tipo_cuenta,
+        $n_cuenta,
+        $id_apr
+      )
+      && $id_cuenta == ""
+    ) {
       echo "Cuenta ya existe en el sistema";
       exit();
     }
 
     $datosCuenta = [
-     "id_cuenta"      => $id_cuenta,
-     "rut"            => $rut,
-     "dv"             => $dv,
-     "id_banco"       => $id_banco,
-     "id_tipo_cuenta" => $id_tipo_cuenta,
-     "n_cuenta"       => $n_cuenta,
-     "nombre_cuenta"  => $nombre_cuenta,
-     "email_cuenta"   => $email_cuenta,
-     "id_usuario"     => $id_usuario,
-     "fecha"          => $fecha,
-     "id_apr"         => $id_apr
+      "id_cuenta"      => $id_cuenta,
+      "rut"            => $rut,
+      "dv"             => $dv,
+      "id_banco"       => $id_banco,
+      "id_tipo_cuenta" => $id_tipo_cuenta,
+      "n_cuenta"       => $n_cuenta,
+      "nombre_cuenta"  => $nombre_cuenta,
+      "email_cuenta"   => $email_cuenta,
+      "id_usuario"     => $id_usuario,
+      "fecha"          => $fecha,
+      "id_apr"         => $id_apr,
+      "webpay"         => $webpay,
+      "caja"           => $caja
     ];
 
     if ($id_cuenta != "") {
@@ -93,18 +112,60 @@ class Ctrl_cuentas extends BaseController {
       $estado_traza = CREAR_CUENTA;
     }
 
-    if ($this->cuentas->save($datosCuenta)) {
+
+    /*
+     * Iniciar transacción
+     */
+    $db = \Config\Database::connect();
+    $db->transStart();
+
+
+    /*
+     * Si esta cuenta será Webpay,
+     * quitar Webpay de las demás cuentas del mismo APR.
+     */
+    if ($webpay == 1) {
+
+      $this->cuentas
+        ->where("id_apr", $id_apr)
+        ->set(["webpay" => 0])
+        ->update();
+    }
+    if ($caja == 1) {
+
+      $this->cuentas
+        ->where("id_apr", $id_apr)
+        ->set(["caja" => 0])
+        ->update();
+    }
+
+    $resultado = $this->cuentas->save($datosCuenta);
+
+
+    $db->transComplete();
+
+
+    if ($resultado && $db->transStatus()) {
+
       echo OK;
 
       if ($id_cuenta == "") {
-        $obtener_id = $this->cuentas->select("max(id) as id_cuenta")
-                                    ->first();
-        $id_cuenta  = $obtener_id["id_cuenta"];
+
+        $obtener_id = $this->cuentas
+          ->select("max(id) as id_cuenta")
+          ->first();
+
+        $id_cuenta = $obtener_id["id_cuenta"];
       }
 
-      $this->guardar_traza($id_cuenta, $estado_traza, "");
+      $this->guardar_traza(
+        $id_cuenta,
+        $estado_traza,
+        ""
+      );
     } else {
-      echo "Error al guardar los datos del socio";
+
+      echo "Error al guardar los datos de la cuenta";
     }
   }
 

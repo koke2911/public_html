@@ -181,6 +181,98 @@ class Md_caja extends Model {
     return json_encode($salida);
   }
 
+  public function obtener_indicador_recaudacion($db, $id_apr)
+  {
+    $consulta = "SELECT 
+                    COALESCE(SUM(CASE WHEN MONTH(fecha) = MONTH(CURRENT_DATE()) AND YEAR(fecha) = YEAR(CURRENT_DATE()) THEN total_pagar ELSE 0 END), 0) as mes_actual,
+                    COALESCE(SUM(CASE WHEN MONTH(fecha) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) AND YEAR(fecha) = YEAR(CURRENT_DATE() - INTERVAL 1 MONTH) THEN total_pagar ELSE 0 END), 0) as mes_anterior
+                 FROM caja 
+                 WHERE id_apr = ? AND estado = 1";
+
+    $query = $db->query($consulta, [$id_apr]);
+    $row   = $query->getRowArray();
+
+    $actual   = floatval($row['mes_actual'] ?? 0);
+    $anterior = floatval($row['mes_anterior'] ?? 0);
+
+    // Cálculo del porcentaje de variación
+    $porcentaje = 0;
+    if ($anterior > 0) {
+      $porcentaje = (($actual - $anterior) / $anterior) * 100;
+    } elseif ($actual > 0) {
+      $porcentaje = 100;
+    }
+
+    return [
+      'total'      => $actual,
+      'porcentaje' => round($porcentaje, 1)
+    ];
+  }
+
+  public function obtener_indicador_tasa_pago($db, $id_apr)
+  {
+    $consulta = "SELECT 
+                    -- Pagos registrados en caja durante el mes y año actual
+                    (SELECT COUNT(DISTINCT id) 
+                     FROM caja 
+                     WHERE id_apr = ? 
+                       AND estado = 1 
+                       AND MONTH(fecha) = MONTH(CURRENT_DATE()) 
+                       AND YEAR(fecha) = YEAR(CURRENT_DATE())
+                    ) as pagados_caja_mes,
+
+                    -- Total de socios activos susceptibles a cobro
+                    (SELECT COUNT(*) 
+                     FROM socios 
+                     WHERE id_apr = ? 
+                       AND estado = 1
+                    ) as total_socios_activos";
+
+    $query = $db->query($consulta, [$id_apr, $id_apr]);
+    $row   = $query->getRowArray();
+
+    $pagados = intval($row['pagados_caja_mes'] ?? 0);
+    $total   = intval($row['total_socios_activos'] ?? 0);
+
+    $tasa_actual = ($total > 0) ? ($pagados / $total) * 100 : 0;
+
+    return [
+      'tasa_actual' => round($tasa_actual, 1),
+      'pagados'     => $pagados,
+      'total'       => $total
+    ];
+  }
+
+  public function obtener_indicador_deudas_pendientes($db, $id_apr)
+  {
+    // 1. Deudas pendientes actuales (boletas emitidas en estado pendiente/no pagadas)
+    $consulta_actual = "SELECT COUNT(*) as total_pendientes
+                        FROM metros m
+                        WHERE m.id_apr = ? 
+                          AND m.estado = 0"; // 0 = Pendiente de pago
+
+    $query_actual = $db->query($consulta_actual, [$id_apr]);
+    $row_actual   = $query_actual->getRowArray();
+    $pendientes_actual = intval($row_actual['total_pendientes'] ?? 0);
+
+    // 2. Deudas resueltas/pagadas en los últimos 7 días
+    $consulta_semana = "SELECT COUNT(*) as pagadas_semana
+                        FROM caja c
+                        INNER JOIN caja_detalle cd ON cd.id_caja = c.id
+                        WHERE c.id_apr = ? 
+                          AND c.estado = 1
+                          AND c.fecha >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)";
+
+    $query_semana = $db->query($consulta_semana, [$id_apr]);
+    $row_semana   = $query_semana->getRowArray();
+    $pagadas_semana = intval($row_semana['pagadas_semana'] ?? 0);
+
+    return [
+      'total'           => $pendientes_actual,
+      'variacion_semana' => $pagadas_semana // Indica cuántas deudas se redujeron/pagaron esta semana
+    ];
+  }
+
 }
 
 ?>

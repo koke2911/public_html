@@ -22,7 +22,9 @@ class Md_cuentas extends Model {
    'id_usuario',
    'fecha',
    'estado',
-   'id_apr'
+   'id_apr',
+   'webpay',
+   'caja'
   ];
 
   public function datatable_cuentas($db, $id_apr) {
@@ -40,7 +42,9 @@ class Md_cuentas extends Model {
                             c.nombre_cuenta,
                             c.email,
                             u.usuario,
-                            date_format(c.fecha, '%d-%m-%Y') as fecha
+                            date_format(c.fecha, '%d-%m-%Y') as fecha,
+                            ifnull(webpay,0) as webpay,
+                            ifnull(caja ,0) as caja
 						from 
 							cuentas c
 							inner join usuarios u on u.id = c.id_usuario
@@ -68,7 +72,9 @@ class Md_cuentas extends Model {
        "nombre_cuenta"  => $key["nombre_cuenta"],
        "email_cuenta"   => $key["email"],
        "usuario"        => $key["usuario"],
-       "fecha"          => $key["fecha"]
+       "fecha"          => $key["fecha"],
+       "webpay"         => $key["webpay"],
+       "caja"           => $key["caja"]
       ];
 
       $data[] = $row;

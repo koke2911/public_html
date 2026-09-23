@@ -1,3 +1,32 @@
+<!-- ESTILOS INTEGRADOS DEL FOOTER -->
+<style>
+  .app-footer {
+    background: var(--card-bg, #FFFFFF);
+    border-top: 1px solid var(--glass-border, rgba(255, 90, 31, 0.22));
+    font-size: 12.5px;
+    color: var(--text-secondary, #8A7362);
+    margin-top: auto;
+  }
+
+  .footer-link {
+    color: var(--text-secondary, #8A7362);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .footer-link:hover {
+    color: var(--aqua-bright, #FF5A1F);
+    text-decoration: underline;
+  }
+
+  .dot-separator {
+    color: var(--text-muted, #B7A290);
+    user-select: none;
+  }
+</style>
+
+<!-- MODAL ACTUALIZAR CLAVE -->
 <div id="dlg_actualizar_clave" class="modal fade" role="dialog">
   <div class="modal-dialog modal-md">
     <div class="modal-content">
@@ -11,19 +40,19 @@
               <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                 <div class="form-group">
                   <label class="small mb-1" for="txt_clave_actual">Clave Actual</label>
-                  <input type='password' class="form-control" id='txt_clave_actual' name="txt_clave_actual"/>
+                  <input type='password' class="form-control" id='txt_clave_actual' name="txt_clave_actual" />
                 </div>
               </div>
               <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                 <div class="form-group">
                   <label class="small mb-1" for="txt_clave_nueva">Clave Nueva</label>
-                  <input type='password' class="form-control" id='txt_clave_nueva' name="txt_clave_nueva"/>
+                  <input type='password' class="form-control" id='txt_clave_nueva' name="txt_clave_nueva" />
                 </div>
               </div>
               <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                 <div class="form-group">
                   <label class="small mb-1" for="txt_repetir">Repetir Clave Nueva</label>
-                  <input type='password' class="form-control" id='txt_repetir' name="txt_repetir"/>
+                  <input type='password' class="form-control" id='txt_repetir' name="txt_repetir" />
                 </div>
               </div>
               <div class="modal-footer">
@@ -40,18 +69,23 @@
   </div>
 </div>
 
-<footer class="py-4 bg-light mt-auto">
-  <div class="container-fluid">
-    <div class="d-flex align-items-center justify-content-between small">
-      <div class="text-muted">Copyright &copy; Info Integral y Corretaje. LTDA 2021</div>
-        <div>
-          <a href="https://softwareapr.cl/info" target="_blank">Información</a> &middot;&middot;
-          <a href="https://medidorinteligente.cl" target="_blank">Medidor inteligente</a> &middot;&middot; <a href="https://puntoblue.cl/" target="_blank">Punto blue</a>
-
-        </div>
+<!-- NUEVO FOOTER -->
+<footer class="app-footer">
+  <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between py-3 px-4">
+    <div class="footer-copyright mb-2 mb-md-0">
+      <span class="text-secondary">Copyright &copy; Info Integral y Corretaje. LTDA 2021 - <?php echo date('Y'); ?></span>
+    </div>
+    <div class="footer-links d-flex align-items-center gap-3">
+      <a href="https://softwareapr.cl/info" target="_blank" rel="noopener noreferrer" class="footer-link">Información</a>
+      <span class="dot-separator">&middot;</span>
+      <a href="https://medidorinteligente.cl" target="_blank" rel="noopener noreferrer" class="footer-link">Medidor inteligente</a>
+      <span class="dot-separator">&middot;</span>
+      <a href="https://puntoblue.cl/" target="_blank" rel="noopener noreferrer" class="footer-link">Punto blue</a>
     </div>
   </div>
-</footer></div></div></div>
+</footer>
+
+<!-- SCRIPTS DEL SISTEMA -->
 <script src="<?php echo base_url(); ?>/js/jquery-3.5.1.slim.min.js" type="text/javascript"></script>
 <script src="<?php echo base_url(); ?>/js/bootstrap.bundle.min.js" type="text/javascript"></script>
 <script src="<?php echo base_url(); ?>/js/scripts.js" type="text/javascript"></script>
@@ -89,4 +123,7 @@
 <script src="<?php echo base_url(); ?>/loader-screen-bar/js/JQLoader.js" type="text/javascript"></script>
 <script src="<?php echo base_url(); ?>/js/chart.min.js" type="text/javascript"></script>
 <script src="<?php echo base_url(); ?>/js/JsBarcode.all.min.js" type="text/javascript"></script>
-<script src="<?php echo base_url(); ?>/js/printThis.js" type="text/javascript"></script></body></html>
+<script src="<?php echo base_url(); ?>/js/printThis.js" type="text/javascript"></script>
+</body>
+
+</html>

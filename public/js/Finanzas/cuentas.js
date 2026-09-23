@@ -15,6 +15,8 @@ function des_habilitar(a, b) {
     $("#txt_rut_cuenta").prop("disabled", a);
     $("#txt_nombre_cuenta").prop("disabled", a);
     $("#txt_email_cuenta").prop("disabled", a);
+    $("#chk_webPay").prop("disabled", a);
+    $("#chk_caja").prop("disabled", a);
 }
 
 function mostrar_datos_cuenta(data) {
@@ -25,6 +27,8 @@ function mostrar_datos_cuenta(data) {
     if (data["rut_cuenta"] != null) { $("#txt_rut_cuenta").val(data["rut_cuenta"]); }
     if (data["nombre_cuenta"] != null) { $("#txt_nombre_cuenta").val(data["nombre_cuenta"]); }
     if (data["email_cuenta"] != null) { $("#txt_email_cuenta").val(data["email_cuenta"]); }
+    $("#chk_webPay").prop("checked", data["webpay"] == 1);
+    $("#chk_caja").prop("checked", data["caja"] == 1);
 }
 
 function guardar_cuenta() {
@@ -37,6 +41,9 @@ function guardar_cuenta() {
     var nombre_cuenta = $("#txt_nombre_cuenta").val();
     var email_cuenta = $("#txt_email_cuenta").val();
 
+    var webpay = $("#chk_webPay").is(":checked") ? 1 : 0;
+    var caja = $("#chk_caja").is(":checked") ? 1 : 0;
+
     $.ajax({
         url: base_url + "/Finanzas/Ctrl_cuentas/guardar_cuenta",
         type: "POST",
@@ -48,7 +55,9 @@ function guardar_cuenta() {
             id_tipo_cuenta: id_tipo_cuenta,
             n_cuenta: n_cuenta,
             nombre_cuenta: nombre_cuenta,
-            email_cuenta: email_cuenta
+            email_cuenta: email_cuenta,
+            webpay:webpay,
+            caja:caja
         },
         success: function(respuesta) {
             const OK = 1;
@@ -360,6 +369,26 @@ $(document).ready(function() {
             { "data": "email_cuenta" },
             { "data": "usuario" },
             { "data": "fecha" },
+            {
+                "data": "webpay",
+                "render": function (data, type, row) {
+                    if (data == 1) {
+                        return '<i class="fas fa-check text-success"></i>';
+                    }
+
+                    return '<i class="fas fa-times text-danger"></i>';
+                }
+            },
+            {
+                "data": "caja",
+                "render": function (data, type, row) {
+                    if (data == 1) {
+                        return '<i class="fas fa-check text-success"></i>';
+                    }
+
+                    return '<i class="fas fa-times text-danger"></i>';
+                }
+            },
             { 
                 "data": "id_cuenta",
                 "render": function(data, type, row) {

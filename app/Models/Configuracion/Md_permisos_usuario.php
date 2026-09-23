@@ -32,7 +32,8 @@ class Md_permisos_usuario extends Model {
 						    ps.id as id_subgrupo,
                             ps.nombre as subgrupo,
                             ps.icono as icono_subgrupo,
-                            ps.collapse as collapse_subgrupo
+                            ps.collapse as collapse_subgrupo,
+               pe.categoria
 						from 
 							permisos_usuario pu
 						    inner join permisos_detalle pd on pu.id_permiso = pd.id
@@ -62,7 +63,8 @@ class Md_permisos_usuario extends Model {
        "id_subgrupo"       => $key["id_subgrupo"],
        "subgrupo"          => $key["subgrupo"],
        "icono_subgrupo"    => $key["icono_subgrupo"],
-       "collapse_subgrupo" => $key["collapse_subgrupo"]
+       "collapse_subgrupo" => $key["collapse_subgrupo"],
+        "categoria" => $key["categoria"]
       ];
 
       $data[] = $row;

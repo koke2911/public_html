@@ -34,7 +34,7 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_id_cuenta">Identificador</label>
-                          <input type="text" class="form-control" name="txt_id_cuenta" id="txt_id_cuenta"/>
+                          <input type="text" class="form-control" name="txt_id_cuenta" id="txt_id_cuenta" />
                         </div>
                       </div>
                     </div>
@@ -54,7 +54,7 @@
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_n_cuenta">N° de Cuenta</label>
-                          <input type="text" class="form-control" name="txt_n_cuenta" id="txt_n_cuenta"/>
+                          <input type="text" class="form-control" name="txt_n_cuenta" id="txt_n_cuenta" />
                         </div>
                       </div>
                     </div>
@@ -62,21 +62,34 @@
                       <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_rut_cuenta">RUT</label>
-                          <input type='text' class="form-control" id='txt_rut_cuenta' name="txt_rut_cuenta"/>
+                          <input type='text' class="form-control" id='txt_rut_cuenta' name="txt_rut_cuenta" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_nombre_cuenta">Nombre</label>
-                          <input type='text' class="form-control" id='txt_nombre_cuenta' name="txt_nombre_cuenta"/>
+                          <input type='text' class="form-control" id='txt_nombre_cuenta' name="txt_nombre_cuenta" />
                         </div>
                       </div>
                       <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
                         <div class="form-group">
                           <label class="small mb-1" for="txt_email_cuenta">Correo Electrónico</label>
-                          <input type='text' class="form-control" id='txt_email_cuenta' name="txt_email_cuenta"/>
+                          <input type='text' class="form-control" id='txt_email_cuenta' name="txt_email_cuenta" />
                         </div>
                       </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="chk_webPay">Webpay</label>
+                          <input type='checkbox' class="" id='chk_webPay' name="chk_webPay" disabled />
+                        </div>
+                      </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="chk_caja">Caja</label>
+                          <input type='checkbox' class="" id='chk_caja' name="chk_caja" disabled />
+                        </div>
+                      </div>
+
                     </div>
                   </form>
                 </div>
@@ -107,6 +120,8 @@
                           <th>C. Electrónico</th>
                           <th>Usuario</th>
                           <th>Fecha</th>
+                          <th>WebPay</th>
+                          <th>Caja</th>
                           <th width="1%">Traza</th>
                         </tr>
                       </thead>

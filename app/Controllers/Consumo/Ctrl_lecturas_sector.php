@@ -12,6 +12,7 @@ use App\Models\Formularios\Md_arranques;
 use App\Models\Configuracion\Md_costo_metros;
 use App\Models\Formularios\Md_convenio_detalle;
 use App\Models\Formularios\Md_repactaciones_detalle;
+use App\Models\Consumo\Md_lecturas_archivos;
 
 class Ctrl_lecturas_sector extends BaseController {
 
@@ -30,6 +31,7 @@ class Ctrl_lecturas_sector extends BaseController {
   protected $validation;
   protected $validacion_datos;
   protected $validacion_id_socio;
+  protected $lecturas_archivos;
 
   public function __construct() {
     $this->metros                = new Md_metros();
@@ -44,6 +46,7 @@ class Ctrl_lecturas_sector extends BaseController {
     $this->sesión                = session();
     $this->db                    = \Config\Database::connect();
     $this->validation            = \Config\Services::validation();
+    $this->lecturas_archivos     = new Md_lecturas_archivos();
 
     $this->validacion_datos = [
      "id_metros"         => [
@@ -461,6 +464,8 @@ class Ctrl_lecturas_sector extends BaseController {
   }
 
 
+
+
   public function importar_planilla(){
       $this->validar_sesion();
       $id_apr=$this->sesión->id_apr_ses;
@@ -727,7 +732,7 @@ class Ctrl_lecturas_sector extends BaseController {
        }
     }
 
-    echo 'TSe ingresaron '.$filas_ok.' de un total de '.$filas_total;
+    echo 'Se ingresaron '.$filas_ok.' de un total de '.$filas_total;
   }
 
   function tomaLectura(){
@@ -781,6 +786,307 @@ class Ctrl_lecturas_sector extends BaseController {
       $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($objPHPExcel, 'Xlsx');
       $writer->save('php://output');
 
+  }
+
+
+  /**
+   * Endpoint receptor de archivos masivos de lectura por Script / API
+   * Recibe: 'id_apr' (POST) y 'lecturas' (FILE - Excel)
+   */
+  public function cargar_lecturas_api()
+  {
+    // 1. Validar parámetros requeridos vía POST
+    $id_apr = $this->request->getPost("id_apr");
+    $file   = $this->request->getFile("lecturas");
+
+    if (!$id_apr || !$file || !$file->isValid()) {
+      return $this->response->setStatusCode(400)->setJSON([
+        "estado"  => "Error",
+        "mensaje" => "Parámetros insuficientes: Se requiere 'id_apr' y un archivo Excel 'lecturas' válido."
+      ]);
+    }
+
+    $nombre_archivo = $file->getName();
+
+    // 2. Extraer Mes y Año desde el nombre del archivo (ej: LECTURAS_08_2026.xlsx)
+    if (!preg_match('/(\d{2})_(\d{4})/', $nombre_archivo, $matches)) {
+      return $this->response->setStatusCode(400)->setJSON([
+        "estado"  => "Error",
+        "mensaje" => "El nombre del archivo debe tener la estructura 'LECTURAS_MM_YYYY.xlsx' (ej: LECTURAS_08_2026.xlsx)"
+      ]);
+    }
+
+    $mes = $matches[1];
+    $anio = $matches[2];
+    $mes_consumo = $mes . '-' . $anio; // Formato 08-2026
+
+    // Calcular Fecha de Vencimiento (+30 días)
+    $fecha_base = new \DateTime("$anio-$mes-01");
+    $fecha_base->modify('+30 days');
+    $fecha_vencimiento_sql = $fecha_base->format('Y-m-d');
+    $fecha_vencimiento_fmt = $fecha_base->format('d-m-Y');
+
+    // 3. Validar estado de carga previa en base de datos
+    $md_archivos = new Md_lecturas_archivos();
+    $yaProcesado = $md_archivos->where("id_apr", $id_apr)
+      ->where("nombre_archivo", $nombre_archivo)
+      ->first();
+
+    if ($yaProcesado && $yaProcesado['filas_procesadas'] >= $yaProcesado['filas_totales'] && $yaProcesado['filas_totales'] > 0) {
+      return $this->response->setStatusCode(409)->setJSON([
+        "estado"  => "Error",
+        "mensaje" => "El archivo '{$nombre_archivo}' ya fue procesado completamente para el APR {$id_apr} el {$yaProcesado['fecha_proceso']}."
+      ]);
+    }
+
+    // 4. Procesar el archivo Excel
+    $extension = strtolower(pathinfo($nombre_archivo, PATHINFO_EXTENSION));
+
+    if ($extension == 'xlsx') {
+      $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader("Xlsx");
+    } elseif ($extension == 'xls') {
+      $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader("Xls");
+    } else {
+      return $this->response->setStatusCode(400)->setJSON([
+        "estado"  => "Error",
+        "mensaje" => "Formato no válido. Solo se admiten archivos .xlsx o .xls"
+      ]);
+    }
+
+    define("ACTIVO", 1);
+    $spreadsheet = $reader->load($file->getTempName());
+    $sheet       = $spreadsheet->getSheet(0);
+
+    $filas_total     = 0;
+    $filas_ok        = 0;
+    $errores_detalle = [];
+
+    foreach ($sheet->getRowIterator(2) as $row) {
+      $num_fila = $row->getRowIndex();
+      $filas_total++;
+
+      $medidor = trim($sheet->getCellByColumnAndRow(1, $num_fila));
+      $lectura = trim($sheet->getCellByColumnAndRow(8, $num_fila));
+
+      if (empty($medidor) || $lectura === '') {
+        $errores_detalle[] = [
+          "fila"    => $num_fila,
+          "medidor" => $medidor ?: 'N/A',
+          "motivo"  => "Medidor o lectura vacía"
+        ];
+        continue;
+      }
+
+      $datosSocios = $this->arranques
+        ->select("s.id as id_socio")
+        ->select("m.id_diametro")
+        ->select("sec.nombre as sector")
+        ->select("case when sub.estado = 1 then p.glosa else '0%' end as subsidio")
+        ->select("case when p.glosa = '50%' then ap.tope_subsidio50 else ap.tope_subsidio end as tope_subsidio")
+        ->select("ifnull((select consumo_actual from metros m where m.id = (select max(m2.id) from metros m2 where m2.id_socio = arranques.id_socio and estado <> 0)), 0) as consumo_anterior")
+        ->select("cf.cargo_fijo")
+        ->select("ifnull(arranques.monto_alcantarillado, 0) as alcantarillado")
+        ->select("ifnull(arranques.monto_cuota_socio, 0) as cuota_socio")
+        ->select("ifnull(arranques.monto_otros, 0) as otros")
+        ->select("arranques.tarifa")
+        ->select("cf.sin_consumo as sin_consumo")
+        ->join("medidores m", "arranques.id_medidor = m.id")
+        ->join("socios s", "arranques.id_socio = s.id")
+        ->join("sectores sec", "arranques.id_sector = sec.id")
+        ->join("subsidios sub", "sub.id_socio = s.id", "left")
+        ->join("porcentajes p", "sub.id_porcentaje = p.id", "left")
+        ->join("apr_cargo_fijo cf", "cf.id_apr = s.id_apr and cf.id_diametro = m.id_diametro and cf.tarifa=arranques.tarifa")
+        ->join("apr ap", "ap.id = s.id_apr")
+        ->where("s.id_apr", $id_apr)
+        ->where("m.id_apr", $id_apr)
+        ->where("m.numero", $medidor)
+        ->first();
+
+      if (!$datosSocios) {
+        $errores_detalle[] = [
+          "fila"    => $num_fila,
+          "medidor" => $medidor,
+          "motivo"  => "Medidor no encontrado en el sistema para este APR"
+        ];
+        continue;
+      }
+
+      $id_socio         = $datosSocios['id_socio'];
+      $id_diametro      = $datosSocios['id_diametro'];
+      $tope_subsidio    = $datosSocios['tope_subsidio'];
+      $consumo_anterior = $datosSocios['consumo_anterior'];
+      $cargo_fijo       = $datosSocios['cargo_fijo'];
+      $alcantarillado   = $datosSocios['alcantarillado'];
+      $cuota_socio      = $datosSocios['cuota_socio'];
+      $otros            = $datosSocios['otros'];
+      $tarifa           = $datosSocios['tarifa'];
+      $cargo_fijo_sc    = $datosSocios['sin_consumo'];
+
+      $subsidio_arr     = explode("%", $datosSocios['subsidio']);
+      $subsidio         = intval($subsidio_arr[0]);
+      $monto_subsidio   = 0;
+
+      // Valida si ya tiene lectura cargada este mes
+      $existe_consumo_mes = $this->metros->select("count(*) as filas")
+        ->where("id_socio", $id_socio)
+        ->where("date_format(fecha_ingreso, '%m-%Y')", $mes_consumo)
+        ->where("estado", 1)
+        ->first();
+
+      if ($existe_consumo_mes["filas"] > 0) {
+        $errores_detalle[] = [
+          "fila"     => $num_fila,
+          "medidor"  => $medidor,
+          "id_socio" => $id_socio,
+          "motivo"   => "El socio ya tiene una lectura registrada para el mes {$mes_consumo}"
+        ];
+        continue;
+      }
+
+      if ($lectura < $consumo_anterior) {
+        $errores_detalle[] = [
+          "fila"             => $num_fila,
+          "medidor"          => $medidor,
+          "id_socio"         => $id_socio,
+          "motivo"           => "La lectura actual ({$lectura}) es menor que la lectura anterior ({$consumo_anterior})"
+        ];
+        continue;
+      }
+
+      // Procesar e Insertar Consumo
+      $metros_consumidos = $lectura - $consumo_anterior;
+      $datosCostoMetros = json_decode($this->costo_metros->datatable_costo_metros_consumo($this->db, $id_apr, $id_diametro, 0, $tarifa));
+
+      $subtotal = 0;
+      $base = 0;
+      $total_subsidio = 0;
+
+      for ($i = 0; $i <= $metros_consumidos; $i++) {
+        foreach ($datosCostoMetros as $value) {
+          foreach ($value as $v) {
+            if ($i >= intval($v->desde) && $i <= intval($v->hasta)) {
+              if (intval($v->id_costo_metros) == 0 && $subtotal == 0) {
+                $subtotal = intval($v->costo);
+                $base     = intval($v->costo);
+              } else if (intval($v->id_costo_metros) != 0) {
+                $subtotal += intval($v->costo);
+              }
+
+              if ($i <= intval($tope_subsidio)) {
+                $total_subsidio = $subtotal - $base;
+              }
+
+              $cargo_fijoSub = ($subsidio > 0) ? ($base * $subsidio / 100) : 0;
+            }
+          }
+        }
+      }
+
+      if ($metros_consumidos == 0 && $cargo_fijo_sc > 0) {
+        $cargo_fijo = $cargo_fijo_sc;
+        $subtotal = $cargo_fijo_sc * $subsidio / 100;
+      } else {
+        $subtotal -= $cargo_fijoSub;
+      }
+
+      if ($subsidio > 0) {
+        $monto_subsidio = $total_subsidio * $subsidio / 100;
+        $alcantarillado = $alcantarillado * $subsidio / 100;
+      }
+
+      $datosConvenioDetalle = $this->convenio_detalle
+        ->select("ifnull(sum(convenio_detalle.valor_cuota), 0) as total_servicios")
+        ->join("convenios", "convenio_detalle.id_convenio=convenios.id")
+        ->where("date_format(convenio_detalle.fecha_pago, '%m-%Y')", $mes_consumo)
+        ->where("convenios.id_socio", $id_socio)
+        ->where("convenios.estado", ACTIVO)
+        ->first();
+
+      $total_servicios = $datosConvenioDetalle ? intval($datosConvenioDetalle["total_servicios"]) : 0;
+
+      $datosRepactacionesDetalle = $this->repactaciones_detalle
+        ->select("ifnull(sum(repactaciones_detalle.valor_cuota), 0) as total_servicios")
+        ->join("repactaciones", "repactaciones_detalle.id_repactacion=repactaciones.id")
+        ->where("date_format(repactaciones_detalle.fecha_pago, '%m-%Y')", $mes_consumo)
+        ->where("repactaciones.id_socio", $id_socio)
+        ->where("repactaciones.estado", ACTIVO)
+        ->first();
+
+      $cuota_repactacion = $datosRepactacionesDetalle ? intval($datosRepactacionesDetalle["total_servicios"]) : 0;
+
+      $monto_facturable = $subtotal - $monto_subsidio;
+      $total_mes = $monto_facturable + $total_servicios + $cuota_repactacion + $alcantarillado + $cuota_socio + $otros;
+
+      $fecha = date("Y-m-d H:i:s");
+
+      $datosMetros = [
+        "id_socio"          => $id_socio,
+        "monto_subsidio"    => $monto_subsidio,
+        "fecha_ingreso"     => date_format(date_create('01-' . $mes_consumo), 'Y-m-d'),
+        "fecha_vencimiento" => $fecha_vencimiento_sql,
+        "consumo_anterior"  => $consumo_anterior,
+        "consumo_actual"    => $lectura,
+        "metros"            => $metros_consumidos,
+        "subtotal"          => $subtotal,
+        "multa"             => 0,
+        "total_servicios"   => $total_servicios,
+        "cuota_repactacion" => $cuota_repactacion,
+        "total_mes"         => $total_mes,
+        "cargo_fijo"        => $cargo_fijo,
+        "monto_facturable"  => $monto_facturable,
+        "id_usuario"        => 1,
+        "fecha"             => $fecha,
+        "id_apr"            => $id_apr,
+        "alcantarillado"    => $alcantarillado,
+        "cuota_socio"       => $cuota_socio,
+        "otros"             => $otros
+      ];
+
+      if ($this->metros->save($datosMetros)) {
+        $filas_ok++;
+        $obtener_id = $this->metros->select("max(id) as id_metros")->first();
+
+        $datosTraza = [
+          "id_metros"   => $obtener_id["id_metros"],
+          "estado"      => 1,
+          "observacion" => 'CARGA AUTOMATICA SCRIPT (' . $nombre_archivo . ')',
+          "id_usuario"  => 0,
+          "fecha"       => $fecha
+        ];
+        $this->metros_traza->save($datosTraza);
+      }
+    }
+
+    // 5. Registrar / Actualizar en historial
+    if ($yaProcesado) {
+      $total_acumulado = $yaProcesado['filas_procesadas'] + $filas_ok;
+      $md_archivos->update($yaProcesado['id'], [
+        "filas_procesadas" => $total_acumulado,
+        "filas_totales"    => $filas_total,
+        "fecha_proceso"     => date("Y-m-d H:i:s")
+      ]);
+      $mensaje_salida = "Se procesaron {$filas_ok} lecturas nuevas (Total acumulado: {$total_acumulado} de {$filas_total}).";
+    } else {
+      $md_archivos->insert([
+        "id_apr"            => $id_apr,
+        "nombre_archivo"    => $nombre_archivo,
+        "mes_consumo"       => $mes_consumo,
+        "fecha_vencimiento" => $fecha_vencimiento_sql,
+        "filas_procesadas"  => $filas_ok,
+        "filas_totales"     => $filas_total,
+        "fecha_proceso"     => date("Y-m-d H:i:s")
+      ]);
+      $mensaje_salida = "Se procesaron {$filas_ok} de {$filas_total} lecturas correctamente.";
+    }
+
+    return $this->response->setJSON([
+      "estado"            => "OK",
+      "mensaje"           => $mensaje_salida,
+      "archivo"           => $nombre_archivo,
+      "fecha_vencimiento" => $fecha_vencimiento_fmt,
+      "registros_omitidos" => count($errores_detalle),
+      "errores_detalle"   => $errores_detalle
+    ]);
   }
 }
 

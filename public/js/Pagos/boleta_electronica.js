@@ -476,6 +476,37 @@ function imprimir_aviso_cobranza () {
   }
 }
 
+function enviar_email_aviso_cobranza() {
+  var data = $("#grid_boletas").DataTable().rows('.selected').data();
+  var arr_boletas = [];
+  $(data).each(function (i, fila) {
+    arr_boletas.push(fila.id_metros);
+  });
+
+  if (arr_boletas.length > 0) {
+    Swal.fire({
+      title: 'Enviando correos...',
+      text: 'Por favor espere un momento',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    var url = base_url + "/Pagos/Ctrl_boleta_electronica/enviar_aviso_cobranza/" + arr_boletas.join(",");
+
+    $.get(url, function (respuesta) {
+      Swal.fire('Proceso Finalizado', respuesta, 'success');
+    }).fail(function () {
+      Swal.fire('Error', 'No se pudieron enviar algunos correos.', 'error');
+    });
+
+  } else {
+    alerta.error("alerta", "Seleccione al menos una boleta");
+  }
+}
+
+
 $(document).ready(function () {
   $("#txt_id_socio").prop("readonly", true);
   $("#txt_rut_socio").prop("readonly", true);
@@ -700,9 +731,27 @@ $(document).ready(function () {
   });
 
   $("#btn_aviso_cobranza").on("click", function () {
-    imprimir_aviso_cobranza();
+    Swal.fire({
+      title: "¿Qué deseas hacer?",
+      text: "Selecciona una opción para el aviso de cobranza",
+      icon: "question",
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: "Imprimir",
+      denyButtonText: "Enviar por Email",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#3085d6",
+      denyButtonColor: "#28a745"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Opción: Imprimir
+        imprimir_aviso_cobranza();
+      } else if (result.isDenied) {
+        // Opción: Enviar por Email
+        enviar_email_aviso_cobranza(); // Reemplaza por el nombre de tu función
+      }
+    });
   });
-
   $("#emitir_boletas").on('submit', function (ev) {
     ev.preventDefault();
     emitir_dte();

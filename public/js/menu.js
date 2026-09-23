@@ -49,57 +49,189 @@ $(document).ready(function () {
         dataType: "json",
         async: false,
         url: base_url + "/Ctrl_menu/permisos_usuario",
-    }).done(function (data) {
-        var menu = "";
-        var id_grupo;
-        var id_subgrupo;
-        var cierre_subgrupo = 0;
+    })
+        .done(function (data) {
 
-        for (var i = 0; i < data.length; i++) {
-            if (id_subgrupo != data[i].id_subgrupo && cierre_subgrupo == 1) {
-                menu += "</nav></div>";
-                cierre_subgrupo = 0;
-            }
+            var menu = "";
+            var id_grupo;
+            var id_subgrupo;
+            var cierre_subgrupo = 0;
 
-            if (id_grupo != data[i].id_grupo) {
-                if (i > 0) {
+            // NUEVO
+            var categoriaActual = null;
+
+            for (var i = 0; i < data.length; i++) {
+
+                /*
+                 * CERRAR SUBGRUPO ANTERIOR
+                 */
+                if (id_subgrupo != data[i].id_subgrupo && cierre_subgrupo == 1) {
                     menu += "</nav></div>";
+                    cierre_subgrupo = 0;
                 }
-                menu += '<a class="nav-link collapsed grupo-item" href="#" data-toggle="collapse" data-target="#' + data[i].collapse + '" aria-expanded="false" aria-controls="' + data[i].collapse + '">\
-                            <div class="sb-nav-link-icon"><i class="' + data[i].icono_grupo + '"></i></div>\
-                            <span class="nombre-grupo">' + data[i].grupo + '</span>\
-                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>\
-                        </a>\
-                        <div class="collapse" id="' + data[i].collapse + '" aria-labelledby="headingOne" data-parent="#sidenavAccordion">\
-                            <nav class="sb-sidenav-menu-nested nav accordion" id="' + data[i].collapse + 'Accordion">';
-                id_grupo = data[i].id_grupo;
+
+
+                /*
+                 * NUEVO GRUPO
+                 */
+                if (id_grupo != data[i].id_grupo) {
+
+                    /*
+                     * Cerrar grupo anterior
+                     */
+                    if (i > 0) {
+                        menu += "</nav></div>";
+                    }
+
+
+                    /*
+                     * =====================================================
+                     * DIBUJAR CATEGORÍA
+                     * =====================================================
+                     *
+                     * Solo se dibuja cuando cambia.
+                     */
+                    if (categoriaActual !== data[i].categoria) {
+
+                        categoriaActual = data[i].categoria;
+
+                        menu +=
+                            '<div class="sb-sidenav-menu-heading categoria-menu">' +
+                            categoriaActual +
+                            '</div>';
+                    }
+
+
+                    /*
+                     * DIBUJAR GRUPO
+                     */
+                    menu +=
+                        '<a class="nav-link collapsed grupo-item" ' +
+                        'href="#" ' +
+                        'data-toggle="collapse" ' +
+                        'data-target="#' + data[i].collapse + '" ' +
+                        'aria-expanded="false" ' +
+                        'aria-controls="' + data[i].collapse + '">' +
+
+                        '<div class="sb-nav-link-icon">' +
+                        '<i class="' + data[i].icono_grupo + '"></i>' +
+                        '</div>' +
+
+                        '<span class="nombre-grupo">' +
+                        data[i].grupo +
+                        '</span>' +
+
+                        '<div class="sb-sidenav-collapse-arrow">' +
+                        '<i class="fas fa-angle-down"></i>' +
+                        '</div>' +
+
+                        '</a>' +
+
+                        '<div class="collapse" ' +
+                        'id="' + data[i].collapse + '" ' +
+                        'aria-labelledby="headingOne" ' +
+                        'data-parent="#sidenavAccordion">' +
+
+                        '<nav class="sb-sidenav-menu-nested nav accordion" ' +
+                        'id="' + data[i].collapse + 'Accordion">';
+
+
+                    id_grupo = data[i].id_grupo;
+                }
+
+
+                /*
+                 * =====================================================
+                 * SUBGRUPO
+                 * =====================================================
+                 */
+                if (data[i].id_subgrupo != null && cierre_subgrupo == 0) {
+
+                    menu +=
+                        '<a class="nav-link collapsed subgrupo-item" ' +
+                        'href="#" ' +
+                        'data-toggle="collapse" ' +
+                        'data-target="#' + data[i].collapse_subgrupo + '" ' +
+                        'aria-expanded="false" ' +
+                        'aria-controls="' + data[i].collapse_subgrupo + '">' +
+
+                        '<div class="sb-nav-link-icon">' +
+                        '<i class="' + data[i].icono_subgrupo + '"></i>' +
+                        '</div>' +
+
+                        '<span class="nombre-subgrupo">' +
+                        data[i].subgrupo +
+                        '</span>' +
+
+                        '<div class="sb-sidenav-collapse-arrow">' +
+                        '<i class="fas fa-angle-down"></i>' +
+                        '</div>' +
+
+                        '</a>' +
+
+                        '<div class="collapse" ' +
+                        'id="' + data[i].collapse_subgrupo + '" ' +
+                        'aria-labelledby="headingOne" ' +
+                        'data-parent="#' + data[i].collapse + 'Accordion">' +
+
+                        '<nav class="sb-sidenav-menu-nested nav">';
+
+                    cierre_subgrupo = 1;
+                }
+
+
+                /*
+                 * =====================================================
+                 * PERMISO FINAL
+                 * =====================================================
+                 */
+                menu +=
+                    '<a class="nav-link item-permiso" ' +
+                    'href="#" ' +
+                    'id="' + data[i].div_id + '" ' +
+                    'onclick="cargar_page(\'' + String(data[i].ruta) + '\')">' +
+
+                    '<div class="sb-nav-link-icon">' +
+                    '<i class="">•</i>' +
+                    '</div>' +
+
+                    '<span class="nombre-permiso">' +
+                    data[i].permiso +
+                    '</span>' +
+
+                    '</a>';
+
+
+                /*
+                 * CAJA EXPRESS
+                 */
+                if (String(data[i].ruta) === "/ctrl_menu/caja_expres") {
+                    cajaExpress = 1;
+                }
+
+
+                id_subgrupo = data[i].id_subgrupo;
             }
 
-            if (data[i].id_subgrupo != null && cierre_subgrupo == 0) {
-                menu += '<a class="nav-link collapsed subgrupo-item" href="#" data-toggle="collapse" data-target="#' + data[i].collapse_subgrupo + '" aria-expanded="false" aria-controls="' + data[i].collapse_subgrupo + '">\
-                            <div class="sb-nav-link-icon"><i class="' + data[i].icono_subgrupo + '"></i></div>\
-                            <span class="nombre-subgrupo">' + data[i].subgrupo + '</span>\
-                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>\
-                        </a>\
-                        <div class="collapse" id="' + data[i].collapse_subgrupo + '" aria-labelledby="headingOne" data-parent="#' + data[i].collapse + 'Accordion">\
-                            <nav class="sb-sidenav-menu-nested nav">';
 
-                cierre_subgrupo = 1;
+            /*
+             * CERRAR ÚLTIMOS CONTENEDORES
+             */
+            if (cierre_subgrupo == 1) {
+                menu += "</nav></div>";
             }
 
-            menu += '<a class="nav-link item-permiso" href="#" id="' + data[i].div_id + '" onclick="cargar_page(\'' + String(data[i].ruta) + '\')">\
-                        <div class="sb-nav-link-icon"><i class="' + data[i].icono + '"></i></div> <span class="nombre-permiso">' + data[i].permiso + '</span>\
-                    </a>';
-
-            if (String(data[i].ruta) === "/ctrl_menu/caja_expres") {
-                cajaExpress = 1;
+            if (data.length > 0) {
+                menu += "</nav></div>";
             }
 
-            id_subgrupo = data[i].id_subgrupo;
-        }
 
-        $("#menu").html(menu);
-    });
+            /*
+             * DIBUJAR MENÚ
+             */
+            $("#menu").html(menu);
+
+        });
 
     // =========================================================
     // BUSCADOR CON DESPLIEGUE MÚLTIPLE EN TODOS LOS NIVELES
