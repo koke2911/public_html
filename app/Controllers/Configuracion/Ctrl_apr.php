@@ -242,4 +242,10 @@ class Ctrl_apr extends BaseController {
     echo view("Configuracion/carga_masiva_socios", $datos);
     
   }
+
+  public function obtener_aprs_api()
+  {
+    $aprs =  $this->apr->select("id, nombre")->where("estado",1)->findAll();
+    return $this->response->setJSON($aprs);
+  }
 }
