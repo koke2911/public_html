@@ -821,7 +821,7 @@ class Ctrl_lecturas_sector extends BaseController {
     $mes_consumo = $mes . '-' . $anio; // Formato 08-2026
 
     // Calcular Fecha de Vencimiento (+30 días)
-    $fecha_base = new \DateTime("$anio-$mes-01");
+    $fecha_base = new \DateTime("$anio-$mes-30");
     $fecha_base->modify('+30 days');
     $fecha_vencimiento_sql = $fecha_base->format('Y-m-d');
     $fecha_vencimiento_fmt = $fecha_base->format('d-m-Y');
