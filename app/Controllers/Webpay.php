@@ -758,20 +758,22 @@
 
 
 						/*
-                     * ==================================================
-                     * REGISTRAR TRANSACCIÓN FINANCIERA
-                     * ==================================================
-                     *
-                     * Buscar cuenta marcada como WEBPAY para este APR
-                     * ==================================================
-                     */
+                         * ==================================================
+                         * REGISTRAR TRANSACCIÓN FINANCIERA
+                         * ==================================================
+                         *
+                         * Buscar cuenta asociada a WebPay (id_medio_pago = 4)
+                         * mediante la tabla intermedia bajo el nuevo modelo N a N
+                         * ==================================================
+                         */
 
 						$cuentaWebpay = $this->db
-							->table("cuentas")
-							->select("id")
-							->where("id_apr", $id_apr)
-							->where("webpay", 1)
-							->where("estado", 1)
+							->table("cuentas c")
+							->select("c.id")
+							->join("cuentas_medios_pago cmp", "cmp.id_cuenta = c.id")
+							->where("c.id_apr", $id_apr)
+							->where("cmp.id_medio_pago", 4) // ID para Webpay
+							->where("c.estado", 1)
 							->get(1)
 							->getRowArray();
 

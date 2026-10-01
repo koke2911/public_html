@@ -230,42 +230,30 @@ class Ctrl_caja extends BaseController {
 
     /*
      * ==========================================================
-     * DATOS DEL PAGO
+     * DATOS DEL PAGO Y FORMULARIO
      * ==========================================================
      */
-
-    $id_socio       = $this->request->getPost("id_socio");
-    $total_pagar    = $this->request->getPost("total_pagar");
-    $entregado      = $this->request->getPost("entregado");
-    $vuelto         = $this->request->getPost("vuelto");
-    $descuento      = $this->request->getPost("descuento");
-
-    /*
-     * 3 = Transferencia
-     */
-    $forma_pago     = $this->request->getPost("forma_pago");
-
-    $n_transaccion  = $this->request->getPost("n_transaccion");
+    $id_socio        = $this->request->getPost("id_socio");
+    $total_pagar     = $this->request->getPost("total_pagar");
+    $entregado       = $this->request->getPost("entregado");
+    $vuelto          = $this->request->getPost("vuelto");
+    $descuento       = $this->request->getPost("descuento");
+    $forma_pago      = $this->request->getPost("forma_pago");
+    $id_cuenta_sel   = $this->request->getPost("id_cuenta_banco"); // ID de la cuenta bancaria seleccionada
+    $n_transaccion   = $this->request->getPost("n_transaccion");
     $abono           = $this->request->getPost("abono");
-    $arr_ids_metros = $this->request->getPost("arr_ids_metros");
+    $arr_ids_metros  = $this->request->getPost("arr_ids_metros") ?? [];
     $total_deuda     = $this->request->getPost("total_deuda");
     $f_transa        = $this->request->getPost("f_transa");
-
 
     /*
      * Fecha de transacción
      */
     if ($f_transa != "") {
-
-      $f_transa = date_format(
-        date_create($f_transa),
-        "Y-m-d"
-      );
+      $f_transa = date_format(date_create($f_transa), "Y-m-d");
     } else {
-
       $f_transa = null;
     }
-
 
     /*
      * Número de transacción
@@ -274,18 +262,15 @@ class Ctrl_caja extends BaseController {
       $n_transaccion = null;
     }
 
-
     $fecha      = date("Y-m-d H:i:s");
     $id_usuario = $this->sesión->id_usuario_ses;
     $id_apr     = $this->sesión->id_apr_ses;
-
 
     /*
      * ==========================================================
      * DATOS A GUARDAR EN CAJA
      * ==========================================================
      */
-
     $datosPago = [
       "total_pagar"        => $total_pagar,
       "entregado"          => $entregado,
@@ -301,164 +286,65 @@ class Ctrl_caja extends BaseController {
       "fecha_pago"         => $f_transa
     ];
 
-
     /*
      * ==========================================================
      * INICIO TRANSACCIÓN
      * ==========================================================
      */
-
     $this->db->transStart();
 
-
     /*
-     * ==========================================================
-     * GUARDAR PAGO
-     * ==========================================================
+     * Guardar pago en caja
      */
-
     $this->caja->save($datosPago);
-
-    /*
-     * Obtener ID recién insertado
-     */
     $id_caja = $this->caja->insertID();
-
     $estado_pago = PAGADO;
 
-
     /*
      * ==========================================================
-     * TRANSFERENCIA
-     *
-     * Si forma de pago = 3:
-     *
-     * 1. Buscar cuenta marcada como caja = 1
-     * 2. Obtener último saldo
-     * 3. Registrar ABONO
-     * 4. Calcular nuevo saldo
+     * REGISTRO EN MÓDULO BANCO (TRANSACCIONES)
      * ==========================================================
      */
+    $id_cuenta_final = null;
 
-    if ((int)$forma_pago === 3) {
-
-      /*
-         * Buscar exclusivamente la cuenta configurada
-         * como cuenta de CAJA para este APR.
-         */
-      $cuentaCaja = $this->cuentas
-        ->select("id")
-        ->select("n_cuenta")
-        ->where("id_apr", $id_apr)
-        ->where("caja", 1)
-        ->first();
-
-
-      /*
-         * Si no hay cuenta configurada como caja,
-         * no podemos registrar correctamente
-         * la transferencia.
-         */
-      if (!$cuentaCaja) {
-
-        $this->db->transRollback();
-
-        return json_encode([
-          "estado"  => "No existe una cuenta configurada como cuenta de Caja",
-          "id_caja" => 0
-        ]);
+    if ($id_cuenta_sel != "") {
+      // 1. Si la cuenta fue seleccionada explícitamente desde el selector
+      $id_cuenta_final = $id_cuenta_sel;
+    } else {
+      // 2. Si no viene seleccionada pero el medio de pago tiene exactamente 1 cuenta configurada
+      $cuentasConfig = $this->cuentas->obtener_cuentas_por_medio_pago($this->db, $id_apr, $forma_pago);
+      if (count($cuentasConfig) == 1) {
+        $id_cuenta_final = $cuentasConfig[0]["id_cuenta"];
       }
+    }
 
+    // Si existe una cuenta válida asociada a este medio de pago, registrar abono en el Banco
+    if ($id_cuenta_final != null) {
 
-      /*
-         * IMPORTANTE:
-         *
-         * Este es el ID de la cuenta bancaria que
-         * tiene caja = 1.
-         */
-      $id_cuenta = $cuentaCaja["id"];
-
-      /*
-         * Número real de la cuenta marcada como Caja.
-         * Lo podemos usar como referencia/concepto.
-         */
-      $numero_cuenta = $cuentaCaja["n_cuenta"];
-
-
-      /*
-         * ======================================================
-         * OBTENER ÚLTIMO SALDO
-         * ======================================================
-         */
-
+      // Obtener el último saldo de la cuenta
       $ultimo_mov = $this->db
         ->table("transacciones")
         ->select("saldo_resultante")
-        ->where("id_cuenta", $id_cuenta)
+        ->where("id_cuenta", $id_cuenta_final)
         ->where("id_apr", $id_apr)
         ->where("estado", ACTIVO)
         ->orderBy("id", "DESC")
         ->get(1)
         ->getRowArray();
 
-
-      /*
-         * Si la cuenta aún no tiene movimientos,
-         * comienza en $0.
-         */
-      $saldo_anterior = 0;
-
-      if (
-        $ultimo_mov &&
-        isset($ultimo_mov["saldo_resultante"])
-      ) {
-
-        $saldo_anterior = (float)$ultimo_mov["saldo_resultante"];
-      }
-
-
-      /*
-         * ======================================================
-         * CALCULAR NUEVO SALDO
-         * ======================================================
-         */
-
+      $saldo_anterior = ($ultimo_mov && isset($ultimo_mov["saldo_resultante"])) ? (float)$ultimo_mov["saldo_resultante"] : 0;
       $monto_transaccion = (float)$total_pagar;
-
       $nuevo_saldo = $saldo_anterior + $monto_transaccion;
 
-
-      /*
-         * ======================================================
-         * CONCEPTO
-         * ======================================================
-         */
-
-      $concepto = "Pago modulo Caja: Transferencia ". $n_transaccion . " Caja N° ". $id_caja;
-
-      /*
-         * Agregar número de transferencia si existe.
-         */
-      // if ($n_transaccion != null) {
-
-      //   $concepto .= " - Transacción " . $n_transaccion;
-      // }
-
-
-      /*
-         * ======================================================
-         * GUARDAR TRANSACCIÓN BANCARIA
-         * ======================================================
-         */
+      // Definir concepto del movimiento bancario
+      $concepto = "Pago Caja - Medio Pago N° " . $forma_pago . " (Folio Caja: " . $id_caja . ")";
+      if ($n_transaccion != null) {
+        $concepto .= " - Transacción: " . $n_transaccion;
+      }
 
       $datosTransaccion = [
         "id_apr"           => $id_apr,
-
-        /*
-             * Cuenta marcada con caja = 1
-             */
-        "id_cuenta"        => $id_cuenta,
-
+        "id_cuenta"        => $id_cuenta_final,
         "tipo_operacion"   => "abono",
         "monto"            => $monto_transaccion,
         "concepto"         => $concepto,
@@ -471,18 +357,13 @@ class Ctrl_caja extends BaseController {
       $this->transacciones->save($datosTransaccion);
     }
 
-
     /*
      * ==========================================================
      * PROCESAR MEDIDORES
      * ==========================================================
      */
-
     foreach ($arr_ids_metros as $id_metros) {
 
-      /*
-         * Detalle del pago
-         */
       $datosPagoDetalle = [
         "id_caja"   => $id_caja,
         "id_metros" => $id_metros
@@ -490,147 +371,94 @@ class Ctrl_caja extends BaseController {
 
       $this->caja_detalle->save($datosPagoDetalle);
 
-
-      /*
-         * Obtener datos del registro de metros
-         */
       $datosMetros = $this->metros
         ->select("total_servicios")
         ->select("date_format(fecha_vencimiento, '%m-%Y') as fecha_vencimiento")
         ->where("id", $id_metros)
         ->first();
 
-
       /*
-         * ======================================================
-         * CONVENIOS
-         * ======================================================
-         */
-
+       * CONVENIOS
+       */
       if ($datosMetros["total_servicios"] != 0) {
-
         $datosConvenio = $this->convenios
           ->select("convenio_detalle.id as id_convenio_detalle")
           ->select("convenios.id as id_convenio")
-          ->join(
-            "convenio_detalle",
-            "convenio_detalle.id_convenio = convenios.id"
-          )
+          ->join("convenio_detalle", "convenio_detalle.id_convenio = convenios.id")
           ->where("convenios.estado", ACTIVO)
-          ->where(
-            "date_format(convenio_detalle.fecha_pago, '%m-%Y')",
-            $datosMetros["fecha_vencimiento"]
-          )
+          ->where("date_format(convenio_detalle.fecha_pago, '%m-%Y')", $datosMetros["fecha_vencimiento"])
           ->where("convenios.id_socio", $id_socio)
           ->findAll();
 
-
         if ($datosConvenio != null) {
-
           foreach ($datosConvenio as $key) {
-
-            /*
-                     * Marcar cuota del convenio como pagada
-                     */
             $datosConvenioDetalle = [
               "id"     => $key["id_convenio_detalle"],
               "pagado" => CONVENIO_PAGADO
             ];
+            $this->convenio_detalle->save($datosConvenioDetalle);
 
-            $this->convenio_detalle->save(
-              $datosConvenioDetalle
-            );
-
-
-            /*
-                     * Traza convenio
-                     */
             $datosConvenioTraza = [
               "id_convenio" => $key["id_convenio"],
               "estado"      => CUOTA_PAGADA,
-              "observacion" =>
-              "Cuota pagada, correspondiente a " .
-                $datosMetros["fecha_vencimiento"] .
-                ".",
+              "observacion" => "Cuota pagada, correspondiente a " . $datosMetros["fecha_vencimiento"] . ".",
               "id_usuario"  => $id_usuario,
               "fecha"       => $fecha
             ];
-
-            $this->convenio_traza->save(
-              $datosConvenioTraza
-            );
+            $this->convenio_traza->save($datosConvenioTraza);
           }
         }
       }
 
-
       /*
-         * ======================================================
-         * MARCAR MEDIDOR COMO PAGADO
-         * ======================================================
-         */
-
+       * MARCAR MEDIDOR COMO PAGADO
+       */
       $datosMetrosSave = [
         "id"         => $id_metros,
         "estado"     => $estado_pago,
         "id_usuario" => $id_usuario,
         "fecha"      => $fecha
       ];
-
       $this->metros->save($datosMetrosSave);
 
-
       /*
-         * Traza metros
-         */
+       * TRAZA METROS
+       */
       $datosMetrosTraza = [
         "id_metros"  => $id_metros,
         "estado"     => PAGADO_TRAZA,
         "id_usuario" => $id_usuario,
         "fecha"      => $fecha
       ];
-
-      $this->metros_traza->save(
-        $datosMetrosTraza
-      );
+      $this->metros_traza->save($datosMetrosTraza);
     }
-
 
     /*
      * ==========================================================
      * TRAZA DE CAJA
      * ==========================================================
      */
-
     $datosPagoTraza = [
       "id_caja"    => $id_caja,
       "estado"     => 1,
       "id_usuario" => $id_usuario,
       "fecha"      => $fecha
     ];
-
     $this->caja_traza->save($datosPagoTraza);
-
 
     /*
      * ==========================================================
      * ABONO DEL SOCIO
      * ==========================================================
      */
-
     if (intval($abono) > 0) {
-
       define("PAGO_ABONO", 7);
 
-
       if (intval($abono) <= intval($total_deuda)) {
-
         $abono = 0;
       } else {
-
         $abono = intval($abono) - intval($total_deuda);
       }
-
 
       $datosSocios = [
         "id"         => $id_socio,
@@ -638,78 +466,47 @@ class Ctrl_caja extends BaseController {
         "id_usuario" => $id_usuario,
         "fecha"      => $fecha
       ];
-
       $this->socios->save($datosSocios);
 
-
-      /*
-         * Traza socio
-         */
       $datosSociosTraza = [
         "id_socio"   => $id_socio,
         "estado"     => PAGO_ABONO,
         "id_usuario" => $id_usuario,
         "fecha"      => $fecha
       ];
-
-      $this->socios_traza->save(
-        $datosSociosTraza
-      );
+      $this->socios_traza->save($datosSociosTraza);
     }
-
 
     /*
      * ==========================================================
      * DESCUENTO
      * ==========================================================
      */
-
     if (intval($descuento) > 0) {
-
       define("DESCUENTOS", 0);
       define("CREAR_EGRESO", 1);
       define("EGRESO_SIMPLE", 2);
       define("SOCIO", "socio");
       define("EGRESO_AUTOMATICO", 0);
 
-
-      /*
-         * Crear egreso
-         */
       $datosEgreso = [
         "tipo_egreso" => EGRESO_SIMPLE,
         "id_usuario"  => $id_usuario,
         "fecha"       => $fecha,
         "id_apr"      => $id_apr
       ];
-
       $this->egresos->save($datosEgreso);
 
-
-      /*
-         * ID recién insertado
-         */
       $id_egreso = $this->egresos->insertID();
 
-
-      /*
-         * Traza egreso
-         */
       $datosEgresoTraza = [
         "id_egreso"  => $id_egreso,
         "estado"     => CREAR_EGRESO,
         "id_usuario" => $id_usuario,
         "fecha"      => $fecha
       ];
+      $this->egresos_traza->save($datosEgresoTraza);
 
-      $this->egresos_traza->save(
-        $datosEgresoTraza
-      );
-
-
-      /*
-         * Detalle egreso
-         */
       $datosEgresoSimple = [
         "id_tipo_egreso" => DESCUENTOS,
         "fecha"          => date("Y-m-d"),
@@ -719,42 +516,32 @@ class Ctrl_caja extends BaseController {
         "id_motivo"      => EGRESO_AUTOMATICO,
         "id_egreso"      => $id_egreso
       ];
-
-      $this->egresos_simples->save(
-        $datosEgresoSimple
-      );
+      $this->egresos_simples->save($datosEgresoSimple);
     }
-
 
     /*
      * ==========================================================
      * FINALIZAR TRANSACCIÓN
      * ==========================================================
      */
-
     $this->db->transComplete();
-
 
     /*
      * ==========================================================
      * RESPUESTA
      * ==========================================================
      */
-
     if ($this->db->transStatus()) {
-
       $respuesta = [
         "estado"  => OK,
         "id_caja" => $id_caja
       ];
     } else {
-
       $respuesta = [
         "estado"  => "Error al registrar el pago",
         "id_caja" => $id_caja
       ];
     }
-
 
     return json_encode($respuesta);
   }
@@ -947,5 +734,13 @@ class Ctrl_caja extends BaseController {
         return 'ordenador';
       }
     }
+  }
+
+  public function obtener_cuentas_por_medio_pago($id_medio_pago)
+  {
+    $this->validar_sesion();
+    $id_apr = $this->sesión->id_apr_ses;
+    $cuentas = $this->cuentas->obtener_cuentas_por_medio_pago($this->db, $id_apr, $id_medio_pago);
+    echo json_encode($cuentas);
   }
 }

@@ -15,8 +15,7 @@ function des_habilitar(a, b) {
     $("#txt_rut_cuenta").prop("disabled", a);
     $("#txt_nombre_cuenta").prop("disabled", a);
     $("#txt_email_cuenta").prop("disabled", a);
-    $("#chk_webPay").prop("disabled", a);
-    $("#chk_caja").prop("disabled", a);
+    $("#cmb_medios_pago").prop("disabled", a); // Habilitar/Deshabilitar según estado
 }
 
 function mostrar_datos_cuenta(data) {
@@ -27,22 +26,27 @@ function mostrar_datos_cuenta(data) {
     if (data["rut_cuenta"] != null) { $("#txt_rut_cuenta").val(data["rut_cuenta"]); }
     if (data["nombre_cuenta"] != null) { $("#txt_nombre_cuenta").val(data["nombre_cuenta"]); }
     if (data["email_cuenta"] != null) { $("#txt_email_cuenta").val(data["email_cuenta"]); }
-    $("#chk_webPay").prop("checked", data["webpay"] == 1);
-    $("#chk_caja").prop("checked", data["caja"] == 1);
+
+    // Asignar los medios de pago seleccionados (espera un array de IDs)
+    if (data["medios_pago_ids"] != null) {
+        $("#cmb_medios_pago").val(data["medios_pago_ids"]);
+    } else {
+        $("#cmb_medios_pago").val([]);
+    }
 }
 
 function guardar_cuenta() {
     var id_cuenta = $("#txt_id_cuenta").val();
     var rut = $("#txt_rut_cuenta").val();
-    rut_cuenta = rut.split('.').join('');
+    var rut_cuenta = rut.split('.').join('');
     var id_banco = $("#cmb_banco").val();
     var id_tipo_cuenta = $("#cmb_tipo_cuenta").val();
     var n_cuenta = $("#txt_n_cuenta").val();
     var nombre_cuenta = $("#txt_nombre_cuenta").val();
     var email_cuenta = $("#txt_email_cuenta").val();
 
-    var webpay = $("#chk_webPay").is(":checked") ? 1 : 0;
-    var caja = $("#chk_caja").is(":checked") ? 1 : 0;
+    // Obtener array de medios de pago seleccionados
+    var medios_pago = $("#cmb_medios_pago").val() || [];
 
     $.ajax({
         url: base_url + "/Finanzas/Ctrl_cuentas/guardar_cuenta",
@@ -56,10 +60,9 @@ function guardar_cuenta() {
             n_cuenta: n_cuenta,
             nombre_cuenta: nombre_cuenta,
             email_cuenta: email_cuenta,
-            webpay:webpay,
-            caja:caja
+            medios_pago: medios_pago
         },
-        success: function(respuesta) {
+        success: function (respuesta) {
             const OK = 1;
             if (respuesta == OK) {
                 $("#grid_cuentas").dataTable().fnReloadAjax(base_url + "/Finanzas/Ctrl_cuentas/datatable_cuentas");
@@ -72,7 +75,7 @@ function guardar_cuenta() {
                 alerta.error("alerta", respuesta);
             }
         },
-        error: function(error) {
+        error: function (error) {
             respuesta = JSON.parse(error["responseText"]);
             alerta.error("alerta", respuesta.message);
         }
@@ -369,29 +372,10 @@ $(document).ready(function() {
             { "data": "email_cuenta" },
             { "data": "usuario" },
             { "data": "fecha" },
+            { "data": "glosa_medios_pago" }, // Columna con los nombres concatenados (Ej: "Tarjeta, Transferencia")
             {
-                "data": "webpay",
-                "render": function (data, type, row) {
-                    if (data == 1) {
-                        return '<i class="fas fa-check text-success"></i>';
-                    }
-
-                    return '<i class="fas fa-times text-danger"></i>';
-                }
-            },
-            {
-                "data": "caja",
-                "render": function (data, type, row) {
-                    if (data == 1) {
-                        return '<i class="fas fa-check text-success"></i>';
-                    }
-
-                    return '<i class="fas fa-times text-danger"></i>';
-                }
-            },
-            { 
                 "data": "id_cuenta",
-                "render": function(data, type, row) {
+                "render": function (data, type, row) {
                     return "<button type='button' class='traza_cuenta btn btn-warning' title='Traza Cuenta'><i class=\"fas fa-shoe-prints\"></i></button>";
                 }
             }

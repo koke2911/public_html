@@ -39,6 +39,45 @@ var peso = {
     }
 }
 
+function cargar_cuentas_por_medio_pago(id_medio_pago) {
+    if (!id_medio_pago) {
+        $("#div_cuenta_banco").hide();
+        $("#cmb_cuenta_banco").html('<option value="">Seleccione Cuenta</option>').val("").prop("required", false);
+        return;
+    }
+
+    $.ajax({
+        url: base_url + "/Pagos/Ctrl_caja/obtener_cuentas_por_medio_pago/" + id_medio_pago,
+        type: "GET",
+        dataType: "json",
+        success: function (cuentas) {
+            $("#cmb_cuenta_banco").html('<option value="">Seleccione Cuenta</option>');
+
+            if (cuentas.length === 0) {
+                // Regla: Si no tiene cuentas configuradas -> No listar y NO requerir
+                $("#div_cuenta_banco").hide();
+                $("#cmb_cuenta_banco").prop("required", false).val("");
+            } else if (cuentas.length === 1) {
+                // Regla: Si es solo una -> Setearla por defecto y mostrarla (o mantener oculta seleccionada)
+                $("#div_cuenta_banco").show();
+                $("#cmb_cuenta_banco").append('<option value="' + cuentas[0].id_cuenta + '">' + cuentas[0].banco + ' - ' + cuentas[0].n_cuenta + '</option>');
+                $("#cmb_cuenta_banco").val(cuentas[0].id_cuenta).prop("required", true);
+            } else {
+                // Regla: Si es más de una -> Listar ambas y hacerla REQUERIDA
+                $("#div_cuenta_banco").show();
+                $.each(cuentas, function (index, cuenta) {
+                    $("#cmb_cuenta_banco").append('<option value="' + cuenta.id_cuenta + '">' + cuenta.banco + ' - ' + cuenta.n_cuenta + '</option>');
+                });
+                $("#cmb_cuenta_banco").val("").prop("required", true);
+            }
+        },
+        error: function () {
+            $("#div_cuenta_banco").hide();
+            $("#cmb_cuenta_banco").prop("required", false);
+        }
+    });
+}
+
 function sumar_deudas() {
     var total = 0;
     total_deuda=0;
@@ -147,16 +186,23 @@ function guardar_pago() {
     var vuelto = peso.quitar_formato($("#txt_vuelto").val());
     var descuento = peso.quitar_formato($("#txt_descuento").val());
     var forma_pago = $("#cmb_forma_pago").val();
+    var id_cuenta_banco = $("#cmb_cuenta_banco").val(); // ID Cuenta seleccionado
     var forma_pago_glosa = $("#cmb_forma_pago option:selected").text();
     var n_transaccion = $("#txt_n_transaccion").val();
     var id_socio = $("#txt_id_socio").val();
     var nombre_socio = $("#txt_nombre_socio").val();
     var abono = peso.quitar_formato($("#txt_abono").val());
 
-    if(forma_pago_glosa=="Transferencia"){
+    if (forma_pago_glosa == "Transferencia") {
         var f_transa = $("#dt_f_transa").val();
-    }else{
-        var f_transa="";
+    } else {
+        var f_transa = "";
+    }
+
+    // Validación si el selector de cuenta está visible, es requerido y no se ha seleccionado nada
+    if ($("#div_cuenta_banco").is(":visible") && $("#cmb_cuenta_banco").prop("required") && !id_cuenta_banco) {
+        alerta.error("alerta", "Debe seleccionar la Cuenta Bancaria Destino");
+        return;
     }
 
     if (parseInt(entregado) < parseInt(total_pagar)) {
@@ -192,13 +238,14 @@ function guardar_pago() {
                         vuelto: vuelto,
                         descuento: descuento,
                         forma_pago: forma_pago,
+                        id_cuenta_banco: id_cuenta_banco,
                         n_transaccion: n_transaccion,
                         abono: abono,
                         arr_ids_metros: arr_ids_metros,
-                        total_deuda:total_deuda,
-                        f_transa:f_transa
+                        total_deuda: total_deuda,
+                        f_transa: f_transa
                     },
-                    success: function(respuesta) {
+                    success: function (respuesta) {
                         const OK = 1;
                         if (respuesta.estado == OK) {
                             $("#txt_id_socio").val("");
@@ -209,6 +256,11 @@ function guardar_pago() {
                             $("#btn_pagar").prop("disabled", true);
                             $("#cmb_forma_pago").prop("disabled", true);
                             $("#cmb_forma_pago").val(1);
+
+                            // Ocultar y reiniciar selector de cuenta banco
+                            $("#div_cuenta_banco").hide();
+                            $("#cmb_cuenta_banco").html('<option value="">Seleccione Cuenta</option>').val("");
+
                             $("#txt_entregado").prop("disabled", true);
                             $("#txt_entregado").val("");
                             $("#txt_vuelto").prop("disabled", true);
@@ -216,7 +268,7 @@ function guardar_pago() {
                             $("#txt_total_pagar").val("");
                             $("#txt_descuento").val("");
                             $("#txt_n_transaccion").prop("disabled", true);
-                            $("#txt_n_transaccion").val(""); 
+                            $("#txt_n_transaccion").val("");
                             $("#dt_f_transa").val("");
 
                             $("#grid_deuda").DataTable().clear().draw();
@@ -233,8 +285,8 @@ function guardar_pago() {
                                 nombre_socio: nombre_socio,
                                 descuento: descuento,
                                 id_caja: respuesta.id_caja,
-                                total_deuda:total_deuda,
-                                fecha_transa:f_transa
+                                total_deuda: total_deuda,
+                                fecha_transa: f_transa
                             }
 
                             var datos_json = JSON.stringify(datos);
@@ -244,7 +296,7 @@ function guardar_pago() {
                             alerta.error("alerta", respuesta.estado);
                         }
                     },
-                    error: function(error) {
+                    error: function (error) {
                         respuesta = JSON.parse(error["responseText"]);
                         alerta.error("alerta", respuesta.message);
                     }
@@ -428,5 +480,40 @@ $(document).ready(function() {
         sumar_deudas();
     }).on("deselect", function (e, dt, type, indexes) {
         sumar_deudas();
+    });
+
+    $("#cmb_forma_pago").on("change", function () {
+        var id_medio = $(this).val();
+
+        // Cargar cuentas dinámicas según el medio seleccionado
+        cargar_cuentas_por_medio_pago(id_medio);
+
+        if (id_medio != "1" && id_medio != "") {
+            $("#txt_n_transaccion").prop("disabled", false);
+        } else {
+            $("#txt_n_transaccion").prop("disabled", true);
+        }
+
+        if (id_medio == "3") {
+            $("#dt_f_transa").prop("disabled", false);
+        } else {
+            $("#dt_f_transa").prop("disabled", true);
+            $("#dt_f_transa").val("");
+        }
+
+        if (id_medio == "1") {
+            var total = $("#txt_total_pagar").val().replace(/\./g, '');
+            total = parseInt(total, 10);
+            let remainder = total % 10;
+            if (remainder <= 5) {
+                total = total - remainder;
+            } else {
+                total = total + (10 - remainder);
+            }
+            total = total.toLocaleString('de-DE');
+            $("#txt_total_pagar").val(total);
+        } else {
+            $("#txt_total_pagar").val(totalRes);
+        }
     });
 });

@@ -44,14 +44,13 @@ class Ctrl_cuentas extends BaseController {
 
     define("CREAR_CUENTA", 1);
     define("MODIFICAR_CUENTA", 2);
-
     define("OK", 1);
     define("ACTIVO", 1);
+    define("ID_WEBPAY", 4); // ID estático configurado para WebPay
 
-    $fecha      = date("Y-m-d H:i:s");
-    $id_usuario = $this->sesión->id_usuario_ses;
-    $id_apr     = $this->sesión->id_apr_ses;
-    $estado     = ACTIVO;
+    $fecha        = date("Y-m-d H:i:s");
+    $id_usuario   = $this->sesión->id_usuario_ses;
+    $id_apr       = $this->sesión->id_apr_ses;
 
     $id_cuenta      = $this->request->getPost("id_cuenta");
     $rut_cuenta     = $this->request->getPost("rut_cuenta");
@@ -60,12 +59,7 @@ class Ctrl_cuentas extends BaseController {
     $n_cuenta       = $this->request->getPost("n_cuenta");
     $nombre_cuenta  = $this->request->getPost("nombre_cuenta");
     $email_cuenta   = $this->request->getPost("email_cuenta");
-
-    /*
-     * Aseguramos que siempre sean 0 o 1
-     */
-    $webpay = $this->request->getPost("webpay") == 1 ? 1 : 0;
-    $caja   = $this->request->getPost("caja") == 1 ? 1 : 0;
+    $medios_pago    = $this->request->getPost("medios_pago") ?? [];
 
     if ($email_cuenta == "") {
       $email_cuenta = NULL;
@@ -75,16 +69,7 @@ class Ctrl_cuentas extends BaseController {
     $rut = $rut_completo[0];
     $dv  = $rut_completo[1];
 
-    if (
-      $this->cuentas->existe_cuenta(
-        $rut,
-        $id_banco,
-        $id_tipo_cuenta,
-        $n_cuenta,
-        $id_apr
-      )
-      && $id_cuenta == ""
-    ) {
+    if ($this->cuentas->existe_cuenta($rut, $id_banco, $id_tipo_cuenta, $n_cuenta, $id_apr) && $id_cuenta == "") {
       echo "Cuenta ya existe en el sistema";
       exit();
     }
@@ -100,9 +85,7 @@ class Ctrl_cuentas extends BaseController {
       "email_cuenta"   => $email_cuenta,
       "id_usuario"     => $id_usuario,
       "fecha"          => $fecha,
-      "id_apr"         => $id_apr,
-      "webpay"         => $webpay,
-      "caja"           => $caja
+      "id_apr"         => $id_apr
     ];
 
     if ($id_cuenta != "") {
@@ -112,59 +95,38 @@ class Ctrl_cuentas extends BaseController {
       $estado_traza = CREAR_CUENTA;
     }
 
-
-    /*
-     * Iniciar transacción
-     */
     $db = \Config\Database::connect();
     $db->transStart();
 
-
-    /*
-     * Si esta cuenta será Webpay,
-     * quitar Webpay de las demás cuentas del mismo APR.
-     */
-    if ($webpay == 1) {
-
-      $this->cuentas
-        ->where("id_apr", $id_apr)
-        ->set(["webpay" => 0])
-        ->update();
-    }
-    if ($caja == 1) {
-
-      $this->cuentas
-        ->where("id_apr", $id_apr)
-        ->set(["caja" => 0])
-        ->update();
-    }
-
+    // Guardar los datos principales de la cuenta
     $resultado = $this->cuentas->save($datosCuenta);
 
+    if ($id_cuenta == "") {
+      $id_cuenta = $this->cuentas->insertID();
+    }
+
+    // Regla de Negocio: Si contiene Webpay, remover Webpay de cualquier otra cuenta activa del mismo APR
+    if (in_array(ID_WEBPAY, $medios_pago)) {
+      $db->query("DELETE cmp FROM cuentas_medios_pago cmp 
+                    INNER JOIN cuentas c ON c.id = cmp.id_cuenta 
+                    WHERE c.id_apr = ? AND cmp.id_medio_pago = ?", [$id_apr, ID_WEBPAY]);
+    }
+
+    // Actualizar relación N a N de Medios de Pago
+    $db->table('cuentas_medios_pago')->where('id_cuenta', $id_cuenta)->delete();
+    foreach ($medios_pago as $id_medio) {
+      $db->table('cuentas_medios_pago')->insert([
+        'id_cuenta' => $id_cuenta,
+        'id_medio_pago' => $id_medio
+      ]);
+    }
 
     $db->transComplete();
 
-
     if ($resultado && $db->transStatus()) {
-
       echo OK;
-
-      if ($id_cuenta == "") {
-
-        $obtener_id = $this->cuentas
-          ->select("max(id) as id_cuenta")
-          ->first();
-
-        $id_cuenta = $obtener_id["id_cuenta"];
-      }
-
-      $this->guardar_traza(
-        $id_cuenta,
-        $estado_traza,
-        ""
-      );
+      $this->guardar_traza($id_cuenta, $estado_traza, "");
     } else {
-
       echo "Error al guardar los datos de la cuenta";
     }
   }

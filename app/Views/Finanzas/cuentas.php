@@ -58,6 +58,7 @@
                         </div>
                       </div>
                     </div>
+                    <!-- Reemplazar en la Vista -->
                     <div class="row">
                       <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
                         <div class="form-group">
@@ -77,93 +78,97 @@
                           <input type='text' class="form-control" id='txt_email_cuenta' name="txt_email_cuenta" />
                         </div>
                       </div>
-                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
-                        <div class="form-group">
-                          <label class="small mb-1" for="chk_webPay">Webpay</label>
-                          <input type='checkbox' class="" id='chk_webPay' name="chk_webPay" disabled />
-                        </div>
-                      </div>
-                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
-                        <div class="form-group">
-                          <label class="small mb-1" for="chk_caja">Caja</label>
-                          <input type='checkbox' class="" id='chk_caja' name="chk_caja" disabled />
-                        </div>
-                      </div>
 
+                      <!-- Nuevo Select Múltiple para Medios de Pago -->
+                      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="cmb_medios_pago">Medios de Pago Asociados</label>
+                          <select id="cmb_medios_pago" name="cmb_medios_pago[]" class="form-control" multiple="multiple">
+                            <option value="1">Efectivo</option>
+                            <option value="2">Tarjeta</option>
+                            <option value="3">Transferencia</option>
+                            <option value="4">Webpay (PuntoBlue)</option>
+                            <option value="5">Cheque</option>
+                            <option value="6">Depósito</option>
+                          </select>
+                          <small class="form-text text-muted">Webpay solo puede estar asociado a una única cuenta activa.</small>
+                        </div>
+                      </div>
                     </div>
-                  </form>
+
                 </div>
+                </form>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
-          <div class="card mb-4">
-            <div class="card-header"><i class="fas fa-sort-numeric-up-alt"></i> Listado de Cuentas</div>
-            <div class="card shadow mb-12">
-              <div class="card-body">
-                <div class="container-fluid">
-                  <div class="table-responsive">
-                    <table id="grid_cuentas" class="table table-bordered" width="100%">
-                      <thead class="thead-dark">
-                        <tr>
-                          <th>Id. Cuenta</th>
-                          <th>Id. Banco</th>
-                          <th>Banco</th>
-                          <th>Id. Tipo de Cuenta</th>
-                          <th>Tipo de Cuenta</th>
-                          <th>N° de Cuenta</th>
-                          <th>RUT</th>
-                          <th>Nombre</th>
-                          <th>C. Electrónico</th>
-                          <th>Usuario</th>
-                          <th>Fecha</th>
-                          <th>WebPay</th>
-                          <th>Caja</th>
-                          <th width="1%">Traza</th>
-                        </tr>
-                      </thead>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="dlg_traza_cuenta" class="modal fade" role="dialog">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h4 class="modal-title">Trazabilidad de la Cuenta</h4>
-            </div>
-            <div class="modal-body">
-              <div id="divContenedorTrazaCuenta"></div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-dark" data-dismiss="modal">Cerrar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="dlg_reciclar_cuenta" class="modal fade" role="dialog">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h4 class="modal-title">Reciclar Cuenta (Doble click, para reciclar)</h4>
-            </div>
-            <div class="modal-body">
-              <div id="divContenedorReciclarCuenta"></div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-dark" data-dismiss="modal">Cerrar</button>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+        <div class="card mb-4">
+          <div class="card-header"><i class="fas fa-sort-numeric-up-alt"></i> Listado de Cuentas</div>
+          <div class="card shadow mb-12">
+            <div class="card-body">
+              <div class="container-fluid">
+                <div class="table-responsive">
+                  <table id="grid_cuentas" class="table table-bordered" width="100%">
+                    <thead class="thead-dark">
+                      <tr>
+                        <th>Id. Cuenta</th>
+                        <th>Id. Banco</th>
+                        <th>Banco</th>
+                        <th>Id. Tipo de Cuenta</th>
+                        <th>Tipo de Cuenta</th>
+                        <th>N° de Cuenta</th>
+                        <th>RUT</th>
+                        <th>Nombre</th>
+                        <th>C. Electrónico</th>
+                        <th>Usuario</th>
+                        <th>Fecha</th>
+                        <th>Tipos de pago</th>                        
+                        <th width="1%">Traza</th>
+                      </tr>
+                    </thead>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="dlg_traza_cuenta" class="modal fade" role="dialog">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Trazabilidad de la Cuenta</h4>
+          </div>
+          <div class="modal-body">
+            <div id="divContenedorTrazaCuenta"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-dark" data-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="dlg_reciclar_cuenta" class="modal fade" role="dialog">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title">Reciclar Cuenta (Doble click, para reciclar)</h4>
+          </div>
+          <div class="modal-body">
+            <div id="divContenedorReciclarCuenta"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-dark" data-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   </div>
 </main>
 <script type="text/javascript" src="<?php echo base_url(); ?>/js/Finanzas/cuentas.js"></script>

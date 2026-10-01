@@ -27,66 +27,59 @@ class Md_cuentas extends Model {
    'caja'
   ];
 
-  public function datatable_cuentas($db, $id_apr) {
+  public function datatable_cuentas($db, $id_apr)
+  {
     define("ACTIVO", 1);
     $estado = ACTIVO;
 
     $consulta = "SELECT 
-							c.id as id_cuenta,
-                            c.id_banco,
-                            b.nombre_banco,
-                            c.id_tipo_cuenta,
-                            tp.glosa as tipo_cuenta,
-                            c.n_cuenta,
-                            concat(c.rut, '-', c.dv) as rut_cuenta,
-                            c.nombre_cuenta,
-                            c.email,
-                            u.usuario,
-                            date_format(c.fecha, '%d-%m-%Y') as fecha,
-                            ifnull(webpay,0) as webpay,
-                            ifnull(caja ,0) as caja
-						from 
-							cuentas c
-							inner join usuarios u on u.id = c.id_usuario
-                            inner join bancos b on b.id = c.id_banco
-                            inner join banco_tipo_cuenta  tp on tp.id = c.id_tipo_cuenta
-						where
-							c.id_apr = ? and
-							c.estado = ?";
+                    c.id as id_cuenta,
+                    c.id_banco,
+                    b.nombre_banco,
+                    c.id_tipo_cuenta,
+                    tp.glosa as tipo_cuenta,
+                    c.n_cuenta,
+                    concat(c.rut, '-', c.dv) as rut_cuenta,
+                    c.nombre_cuenta,
+                    c.email,
+                    u.usuario,
+                    date_format(c.fecha, '%d-%m-%Y') as fecha,
+                    GROUP_CONCAT(cmp.id_medio_pago) as medios_pago_ids,
+                    GROUP_CONCAT(mp.glosa SEPARATOR ', ') as glosa_medios_pago
+                FROM cuentas c
+                INNER JOIN usuarios u ON u.id = c.id_usuario
+                INNER JOIN bancos b ON b.id = c.id_banco
+                INNER JOIN banco_tipo_cuenta tp ON tp.id = c.id_tipo_cuenta
+                LEFT JOIN cuentas_medios_pago cmp ON cmp.id_cuenta = c.id
+                LEFT JOIN forma_pago mp ON mp.id = cmp.id_medio_pago
+                WHERE c.id_apr = ? AND c.estado = ?
+                GROUP BY c.id";
 
-    $query   = $db->query($consulta, [
-     $id_apr,
-     $estado
-    ]);
+    $query   = $db->query($consulta, [$id_apr, $estado]);
     $cuentas = $query->getResultArray();
 
+    $data = [];
     foreach ($cuentas as $key) {
       $row = [
-       "id_cuenta"      => $key["id_cuenta"],
-       "id_banco"       => $key["id_banco"],
-       "banco"          => $key["nombre_banco"],
-       "id_tipo_cuenta" => $key["id_tipo_cuenta"],
-       "tipo_cuenta"    => $key["tipo_cuenta"],
-       "n_cuenta"       => $key["n_cuenta"],
-       "rut_cuenta"     => $key["rut_cuenta"],
-       "nombre_cuenta"  => $key["nombre_cuenta"],
-       "email_cuenta"   => $key["email"],
-       "usuario"        => $key["usuario"],
-       "fecha"          => $key["fecha"],
-       "webpay"         => $key["webpay"],
-       "caja"           => $key["caja"]
+        "id_cuenta"          => $key["id_cuenta"],
+        "id_banco"           => $key["id_banco"],
+        "banco"              => $key["nombre_banco"],
+        "id_tipo_cuenta"    => $key["id_tipo_cuenta"],
+        "tipo_cuenta"        => $key["tipo_cuenta"],
+        "n_cuenta"           => $key["n_cuenta"],
+        "rut_cuenta"         => $key["rut_cuenta"],
+        "nombre_cuenta"      => $key["nombre_cuenta"],
+        "email_cuenta"       => $key["email"],
+        "usuario"            => $key["usuario"],
+        "fecha"              => $key["fecha"],
+        "medios_pago_ids"    => $key["medios_pago_ids"] ? explode(',', $key["medios_pago_ids"]) : [],
+        "glosa_medios_pago"  => $key["glosa_medios_pago"] ?? 'Sin Medios'
       ];
 
       $data[] = $row;
     }
 
-    if (isset($data)) {
-      $salida = ["data" => $data];
-
-      return json_encode($salida);
-    } else {
-      return "{ \"data\": [] }";
-    }
+    return json_encode(["data" => $data]);
   }
 
   public function existe_cuenta($rut, $id_banco, $id_tipo_cuenta, $n_cuenta, $id_apr) {
@@ -184,6 +177,23 @@ class Md_cuentas extends Model {
     $salida = ["data" => $cuentas];
 
     return json_encode($salida);
+  }
+
+  public function obtener_cuentas_por_medio_pago($db, $id_apr, $id_medio_pago)
+  {
+    $consulta = "SELECT 
+                    c.id as id_cuenta,
+                    b.nombre_banco as banco,
+                    c.n_cuenta
+                 FROM cuentas c
+                 INNER JOIN bancos b ON b.id = c.id_banco
+                 INNER JOIN cuentas_medios_pago cmp ON cmp.id_cuenta = c.id
+                 WHERE c.id_apr = ? 
+                   AND c.estado = 1 
+                   AND cmp.id_medio_pago = ?";
+
+    $query = $db->query($consulta, [$id_apr, $id_medio_pago]);
+    return $query->getResultArray();
   }
 }
 

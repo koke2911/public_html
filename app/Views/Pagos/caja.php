@@ -50,7 +50,7 @@
               <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
                 <div class="form-group">
                   <label class="small mb-1" for="txt_descuentoSocio">descuento</label>
-                  <input type='text' class="form-control" id='txt_descuentoSocio' name="txt_descuentoSocio" disabled/>
+                  <input type='text' class="form-control" id='txt_descuentoSocio' name="txt_descuentoSocio" disabled />
                 </div>
               </div>
             </div>
@@ -112,6 +112,14 @@
                         <option value="3">Transferencia</option>
                         <option value="5">Cheque</option>
                         <option value="6">Depósito</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12" id="div_cuenta_banco" style="display: none;">
+                    <div class="form-group">
+                      <label class="small mb-1" for="cmb_cuenta_banco" style="font-size: 150%;">Cuenta Bancaria Destino <span class="text-danger">*</span></label>
+                      <select id="cmb_cuenta_banco" name="cmb_cuenta_banco" class="form-control" style="font-size: 150%;">
+                        <option value="">Seleccione Cuenta</option>
                       </select>
                     </div>
                   </div>
