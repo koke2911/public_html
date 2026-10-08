@@ -4,8 +4,16 @@ var txt_bafecta = $("#txt_bafecta").val();
 var txt_fafecta = $("#txt_fafecta").val();
 var txt_fexenta = $("#txt_fexenta").val();
 var id_apr = $("#id_apr").val();
+var tipo_apr = $("#tipo_apr").val();
+
+
 
 function opciones_anular(idSii, id_metros,id_tipo_documento){
+
+  if (tipo_apr == 'E') {    
+    return;
+  }
+
   Swal.fire({
     title: 'Opciones de la boleta',
     showDenyButton: true,
@@ -210,6 +218,12 @@ var peso = {
 }
 
 function emitir_dte () {
+
+  if(tipo_apr=='A'){
+    var url ='/Pagos/Ctrl_boleta_electronica/emitir_dte_new';
+  }else{
+    var url = '/Pagos/Ctrl_boleta_electronica/emitir_dte_electrico';
+  }
   var data = $("#grid_boletas").DataTable().rows('.selected').data();
   var arr_boletas = [];
   $(data).each(function (i, fila) {
@@ -228,7 +242,7 @@ function emitir_dte () {
 
     setTimeout(function () {
       $.ajax({
-        url: base_url + "/Pagos/Ctrl_boleta_electronica/emitir_dte_new",
+        url: base_url + url,
         type: "POST",
         async: false,
         data: {arr_boletas: arr_boletas, comments: $("#comments").val(), type: $("#type").val()},
@@ -319,6 +333,55 @@ function enviar_punto_blue(){
         action: "close"
       });
     }
+}
+
+function enviarMailElectrico(){
+  var data = $("#grid_boletas").DataTable().rows('.selected').data();
+  var arr_boletas = [];
+
+  $(data).each(function (i, fila) {
+    if (fila.folio_bolect > 0) {
+      arr_boletas.push(fila.id_metros);
+    }
+  });
+
+  if (arr_boletas.length > 0) {
+
+    $.ajax({
+      url: base_url + "/Pagos/Ctrl_boleta_electronica/envia_mailElectrico/" + arr_boletas,
+      type: "POST",
+      success: function (respuesta) {
+        buscar_boletas();
+        $(".div_sample").JQLoader({
+          theme: "standard",
+          mask: true,
+          background: "#fff",
+          color: "#fff",
+          action: "close"
+        });
+      },
+      error: function (error) {
+        $(".div_sample").JQLoader({
+          theme: "standard",
+          mask: true,
+          background: "#fff",
+          color: "#fff",
+          action: "close"
+        });
+        alerta.error("alerta", "Ha ocurrido un error");
+      }
+    });
+
+  } else {
+    alerta.error("alerta", "Seleccione al menos una boleta, con folio SII")
+    $(".div_sample").JQLoader({
+      theme: "standard",
+      mask: true,
+      background: "#fff",
+      color: "#fff",
+      action: "close"
+    });
+  }
 }
 function enviarMail(){
  
@@ -443,6 +506,24 @@ function imprimir_dte () {
   }
 }
 
+
+function imprimir_dte_Electrico () {
+
+    var data = $("#grid_boletas").DataTable().rows('.selected').data();
+    var arr_boletas = [];
+    $(data).each(function (i, fila) {
+      if (fila.folio_bolect > 0) {
+        arr_boletas.push(fila.id_metros);
+      }
+    });
+
+    if (arr_boletas.length > 0) {
+      var url = base_url + "/Pagos/Ctrl_boleta_electronica/imprimir_dte_electrico/" + arr_boletas;
+      window.open(url, "DTE", "width=1200,height=800,location=0,scrollbars=yes");
+    } else {
+      alerta.error("alerta", "Seleccione al menos una boleta, con folio SII")
+    }
+}
 function imprimir_dte_nuevo() {
 
   var data = $("#grid_boletas").DataTable().rows('.selected').data();
@@ -558,15 +639,15 @@ $(document).ready(function () {
   });
 
   $("#btn_emitir").on("click", function () {
-    $.ajax({
-      url: base_url + "/Pagos/Ctrl_boleta_electronica/observaciones",
-      type: "POST",
-      async: false,
-      success: function (respuesta) {
-        $("#comments").val(respuesta);
-      }
-    });
-    $('#dlg_emitir_boletas').modal('show');
+      $.ajax({
+        url: base_url + "/Pagos/Ctrl_boleta_electronica/observaciones",
+        type: "POST",
+        async: false,
+        success: function (respuesta) {
+          $("#comments").val(respuesta);
+        }
+      });
+      $('#dlg_emitir_boletas').modal('show');
   });
 
   $("#btn_enviar_mail").on("click", function () {
@@ -584,6 +665,11 @@ $(document).ready(function () {
       return;
     }
 
+
+    if(tipo_apr=='E'){
+      enviarMailElectrico();
+      return;
+    }
     // Paso 1: Seleccionar el formato
     Swal.fire({
       title: 'Selecciona formato',
@@ -705,6 +791,11 @@ $(document).ready(function () {
 
   $("#btn_imprimir").on("click", function () {
     
+
+    if(tipo_apr=='E'){
+      imprimir_dte_Electrico();
+      return;
+    }
     Swal.fire({
       title: 'Selecciona una opción',
       text: '¿Cómo deseas ver la boleta?',
@@ -913,6 +1004,11 @@ $(document).on('click', '.btn-boleta', function () {
   let id_socio = $(this).data('id_socio');
   let fecha_ingreso = $(this).data('fecha_ingreso');
 
+  if(tipo_apr=='E' && url!='--'){
+    window.open('../'+url, '_blank');
+    return;
+  }
+
   Swal.fire({
     title: 'Selecciona una opción',
     text: '¿Cómo deseas ver la boleta?',
@@ -941,6 +1037,29 @@ $(document).on('click', '.btn-boleta', function () {
       // }
     }
 
+  });
+
+  $("#btn_servicio_electrico").on("click", function () {
+    Swal.fire({
+      title: "¿Qué deseas hacer?",
+      text: "Selecciona una opción para el servicio eléctrico",
+      icon: "question",
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: "Imprimir",
+      denyButtonText: "Enviar por Email",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#3085d6",
+      denyButtonColor: "#28a745"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Opción: Imprimir (Llama a tu función de impresión de DTE o la correspondiente)
+        imprimir_dte();
+      } else if (result.isDenied) {
+        // Opción: Enviar por Email (Llama a tu función de envío de correo)
+        enviarMail();
+      }
+    });
   });
 
 });

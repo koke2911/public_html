@@ -233,6 +233,16 @@
                           <select id="cmb_sucursal_sii" name="cmb_sucursal_sii" class="form-control"></select>
                         </div>
                       </div>
+                      <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="cmb_tipo">Tipo Servicio</label>
+                          <select id="cmb_tipo" name="cmb_tipo" class="form-control">
+                            <option value="">Seleccione</option>
+                            <option value="A">Agua</option>
+                            <option value="E">Eléctrico</option>
+                          </select>
+                        </div>
+                      </div>
                     </div>
                   </form>
                 </div>

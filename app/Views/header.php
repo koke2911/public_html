@@ -44,6 +44,46 @@ $sesión = session();
 
   <script src="<?php echo base_url(); ?>/js/all.min.js"></script>
 
+  <style>
+    /* Estilos personalizados para los ítems de Rol con Check Verde */
+    .role-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      font-size: 13px;
+      color: #495057;
+      user-select: none;
+    }
+
+    .role-item:hover {
+      background-color: rgba(0, 123, 255, 0.08);
+      color: #007bff;
+    }
+
+    .role-item.active {
+      background-color: rgba(40, 167, 69, 0.1);
+      color: #1e7e34;
+      font-weight: 600;
+    }
+
+    .role-item .role-check {
+      color: #28a745;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      transform: scale(0.8);
+    }
+
+    .role-item.active .role-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+  </style>
+
 </head>
 
 <body class="sb-nav-fixed">
@@ -118,25 +158,58 @@ $sesión = session();
           </a>
 
 
-          <div class="dropdown-menu dropdown-menu-right">
+          <!-- MENÚ DESPLEGABLE DE USUARIO (DROPDOWN) -->
+          <div class="dropdown-menu dropdown-menu-right topbar-dropdown p-0 border-0 shadow" style="min-width: 240px;">
 
-            <a class="dropdown-item" href="#">
-              <?php echo $sesión->apr_ses; ?>
-            </a>
+            <!-- Cabecera del Menú -->
+            <div class="dropdown-head p-3 border-bottom">
+              <div class="dropdown-user font-weight-bold text-dark">
+                <?php echo htmlspecialchars(($sesión->nombres_ses ?? '') . ' ' . ($sesión->ape_pat_ses ?? '')); ?>
+              </div>
+              <div class="dropdown-apr text-muted small">
+                <i class="fas fa-building mr-1"></i> <?php echo htmlspecialchars($sesión->apr_ses ?? ''); ?>
+              </div>
+            </div>
 
-            <a
-              class="dropdown-item"
-              href="#"
-              id="btn_actualizar_clave">
-              Actualizar Clave
-            </a>
+            <!-- SECCIÓN DE ROLES CON CHECK VERDE -->
+            <div class="px-2 py-2 border-bottom bg-light">
+              <div class="px-2 pb-1 small font-weight-bold text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
+                <i class="fas fa-user-tag mr-1"></i> Seleccionar Rol
+              </div>
 
-            <div class="dropdown-divider"></div>
+              <div class="role-item active" onclick="seleccionarRol(this, 'administrador')">
+                <span><i class="fas fa-user-shield mr-2"></i>Administrador</span>
+                <i class="fas fa-check-circle role-check"></i>
+              </div>
 
-            <a
-              class="dropdown-item"
-              href="<?php echo base_url(); ?>/Ctrl_login/logout">
-              Cerrar Sesión
+              <div class="role-item" onclick="seleccionarRol(this, 'operador')">
+                <span><i class="fas fa-user-cog mr-2"></i>Operador</span>
+                <i class="fas fa-check-circle role-check"></i>
+              </div>
+
+              <div class="role-item" onclick="seleccionarRol(this, 'tesorero')">
+                <span><i class="fas fa-coins mr-2"></i>Tesorero</span>
+                <i class="fas fa-check-circle role-check"></i>
+              </div>
+
+              <div class="role-item" onclick="seleccionarRol(this, 'directiva')">
+                <span><i class="fas fa-users mr-2"></i>Directiva</span>
+                <i class="fas fa-check-circle role-check"></i>
+              </div>
+            </div>
+
+            <!-- Opción Actualizar Clave -->
+            <button class="dropdown-item d-flex align-items-center py-2" id="btn_actualizar_clave" type="button">
+              <i class="fas fa-key mr-2" style="color: var(--aqua-bright, #00f2fe);"></i>
+              <span>Actualizar Clave</span>
+            </button>
+
+            <div class="dropdown-divider my-0"></div>
+
+            <!-- Opción Cerrar Sesión -->
+            <a class="dropdown-item d-flex align-items-center py-2" href="<?php echo base_url(); ?>/Ctrl_login/logout" style="color: var(--red-alert, #ff4d4d);">
+              <i class="fas fa-sign-out-alt mr-2"></i>
+              <span>Cerrar Sesión</span>
             </a>
 
           </div>
@@ -190,7 +263,7 @@ $sesión = session();
                 </span>
               </a>
 
-              <!-- MENÚ DINÁMICO -->
+              <!-- MENÚ DINÁMICO POR ROL -->
               <div id="menu"></div>
 
 
@@ -208,3 +281,24 @@ $sesión = session();
         </nav>
 
       </div>
+      <script>
+        function seleccionarRol(elemento, rol) {
+          // Cambiar visualmente la clase activa en el Dropdown
+          document.querySelectorAll('.role-item').forEach(item => {
+            item.classList.remove('active');
+          });
+
+          elemento.classList.add('active');
+
+          // Ejecutar el filtrado sobre la estructura de acordeón nativa
+          if (typeof filtrarMenuPorRol === "function") {
+            filtrarMenuPorRol(rol);
+          }
+        }
+      </script>
+
+
+      <!-- Operador : Formularios, Ingreso Lecturas ,Control de Agua, Pagos, Inventario -->
+      <!-- Tesorero : Formularios,Pagos,Gestion Financiera ,Informes, R. Humanos -->
+      <!-- Direcctiva : Formularios, control de agua, informes -->
+      <!-- Adminsitrador: todos los que tenga -->

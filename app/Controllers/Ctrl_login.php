@@ -107,7 +107,8 @@ class Ctrl_login extends BaseController {
                "tipo_integracion_ses" => $datosApr["tipo_integracion"],
                "Bafecta" => $Bafecta,
                "Fafecta" => $Fafecta,
-               "Fexenta" => $Fexenta
+               "Fexenta" => $Fexenta,
+               "tipo_apr" => $datosApr["tipo"],
               ];
 
               $session = session();

@@ -42,7 +42,7 @@ class Md_permisos_usuario extends Model {
 						where 
 							pu.estado = ? and
 						    pu.id_usuario = ?
-						order by pe.orden, pd.orden, ps.id";
+						order by pe.orden";
 
     $query            = $db->query($consulta, [
      $estado,

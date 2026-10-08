@@ -87,6 +87,7 @@ class Ctrl_apr extends BaseController {
     $tipo_integracion            = $this->request->getPost('tipo_integracion');
     $sucursal_sii            = $this->request->getPost('sucursal_sii');
     $ultimo_folio_nc            = $this->request->getPost('ultimo_folio_nc');
+    $tipo            = $this->request->getPost('tipo');
     
 
     $rut_completo = explode("-", $rut_apr);
@@ -123,7 +124,8 @@ class Ctrl_apr extends BaseController {
       "ultimo_folio_afecta" => $ultimo_folio39,
       "ultimo_folio_fe"      => $ultimo_folio34,
       "ultimo_folio_fa"      => $ultimo_folio33,
-      "utimo_notac"         => $ultimo_folio_nc
+      "utimo_notac"         => $ultimo_folio_nc,
+      "tipo"         => $tipo
     ];
 
     // print_r($datosAPR);

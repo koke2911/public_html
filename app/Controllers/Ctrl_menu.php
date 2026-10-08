@@ -453,6 +453,24 @@ class Ctrl_menu extends BaseController {
     echo view('Informes/deudores_det');
   }
 
+  public function AtenionesSis()
+  {
+    $this->validar_sesion();
+    echo view('Formularios/atenciones_usuario');
+  }
+
+
+  public function interrupcion_servicios()
+  {
+    $this->validar_sesion();
+    echo view('Formularios/interrupcion_servicios');
+  }
+
+  public function control_presion()
+  {
+    $this->validar_sesion();
+    echo view('Formularios/control_presion');
+  }
 
   
 }

@@ -37,6 +37,7 @@ class Ctrl_boleta_electronica extends BaseController
   protected $sesión;
   protected $db;
   protected $error = "";
+
   protected $cola_emails;
   protected $convenios;
   protected $convenio_detalle;
@@ -57,8 +58,10 @@ class Ctrl_boleta_electronica extends BaseController
     $this->cola_emails       = new Md_cola_emails();
     $this->sesión            = session();
     $this->db                = \Config\Database::connect();
+
     $this->convenios        = new Md_convenios();
     $this->convenio_detalle = new Md_convenio_detalle();
+
   }
 
   public function validar_sesion()
@@ -304,6 +307,98 @@ class Ctrl_boleta_electronica extends BaseController
     // print_r($data);
 
   }
+
+  public function envia_mailElectrico($arr_boletas)
+  {
+
+    $this->validar_sesion();
+    $folios = $this->request->getPost("arr_boletas");
+    $folios = explode(",", $arr_boletas);
+    $id_apr = $this->sesión->id_apr_ses;
+
+    foreach ($folios as $folio) {
+      $datosMetros    = $this->metros->select("folio_bolect")
+        ->select("id_socio")
+        ->select("url_boleta")
+        ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
+        ->where("id", $folio)
+        ->first();
+      $folio_sii      = $datosMetros["folio_bolect"];
+      $url_boleta = $datosMetros["url_boleta"];
+      $id_socio = $datosMetros["id_socio"];
+      $mes = $datosMetros["mes_consumo"];
+
+      $datosSocios = $this->socios
+        ->select("concat(socios.rut, '-', socios.dv) as rut_socio")
+        ->select("concat(socios.nombres, ' ', socios.ape_pat, ' ', socios.ape_mat) as nombre_socio")
+        ->select("concat(socios.calle, ', ', socios.numero, ', ', socios.resto_direccion) as direccion")
+        ->select("socios.rol")
+        ->select("socios.id_comuna")
+        ->select("ifnull(socios.email,'--') as email")
+        ->where("socios.id", $id_socio)
+        ->first();
+
+      $nombre_socio = $datosSocios['nombre_socio'];
+      $rut_socio = $datosSocios['rut_socio'];
+      $email_socio = $datosSocios['email'];
+
+
+      if ($email_socio != "--" && $email_socio != "") {
+
+        $this->email = \Config\Services::email();
+        $url_qr = base_url() . "/QR_punto_blue.png";
+
+        $subject = 'Tu Aviso de Cobro Electrico ya está Disponible';
+        $message = '<p>¡Hola ' . $nombre_socio . '!<br>
+                       Tu Aviso de Cobro Electrico, correspondiente al Mes: ' . $mes . ', Ya está disponible.<BR>Puedes realizar el pago, de forma "online", a través de: www.puntoblue.cl<BR> o escanenado con tu teléfono móvil el "codigo QR" adjunto en este Correo.<BR><BR>
+                          ¡Saludos Cordiales!</p>';
+
+        $this->email->attach('QR_punto_blue.png', 'inline');
+
+        // Datos el email destino. Donde irá a parar el formulario
+        $this->email->setTo($email_socio);
+
+        // Email desde el que se envía (el que hemos configurarado en el apartado anterior)
+        $this->email->setFrom("boletas@gestionapr.cl", "Software APR");
+
+
+        $this->email->setSubject($subject);
+        $this->email->setMessage($message);
+
+        $boleta = $folio_sii . '_' . $id_apr . '.pdf';
+
+        if (!file_exists('boletas_electricas/' . $boleta)) {
+          $homepage = file_get_contents($url_boleta);
+          file_put_contents('boletas_electricas/' . $folio_sii . '_' . $id_apr . '.pdf', $homepage);
+        }
+
+
+        $this->email->attach('boletas_electricas/' . $boleta);
+
+        if ($this->email->send()) {
+
+          $datosMetrosSave = [
+            "id"                => $folio,
+            "estado_mail"        => "OK"
+          ];
+
+          $this->metros->save($datosMetrosSave);
+        }
+
+        $this->email->clear(TRUE);
+        // $data = $this->email->printDebugger(['headers']);
+        // print_r($data);
+        echo $email_socio;
+      }
+    }
+    // $this->email->printDebugger();
+
+    // print_r($this->email->printDebugger());
+    // print_r($data);
+
+  }
+
+ 
 
 
   public function envia_mail_nuevo($arr_boletas)
@@ -1185,6 +1280,158 @@ class Ctrl_boleta_electronica extends BaseController
     return $base64;
   }
 
+  public function generarGraficoElectrico($id_socio, $mes_consumo, $folio)
+  {
+    // ===============================
+    // 1. CONSULTA
+    // ===============================
+    $sql = "
+        SELECT 
+            DATE_FORMAT(fecha_ingreso, '%Y-%m') AS periodo,
+            MONTH(fecha_ingreso) AS mes,
+            SUM(metros) AS total_metros
+        FROM metros
+        WHERE id_socio = ?
+          AND fecha_ingreso >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+          AND estado IN (1,2)
+          AND DATE_FORMAT(fecha_ingreso, '%Y-%m') <> ?
+        GROUP BY periodo, mes
+        ORDER BY periodo ASC
+    ";
+
+    $query  = $this->db->query($sql, [$id_socio, $mes_consumo]);
+    $result = $query->getResultArray();
+
+    // ===============================
+    // 2. COMPLETAR MESES FALTANTES
+    // ===============================
+    $datos = [];
+
+    foreach ($result as $row) {
+      $datos[(int)$row['mes']] = (int)$row['total_metros'];
+    }
+
+    $meses  = [];
+    $metros = [];
+    for ($i = 11; $i >= 0; $i--) {
+      $timestamp = strtotime("-$i month");
+
+      $mesNumero = (int) date('n', $timestamp);
+
+      $meses[]  = $mesNumero;
+      $metros[] = $datos[$mesNumero] ?? 0; // si no existe → 0
+    }
+
+
+    // ===============================
+    // 3. CREAR IMAGEN
+    // ===============================
+    $width  = 500;
+    $height = 300;
+    $image  = imagecreatetruecolor($width, $height);
+
+    // Colores
+    $white = imagecolorallocate($image, 255, 255, 255);
+    $black = imagecolorallocate($image, 0, 0, 0);
+    $blue  = imagecolorallocate($image, 0, 102, 204);
+    $red   = imagecolorallocate($image, 220, 0, 0);
+
+    imagefill($image, 0, 0, $white);
+
+    // ===============================
+    // 4. ESCALAS
+    // ===============================
+    $paddingLeft   = 60;
+    $paddingBottom = 50;
+    $paddingTop    = 40;
+    $paddingRight  = 30;
+
+    $maxValue     = max($metros) ?: 1;
+    $usableHeight = $height - $paddingTop - $paddingBottom;
+    $scaleFactor  = $usableHeight / $maxValue;
+
+    $barCount    = count($metros);
+    $usableWidth = $width - $paddingLeft - $paddingRight;
+    $barWidth    = max(14, floor($usableWidth / ($barCount * 1.5)));
+    $spacing     = $barWidth * 1.5;
+
+    // ===============================
+    // 5. EJES
+    // ===============================
+    imageline($image, $paddingLeft, $paddingTop, $paddingLeft, $height - $paddingBottom, $black);
+    imageline($image, $paddingLeft, $height - $paddingBottom, $width - $paddingRight, $height - $paddingBottom, $black);
+
+    // ===============================
+    // 6. BARRAS
+    // ===============================
+    $mesAbreviado = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
+    for ($i = 0; $i < $barCount; $i++) {
+
+      $x1 = $paddingLeft + ($i * $spacing);
+      $x2 = $x1 + $barWidth;
+
+      $y1 = $height - $paddingBottom;
+      $y2 = $y1 - ($metros[$i] * $scaleFactor);
+
+      imagefilledrectangle($image, $x1, $y1, $x2, $y2, $blue);
+
+      // Valor arriba
+      $text  = (string) $metros[$i];
+      $textX = $x1 + ($barWidth / 2) - (strlen($text) * 3);
+      $textY = max(10, $y2 - 15);
+
+      imagestring($image, 3, $textX, $textY, $text, $red);
+
+      // Mes abajo
+      imagestring(
+        $image,
+        3,
+        $x1 + 2,
+        $height - 35,
+        $mesAbreviado[$meses[$i] - 1],
+        $black
+      );
+    }
+
+    // ===============================
+    // 7. EJE Y
+    // ===============================
+    $steps = 5;
+
+    for ($i = 0; $i <= $steps; $i++) {
+      $y = $height - $paddingBottom - ($i * ($usableHeight / $steps));
+      $val = round($maxValue * ($i / $steps));
+
+      imageline($image, $paddingLeft - 5, $y, $paddingLeft, $y, $black);
+      imagestring($image, 2, 5, $y - 7, $val . " Kwh", $black);
+    }
+
+    // ===============================
+    // 8. TÍTULO
+    // ===============================
+    imagestring(
+      $image,
+      5,
+      ($width / 2) - 90,
+      10,
+      "Consumo ultimos 12 meses",
+      $black
+    );
+
+    // ===============================
+    // 9. EXPORTAR
+    // ===============================
+    $ruta = "grafico_" . $folio . ".jpg";
+    imagejpeg($image, $ruta, 100);
+
+    $base64 = base64_encode(file_get_contents($ruta));
+
+    imagedestroy($image);
+
+    return $base64;
+  }
+
   public function imagenTablaConsumo($id_metros)
   {
     // ===============================
@@ -1321,6 +1568,141 @@ class Ctrl_boleta_electronica extends BaseController
     return base64_encode(file_get_contents($ruta));
   }
 
+  public function imagenTablaConsumoElectrico($id_metros)
+  {
+    // ===============================
+    // 1. CONSUMO + CARGO FIJO
+    // ===============================
+    $sql = "
+        SELECT cf.id, m.metros
+        FROM metros m
+        INNER JOIN arranques a ON a.id_socio = m.id_socio
+        INNER JOIN medidores me ON me.id = a.id_medidor
+        INNER JOIN apr_cargo_fijo cf 
+            ON cf.id_diametro = me.id_diametro
+           AND cf.tarifa = a.tarifa
+           AND cf.id_apr = m.id_apr
+        WHERE m.id = ?
+    ";
+
+    $row = $this->db->query($sql, [$id_metros])->getRowArray();
+    if (!$row) {
+      return null;
+    }
+
+    $consumo = (int)$row['metros'];
+    $idCargoFijo = (int)$row['id'];
+
+    // ===============================
+    // 2. RANGOS DESDE costo_metros
+    // ===============================
+    $rangos = $this->db->query("
+        SELECT desde, hasta, costo
+        FROM costo_metros
+        WHERE id_cargo_fijo = ? and estado=1
+        ORDER BY desde ASC
+    ", [$idCargoFijo])->getResultArray();
+
+    if (!$rangos) {
+      return null;
+    }
+
+    // ===============================
+    // 3. DISTRIBUCIÓN CORRECTA
+    // ===============================
+    $detalle = [];
+    $total = 0;
+
+    foreach ($rangos as $r) {
+
+      if ($consumo < $r['desde']) {
+        continue;
+      }
+
+      $metrosRango = min($consumo, $r['hasta']) - $r['desde'] + 1;
+
+      if ($metrosRango <= 0) {
+        continue;
+      }
+
+      $subtotal = $metrosRango * $r['costo'];
+
+      $detalle[] = [
+        'rango'    => $r['desde'] . ' - ' . $r['hasta'],
+        'metros'   => $metrosRango,
+        'costo'    => $r['costo'],
+        'subtotal' => $subtotal
+      ];
+
+      $total += $subtotal;
+    }
+
+    // ===============================
+    // 4. CREAR IMAGEN
+    // ===============================
+    $rowHeight = 28;
+    $rows = count($detalle) + 2;
+    $width = 520;
+    $height = ($rows * $rowHeight) + 40;
+
+    $img = imagecreatetruecolor($width, $height);
+
+    $white = imagecolorallocate($img, 255, 255, 255);
+    $black = imagecolorallocate($img, 0, 0, 0);
+    $gray  = imagecolorallocate($img, 230, 230, 230);
+    $blue  = imagecolorallocate($img, 0, 102, 204);
+
+    imagefill($img, 0, 0, $white);
+
+    // ===============================
+    // 5. TÍTULO
+    // ===============================
+    imagestring($img, 5, 140, 10, "Detalle Consumo por Tramo", $blue);
+
+    // ===============================
+    // 6. CABECERA
+    // ===============================
+    $y = 40;
+    imagefilledrectangle($img, 10, $y, $width - 10, $y + $rowHeight, $gray);
+
+    imagestring($img, 4, 20,  $y + 6, "Rango (Kwh)", $black);
+    imagestring($img, 4, 170, $y + 6, "Consumo",   $black);
+    imagestring($img, 4, 290, $y + 6, "Costo",     $black);
+    imagestring($img, 4, 390, $y + 6, "Subtotal",  $black);
+
+    $y += $rowHeight;
+
+    // ===============================
+    // 7. FILAS
+    // ===============================
+    foreach ($detalle as $d) {
+
+      imagerectangle($img, 10, $y, $width - 10, $y + $rowHeight, $black);
+
+      imagestring($img, 3, 20,  $y + 6, $d['rango'], $black);
+      imagestring($img, 3, 185, $y + 6, $d['metros'], $black);
+      imagestring($img, 3, 300, $y + 6, "$" . number_format($d['costo'], 0), $black);
+      imagestring($img, 3, 395, $y + 6, "$" . number_format($d['subtotal'], 0), $black);
+
+      $y += $rowHeight;
+    }
+
+    // ===============================
+    // 8. TOTAL
+    // ===============================
+    imagefilledrectangle($img, 10, $y, $width - 10, $y + $rowHeight, $gray);
+    imagestring($img, 4, 280, $y + 6, "TOTAL", $black);
+    imagestring($img, 4, 395, $y + 6, "$" . number_format($total, 0), $black);
+
+    // ===============================
+    // 9. GUARDAR + BASE64
+    // ===============================
+    $ruta = FCPATH . "tabla_consumo_" . $id_metros . ".jpg";
+    imagejpeg($img, $ruta, 100);
+    imagedestroy($img);
+
+    return base64_encode(file_get_contents($ruta));
+  }
 
 
 
@@ -1770,37 +2152,37 @@ class Ctrl_boleta_electronica extends BaseController
           $facturable = $facturable;
 
           $totales = '##############################################################
-#######    TOTALES
-##############################################################
-#
-# TASA DE IMPUESTO
-$Totales["TasaIVA"]="19";
-#
-# NETO AFECTO
-$Totales["MntNeto"]="0";
-#
-# NETO EXENTO
-$Totales["MntExe"]="' . $facturable . '";
-#
-$DatosAdicionales["MntNetoExe"]="' . $facturable . '";
-#
-# MONTO IVA
-$Totales["IVA"]="0";
-#
-# MONTO NF
-$Totales["MontoNF"]="' . $adicionales . '";
-#
-# MONTO TOTAL BRUTO
-$Totales["MntTotal"]="' . $facturable . '";
-$DatosAdicionales["TipoDocumento"]="' . $dte_glosa . '";
-$DatosAdicionales["GlosaDTE"]="' . $dte_glosa2 . '";
-#
-# % DESCUENTO GLOBAL AFECTO
-$Totales["porcdescuento_afecto"]="0";
-#
-# % DESCUENTO GLOBAL EXENTO
-$Totales["porcdescuento_exento"]="0";
-#';
+                      #######    TOTALES
+                      ##############################################################
+                      #
+                      # TASA DE IMPUESTO
+                      $Totales["TasaIVA"]="19";
+                      #
+                      # NETO AFECTO
+                      $Totales["MntNeto"]="0";
+                      #
+                      # NETO EXENTO
+                      $Totales["MntExe"]="' . $facturable . '";
+                      #
+                      $DatosAdicionales["MntNetoExe"]="' . $facturable . '";
+                      #
+                      # MONTO IVA
+                      $Totales["IVA"]="0";
+                      #
+                      # MONTO NF
+                      $Totales["MontoNF"]="' . $adicionales . '";
+                      #
+                      # MONTO TOTAL BRUTO
+                      $Totales["MntTotal"]="' . $facturable . '";
+                      $DatosAdicionales["TipoDocumento"]="' . $dte_glosa . '";
+                      $DatosAdicionales["GlosaDTE"]="' . $dte_glosa2 . '";
+                      #
+                      # % DESCUENTO GLOBAL AFECTO
+                      $Totales["porcdescuento_afecto"]="0";
+                      #
+                      # % DESCUENTO GLOBAL EXENTO
+                      $Totales["porcdescuento_exento"]="0";
+                      #';
         } else if ($tipo_dte == 39) {
 
           $dte_glosa = 'BOLETA AFECTA O NO EXENTA ELECTRONICA';
@@ -1813,37 +2195,37 @@ $Totales["porcdescuento_exento"]="0";
 
 
           $totales = '##############################################################
-  #######	TOTALES
-  ##############################################################
-  #
-  # TASA DE IMPUESTO
-  $Totales["TasaIVA"]="19";
-  #
-  # NETO AFECTO
-  $Totales["MntNeto"]="' . $afecto . '";
-  #
-  # NETO EXENTO
-  $Totales["MntExe"]="' . $facturable . '";
-  #
-  $DatosAdicionales["MntNetoExe"]="' . $afecto . '";
-  #
-  # MONTO IVA
-  $Totales["IVA"]="' . $iva . '";
-  #
-  # MONTO NF
-  $Totales["MontoNF"]="' . $adicionales . '";
-  #
-  # MONTO TOTAL BRUTO
-  $Totales["MntTotal"]="' . $facturable . '";
-  $DatosAdicionales["TipoDocumento"]="' . $dte_glosa . '";
-  $DatosAdicionales["GlosaDTE"]="' . $dte_glosa2 . '";
-  #
-  # % DESCUENTO GLOBAL AFECTO
-  $Totales["porcdescuento_afecto"]="0";
-  #
-  # % DESCUENTO GLOBAL EXENTO
-  $Totales["porcdescuento_exento"]="0";
-  #';
+                      #######	TOTALES
+                      ##############################################################
+                      #
+                      # TASA DE IMPUESTO
+                      $Totales["TasaIVA"]="19";
+                      #
+                      # NETO AFECTO
+                      $Totales["MntNeto"]="' . $afecto . '";
+                      #
+                      # NETO EXENTO
+                      $Totales["MntExe"]="' . $facturable . '";
+                      #
+                      $DatosAdicionales["MntNetoExe"]="' . $afecto . '";
+                      #
+                      # MONTO IVA
+                      $Totales["IVA"]="' . $iva . '";
+                      #
+                      # MONTO NF
+                      $Totales["MontoNF"]="' . $adicionales . '";
+                      #
+                      # MONTO TOTAL BRUTO
+                      $Totales["MntTotal"]="' . $facturable . '";
+                      $DatosAdicionales["TipoDocumento"]="' . $dte_glosa . '";
+                      $DatosAdicionales["GlosaDTE"]="' . $dte_glosa2 . '";
+                      #
+                      # % DESCUENTO GLOBAL AFECTO
+                      $Totales["porcdescuento_afecto"]="0";
+                      #
+                      # % DESCUENTO GLOBAL EXENTO
+                      $Totales["porcdescuento_exento"]="0";
+                      #';
         }
 
         $content = <<<EOD
@@ -2766,6 +3148,866 @@ $Totales["porcdescuento_exento"]="0";
     }
   }
 
+  public function procesa_dte_electrico($folio, $f_sii)
+  {
+
+    ini_set("soap.wsdl_cache_enabled", "0");
+    define("BOLETA_EXENTA", 41);
+    define("FACTURA_EXENTA", 34);
+    define("ASIGNA_FOLIO_BOLECT", 7);
+    define("PENDIENTE", 1);
+    define("ACTIVO", 1);
+
+    $datosMetros = $this->metros
+      ->select("id_socio")
+      ->select("monto_facturable")
+      ->select("total_mes")
+      ->select("total_servicios")
+      ->select("multa")
+      ->select("cuota_repactacion")
+      ->select("consumo_anterior")
+      ->select("consumo_actual")
+      ->select("metros")
+      ->select("monto_subsidio")
+      ->select("subtotal")
+      ->select("ifnull(alcantarillado,0) as alcantarillado")
+      ->select("cuota_socio")
+      ->select("otros")
+      ->select("iva")
+      ->select("cargo_fijo")
+      ->select("date_format(fecha_ingreso, '%m-%Y') as mes_consumo")
+      ->select("date_format(fecha_ingreso, '%d-%m-%Y') as fecha_ingreso")
+      ->select("date_format(fecha_vencimiento, '%Y-%m-%d') as fecha_vencimiento")
+      ->select("ifnull(elt(field(tipo_facturacion, 1, 2), 'NORMAL', 'TÉRMINO MEDIO'), 'NO REGISTRADO') as tipo_facturacion")
+      ->where("id", $folio)
+      ->first();
+
+    $consumo_anterior  = $datosMetros["consumo_anterior"];
+    $consumo_actual    = $datosMetros["consumo_actual"];
+    $metros_           = $datosMetros["metros"];
+    $total_mes         = $datosMetros["total_mes"];
+    $monto_facturable  = $datosMetros["monto_facturable"];
+    $cuota_repactacion = $datosMetros["cuota_repactacion"];
+    $multa             = $datosMetros["multa"];
+    $monto_subsidio    = $datosMetros["monto_subsidio"];
+    $subtotal          = $datosMetros["subtotal"];
+    $alcantarillado    = $datosMetros["alcantarillado"];
+    $cuota_socio       = $datosMetros["cuota_socio"];
+    $otros             = $datosMetros["otros"];
+    $iva               = $datosMetros["iva"];
+    $mes_consumo       = $datosMetros["mes_consumo"];
+    $periodo_desde     = $this->periodo_desde($mes_consumo);
+    $periodo_hasta     = $this->periodo_hasta($mes_consumo);
+    $fecha_vencimiento = $datosMetros["fecha_vencimiento"];
+    $id_socio          = $datosMetros["id_socio"];
+    $cargo_fijo        = $datosMetros["cargo_fijo"];
+    $fecha_ingreso     = $datosMetros["fecha_ingreso"];
+
+    if (intval($total_mes) > 0) {
+      $datosSocios = $this->socios
+        ->select("concat(socios.rut, '-', socios.dv) as rut_socio")
+        ->select("concat(socios.nombres, ' ', socios.ape_pat, ' ', socios.ape_mat) as nombre_socio")
+        ->select("concat(socios.calle, ', ', socios.numero, ', ', socios.resto_direccion) as direccion")
+        ->select("socios.rol")
+        ->select("socios.id_comuna")
+        ->select("a.id_tipo_documento as tipo_documento")
+        ->select("m.numero as num_medidor")
+        ->select("cf.cargo_fijo")
+        ->select("socios.id")
+        ->select("s.nombre as sector")
+        ->select("t.tipo as tarifa")
+        ->select("0 as meses_deuda")
+        ->select("a.descuento as descuento")
+        ->select("ifnull(socios.abono,0) as abono")
+        ->join("arranques a", "a.id_socio = socios.id")
+        ->join("sectores s", "a.id_sector = s.id")
+        ->join("medidores m", "a.id_medidor = m.id")
+        ->join("tarifas t", "a.tarifa = t.id_tarifa")
+        ->join("apr_cargo_fijo cf", "cf.id_apr = socios.id_apr and cf.id_diametro = m.id_diametro")
+        ->where("socios.id", $id_socio)
+        ->first();
+      $descuento_arranque = $datosSocios["descuento"];
+      $abono = $datosSocios["abono"];
+
+      if ($datosSocios["rut_socio"] != "") {
+        $rut_socio = $datosSocios["rut_socio"];
+      } else {
+        $rut_socio = "66666666-6";
+      }
+
+      if ($datosSocios["nombre_socio"] != "") {
+        $nombre_socio = $datosSocios["nombre_socio"];
+      } else {
+        $nombre_socio = "Sin RUT";
+      }
+
+      if ($datosSocios["direccion"] != ", , ") {
+        $direccion = $datosSocios["direccion"];
+      } else {
+        $direccion = "Sin Dirección";
+      }
+
+      if ($datosSocios["id_comuna"] != "") {
+        $datosComuna = $this->comunas->select("nombre")
+          ->where("id", $datosSocios["id_comuna"])
+          ->first();
+        $comuna      = $datosComuna["nombre"];
+      } else {
+        $comuna = "Sin Comuna";
+      }
+
+      helper('tipo_dte');
+      $tipo_dte = tipo_dte($datosSocios["tipo_documento"]);
+      $tipo_doc_metros = $datosSocios["tipo_documento"];
+
+      $num_medidor = $datosSocios["num_medidor"];
+      $sector      = $datosSocios["sector"];
+
+      $datosParaGrafico = $this->metros->select("date_format(fecha_ingreso, '%m-%Y') as fecha")
+        ->select("consumo_actual")
+        ->where("id_socio", $id_socio)
+        ->whereNotIn("estado", [0])
+        ->findAll();
+      $datos_graf       = [];
+
+      foreach ($datosParaGrafico as $key) {
+        $datos_graf[$key["fecha"]] = $key["consumo_actual"];
+      }
+
+      $datosDeuda            = $this->metros->select("total_mes")
+        ->where("id_socio", $id_socio)
+        ->where("estado", PENDIENTE)
+        ->where("id<", $folio)
+        ->findAll();
+
+      $datosObservacionesDte = $this->observaciones_dte
+        ->select("titulo")
+        ->select("observacion")
+        ->where("id_apr", $this->sesión->id_apr_ses)
+        ->where("estado", ACTIVO)
+        ->findAll();
+
+      $datosUltPagoId = $this->caja
+        ->selectMax("id")
+        ->where("id_socio", $id_socio)
+        ->where("estado", ACTIVO)
+        ->first();
+
+      $datosUltPago = $this->caja
+        ->select("total_pagar")
+        ->select("date_format(fecha, '%d-%m-%Y') as fecha")
+        ->where("id", $datosUltPagoId["id"])
+        ->first();
+
+      $consumo_anterior_nf = 0;
+
+      if ($datosDeuda != NULL) {
+        foreach ($datosDeuda as $key) {
+          $consumo_anterior_nf = $consumo_anterior_nf + intval($key["total_mes"]);
+        }
+      }
+
+      $observaciones = "TIPO FACTURACION, " . $datosMetros["tipo_facturacion"] . "\n";
+
+      if ($datosUltPago != NULL) {
+        $observaciones .= "ULTIMO PAGO REALIZADO: " . $datosUltPago["fecha"] . ", POR $" . number_format($datosUltPago["total_pagar"], 0, ",", ".") . "\n";
+      }
+
+      if ($datosObservacionesDte != NULL) {
+        foreach ($datosObservacionesDte as $key) {
+          $observaciones .= $key["titulo"] . ", " . $key["observacion"] . "\n";
+        }
+      }
+
+      if ($datosSocios["meses_deuda"] >= 2) {
+        $observaciones .= 'CORTE DE SUMINISTRO EN TRAMITE POR : ' . $datosSocios["meses_deuda"] . ' MESES VENCIDOS' . "\n";
+      }
+
+      $monto_metros = intval($subtotal) - intval($cargo_fijo);
+      $rut_apr = $this->sesión->rut_apr_ses . "-" . $this->sesión->dv_apr_ses;
+      $id_apr = $this->sesión->id_apr_ses;
+
+      $datosApr = $this->apr->select("*")
+        ->where("id", $id_apr)
+        ->first();
+
+      $datosComuna = $this->comunas->select("comunas.nombre")
+        ->select("r.nombre as region")
+        ->join("provincias p", "p.id = comunas.id_provincia")
+        ->join("regiones r", "r.id = p.id_region")
+        ->where("comunas.id", $datosApr["id_comuna"])
+        ->first();
+
+      $fecha = date('Y-m-d');
+      $fecha_venc = date("Y-m-d", strtotime($fecha . "+ 1 month"));
+
+      $multas = '';
+      $cuotas = '';
+      $cuotas_socios = '';
+      $monto_total_convenios = 0;
+      $mes_evaluado = $this->mes_pago($fecha_vencimiento);
+      $lista_convenios_mes = [];
+
+      if ($multa > 0) {
+        $multas = 'Multas : $' . $multa;
+      }
+
+      // 1. Obtener convenios vinculando la glosa del servicio
+      $datosConvenios = $this->convenios
+        ->select("convenios.id as id_convenio")
+        ->select("servicios.glosa as servicio")
+        ->join("servicios", "convenios.id_servicio = servicios.id")
+        ->where("convenios.id_socio", $id_socio)
+        ->where("convenios.estado", 1)
+        ->findAll();
+
+        // print_r($datosConvenios);
+
+      // 2. Buscar cuotas activas para este mes y rescatar el nombre del servicio (Glosa)
+      if (!empty($datosConvenios)) {
+        foreach ($datosConvenios as $conv) {
+          $cuotaMes = $this->convenio_detalle
+            ->select("numero_cuota")
+            ->select("valor_cuota")
+            ->where("id_convenio", $conv["id_convenio"])
+            ->where("date_format(fecha_pago, '%m-%Y')", $mes_evaluado)
+            // ->where("date_format(convenio_detalle.fecha_pago, '%m-%Y')", $datosMetros["fecha_vencimiento"])
+            ->first();
+
+// print_r($mes_evaluado);
+
+          if ($cuotaMes != NULL) {
+            $monto_cuota = intval($cuotaMes["valor_cuota"]);
+            $monto_total_convenios += $monto_cuota;
+
+            $lista_convenios_mes[] = [
+              'glosa' => $conv["servicio"] ,
+              'monto' => $monto_cuota
+            ];
+
+            $observaciones .= "Convenio " . $conv["servicio"] . " Cuota " . $cuotaMes["numero_cuota"] . ": $" . number_format($monto_cuota, 0, ",", ".") . "\n";
+          }
+        }
+      }
+
+      // print_r($lista_convenios_mes);
+
+      if (intval($cuota_repactacion) > 0) {
+        $datosCuotaRepactacion = $this->repactaciones
+          ->select("concat('', rd.numero_cuota, '/', repactaciones.n_cuotas, '') as cuotas")
+          ->join("repactaciones_detalle rd", "rd.id_repactacion = repactaciones.id")
+          ->where("repactaciones.id_socio", $id_socio)
+          ->where("date_format(rd.fecha_pago, '%m-%Y')", $mes_evaluado)
+          ->first();
+        $cuotasCant = $datosCuotaRepactacion["cuotas"];
+
+        $cuotas = 'Cuota Repactacion ' . $cuotasCant . ' : $' . $cuota_repactacion;
+      }
+
+      if (intval($cuota_socio) > 0) {
+        $cuotas_socios = 'Cuota Socio : $' . $cuota_socio;
+      }
+
+      // --- TRATAMIENTO MATEMÁTICO DE IVA BASADO EN TOTAL_MES ---
+      $total_consumo_mes = intval($cargo_fijo) + intval($monto_metros) + intval($alcantarillado) - intval($monto_subsidio);
+
+      if ($tipo_dte == 41 || $tipo_dte == 34) { // BOLETA y FACTURA EXENTA
+        $iva = 0;
+        $neto = $total_mes;
+        $facturable = $total_consumo_mes;
+        $adicionales = intval($total_mes) - ($total_consumo_mes + intval($monto_subsidio) + intval($multa) + intval($monto_total_convenios) + intval($cuota_socio) + intval($cuota_repactacion) + intval($otros));
+        if ($adicionales < 0) {
+          $adicionales = 0;
+        }
+
+        $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf);
+      } else if ($tipo_dte == 39 || $tipo_dte == 33) {  // BOLETA AFECTA
+        
+        // Se calcula el IVA del mes dividiendo el total del mes actual por 1.19
+        $neto = $total_mes;
+        $iva  = intval($total_mes * 0.19);
+        $facturable = $neto;
+
+        // Se calcula el residuo limpio para la variable adicionales
+        $adicionales = intval($total_mes) - ($total_consumo_mes + intval($monto_subsidio) + intval($multa) + intval($monto_total_convenios) + intval($cuota_socio) + intval($cuota_repactacion) + intval($otros));
+        if ($adicionales < 0) {
+          $adicionales = 0;
+        }
+
+        // IVA para la deuda anterior
+        $iva_anterior = intval(round(intval($consumo_anterior_nf) * 0.19));
+        $consumo_anterior_nf = intval($consumo_anterior_nf) + intval($iva_anterior);
+
+        $totalMasIva= intval($total_mes) + intval($iva);
+        $total_mes= $totalMasIva;
+        $vlr_pagar  = intval($total_mes) + intval($consumo_anterior_nf);
+      }
+
+      $fecha_comp = explode('-', $mes_consumo);
+      $monthNumber = $fecha_comp[0];
+      $meses_ano = [
+        '01' => 'Enero',
+        '02' => 'Febrero',
+        '03' => 'Marzo',
+        '04' => 'Abril',
+        '05' => 'Mayo',
+        '06' => 'Junio',
+        '07' => 'Julio',
+        '08' => 'Agosto',
+        '09' => 'Septiembre',
+        '10' => 'Octubre',
+        '11' => 'Noviembre',
+        '12' => 'Diciembre'
+      ];
+      $mes = isset($meses_ano[$monthNumber]) ? $meses_ano[$monthNumber] : '';
+
+      $subsidiario = intval($monto_subsidio) > 0 ? 'SI' : 'NO';
+
+      $img_grafico = $this->generarGraficoElectrico($id_socio, $mes_consumo, $folio);
+      $img_consumo = $this->imagenTablaConsumoElectrico($folio);
+
+      $mes_lectura = $mes . ' del ' . $fecha_comp[1];
+      $vlr_pagar = $vlr_pagar - $abono;
+
+      $rutaPdf = $this->crearPdfElectrico([
+        'folio'                => $f_sii,
+        'folio_metros'         => $folio,
+        'rut_socio'            => $rut_socio,
+        'nombre_socio'         => $nombre_socio,
+        'direccion'            => $direccion,
+        'fecha_ingreso'        => $fecha_ingreso,
+        'fecha_vencimiento'    => $fecha_vencimiento,
+        'consumo_anterior'     => $consumo_anterior,
+        'consumo_actual'       => $consumo_actual,
+        'metros'               => $metros_,
+        'cargo_fijo'           => $cargo_fijo,
+        'subtotal'             => $subtotal,
+        'iva'                  => $iva,
+        'abono'                => $abono,
+        'deuda_anterior'       => $consumo_anterior_nf,
+        'total_pagar'          => $vlr_pagar,
+        'observaciones'        => $observaciones,
+        'grafico'              => $img_grafico,
+        'tabla_consumo'        => $img_consumo,
+        'datos_apr'            => $datosApr,
+        'datos_socio'          => $datosSocios,
+        'neto'                 => $neto,
+        'facturable'           => $facturable,
+        'sector'               => $sector,
+        'num_medidor'          => $num_medidor,
+        'cuotas'               => $cuotas,
+        'cuotas_socios'        => $cuotas_socios,
+        'mes_consumo'          => $mes_consumo,
+        'periodo_desde'        => $periodo_desde,
+        'periodo_hasta'        => $periodo_hasta,
+        'comuna'               => $comuna,
+        'rut_apr'              => $rut_apr,
+        'fecha_emision'        => $fecha,
+        'fecha_venc_pdf'       => $fecha_venc,
+        'monto_metros'         => $monto_metros,
+        'alcantarillado'       => $alcantarillado,
+        'subsidiario'          => $subsidiario,
+        'tarifa'               => $datosSocios["tarifa"],
+        'rol'                  => $datosSocios["rol"],
+        'total_consumo_mes'    => $total_consumo_mes,
+        'total_cargos_adicionales' => $adicionales,
+        'mes_lectura'          => $mes_lectura,
+        'convenios_detallados' => $lista_convenios_mes,
+        'total_servicios_valor' => $monto_total_convenios,
+        'otros_valor'          => $otros,
+        'cuota_repactacion'    => $cuota_repactacion,
+        'cuota_socio_valor'    => $cuota_socio,
+        'monto_subsidio'       => $monto_subsidio,
+        'multas'               => $multas,
+        'multa_valor'          => $multa,
+        'total_mes'            => $total_mes
+      ]);
+
+      if (!$rutaPdf) {
+        $this->error .= "Id Metros: $folio, <br>";
+        $this->error .= "Error: No fue posible generar PDF eléctrico. <br><br>";
+      } else {
+
+        $datosMetrosSave = [
+          "id"                => $folio,
+          "folio_bolect"      => $f_sii,
+          "url_boleta"        => $rutaPdf,
+          "fecha_documento"   => date('Y-m-d'),
+          "id_tipo_documento" => $tipo_doc_metros,
+          "iva"               => $iva
+        ];
+
+        if ($this->metros->save($datosMetrosSave)) {
+
+          $nombre_grafico = FCPATH . 'grafico_' . $folio . '.jpg';
+          $nombre_tabla   = FCPATH . 'tabla_consumo_' . $folio . '.jpg';
+
+          if (file_exists($nombre_grafico)) {
+            unlink($nombre_grafico);
+          }
+
+          if (file_exists($nombre_tabla)) {
+            unlink($nombre_tabla);
+          }
+
+          $fecha      = date("Y-m-d H:i:s");
+          $id_usuario = $this->sesión->id_usuario_ses;
+          $estado     = ASIGNA_FOLIO_BOLECT;
+
+          $datosTraza = [
+            "id_metros"  => $folio,
+            "estado"     => $estado,
+            "id_usuario" => $id_usuario,
+            "fecha"      => $fecha
+          ];
+
+          if (!$this->metros_traza->save($datosTraza)) {
+            $this->error .= "Id Metros: $folio, <br>";
+            $this->error .= "Error: Falló al ingresar traza. <br><br>";
+          }
+        } else {
+          $this->error .= "Id Metros: $folio, <br>";
+          $this->error .= "Error: Falló al guardar documento eléctrico. <br><br>";
+        }
+      }
+    }
+  }
+
+
+private function crearPdfElectrico($datos)
+{
+
+  // print_r($datos);
+  $rutaTmpTabla = '';
+  $rutaTmpGrafico = '';
+
+  try {
+    $id_apr = $this->sesión->id_apr_ses;
+    $carpeta = FCPATH . 'boletas_electricas/';
+
+    if (!is_dir($carpeta)) {
+      mkdir($carpeta, 0777, true);
+    }
+
+    $nombreArchivo = $datos['folio'] . '_' . $id_apr . '.pdf';
+    $rutaCompleta  = $carpeta . $nombreArchivo;
+    $logo = FCPATH . 'logo_apr/' . $id_apr . '.png';
+
+    // --- ARCHIVOS TEMPORALES SEGUROS PARA IMÁGENES ---
+    if (!empty($datos['tabla_consumo'])) {
+      $raw_tabla = preg_replace('#^data:image/\w+;base64,#i', '', $datos['tabla_consumo']);
+      $bin_tabla = base64_decode(str_replace(' ', '+', $raw_tabla));
+      if ($bin_tabla !== false) {
+        $rutaTmpTabla = WRITEPATH . 'mpdf/tmp_tabla_' . $datos['folio'] . '_' . time() . '.png';
+        file_put_contents($rutaTmpTabla, $bin_tabla);
+      }
+    }
+
+    if (!empty($datos['grafico'])) {
+      $raw_grafico = preg_replace('#^data:image/\w+;base64,#i', '', $datos['grafico']);
+      $bin_grafico = base64_decode(str_replace(' ', '+', $raw_grafico));
+      if ($bin_grafico !== false) {
+        $rutaTmpGrafico = WRITEPATH . 'mpdf/tmp_grafico_' . $datos['folio'] . '_' . time() . '.png';
+        file_put_contents($rutaTmpGrafico, $bin_grafico);
+      }
+    }
+
+    // Configuración para Hoja Carta (LETTER)
+    $mpdf = new \Mpdf\Mpdf([
+      'tempDir'      => WRITEPATH . 'mpdf',
+      'format'       => 'LETTER',
+      'margin_left'  => 12,
+      'margin_right' => 12,
+      'margin_top'   => 10,
+      'margin_bottom' => 10
+    ]);
+
+    $html = '
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9.5pt;
+            color: #1e293b;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .text-bold { font-weight: bold; }
+        
+        /* ENCABEZADO */
+        .header-box {
+            border: 0px solid #1e3a8a;
+            background-color: #f8fafc;
+            color: #1e3a8a;
+            text-align: center;
+            font-weight: bold;
+            padding: 10px 6px;
+            font-size: 11pt;
+            border-radius: 5px;
+        }
+        .titulo-apr {
+            font-weight: bold;
+            font-size: 12.5pt;
+            color: #1e3a8a;
+        }
+        .subtitulo-apr {
+            font-size: 8.5pt;
+            color: #475569;
+            line-height: 1.3;
+        }
+        
+        .linea-division {
+            border-top: 1.5px dashed #cbd5e1;
+            margin: 12px 0;
+        }
+
+        /* SECCIONES */
+        .seccion-header {
+            font-weight: bold;
+            font-size: 9.5pt;
+            color: #1e3a8a;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 3px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        /* TABLA DE COBROS */
+        .tabla-cobros th {
+            background: #1e3a8a;
+            color: #ffffff;
+            font-weight: bold;
+            padding: 6px 8px;
+            font-size: 9.5pt;
+        }
+        .tabla-cobros td {
+            padding: 4.5px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 9pt;
+        }
+        .fila-resaltada {
+            background: #f8fafc;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        .fila-total {
+            background: #1e3a8a;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 10.5pt;
+        }
+        .fila-total td {
+            color: #ffffff !important;
+            padding: 7px 8px;
+        }
+
+        /* TABLAS DE INFORMACIÓN */
+        .tabla-info td {
+            padding: 3.5px 4px;
+            font-size: 9pt;
+        }
+
+        /* DESTACADO TOTAL A PAGAR */
+        .box-total-pagar {
+            background-color: #fef2f2;
+            border-radius: 0px;
+            padding: 10px 6px;
+            text-align: center;
+        }
+        .total-monto {
+            font-size: 17pt;
+            font-weight: bold;
+            color: #dc2626;
+            margin: 4px 0;
+        }
+
+        .obs {
+            font-size: 8.5pt;
+            color: #334155;
+            background: #f8fafc;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            line-height: 1.3;
+        }
+    </style>
+
+    <!-- ENCABEZADO -->
+    <table border="0">
+        <tr>
+            <td width="15%" align="center" valign="middle">';
+    if (file_exists($logo)) {
+      $html .= '<img src="' . $logo . '" style="max-width:80px; max-height:80px;">';
+    }
+    $html .= '
+            </td>
+            <td width="70%" valign="middle" style="padding-left: 8px;">
+                <span class="titulo-apr">' . strtoupper(htmlspecialchars($datos['datos_apr']['nombre'])) . '</span><br>
+                <span class="subtitulo-apr">
+                    <b>SERVICIOS DE DISTRIBUCIÓN ELÉCTRICA</b><br>
+                    ' . htmlspecialchars($datos['datos_apr']['direccion']) . ' - ' . htmlspecialchars($datos['comuna']) . '
+                </span>
+            </td>
+            <td width="30%" valign="top">
+                <div class="header-box">
+                    R.U.T.: ' . htmlspecialchars($datos['rut_apr']) . '<br>
+                    COMPORBANTE DE COBRO<br>
+                    Nº ' . htmlspecialchars($datos['folio']) . '
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 10px;"></div>
+
+    <!-- SECCIÓN DETALLE Y CLIENTE (50% / 50%) -->
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+            <!-- COLUMNA COBROS -->
+            <td width="50%" valign="top" style="padding-right: 12px;">
+                <table class="tabla-cobros">
+                    <thead>
+                        <tr>
+                            <th align="left">DETALLE DE SUS COBROS</th>
+                            <th width="38%" class="text-right">VALOR ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Cargo Fijo</td>
+                            <td class="text-right">' . number_format($datos['cargo_fijo'], 0, ',', '.') . '</td>
+                        </tr>
+                        <tr>
+                            <td>Consumo Energía Kwh</td>
+                            <td class="text-right">' . number_format($datos['monto_metros'], 0, ',', '.') . '</td>
+                        </tr>';
+
+    if ($datos['alcantarillado'] > 0) {
+      $html .= '<tr>
+                <td>Alcantarillado / Servicio Adic.</td>
+                <td class="text-right">' . number_format($datos['alcantarillado'], 0, ',', '.') . '</td>
+              </tr>';
+    }
+    if (!empty($datos['convenios_detallados'])) {
+      foreach ($datos['convenios_detallados'] as $convenio) {
+        $html .= '<tr>
+                  <td>' . htmlspecialchars($convenio['glosa']) . '</td>
+                  <td class="text-right">' . number_format($convenio['monto'], 0, ',', '.') . '</td>
+                </tr>';
+      }
+    }
+    if ($datos['cuota_socio_valor'] > 0) {
+      $html .= '<tr>
+                <td>Cuota Socio</td>
+                <td class="text-right">' . number_format($datos['cuota_socio_valor'], 0, ',', '.') . '</td>
+              </tr>';
+    }
+    if ($datos['otros_valor'] > 0) {
+      $html .= '<tr>
+                <td>Otros Cargos</td>
+                <td class="text-right">' . number_format($datos['otros_valor'], 0, ',', '.') . '</td>
+              </tr>';
+    }
+    if ($datos['total_cargos_adicionales'] > 0) {
+      $html .= '<tr>
+                <td>Cargos Adicionales</td>
+                <td class="text-right">' . number_format($datos['total_cargos_adicionales'], 0, ',', '.') . '</td>
+              </tr>';
+    }
+
+    $html .= '
+                        <tr class="fila-resaltada">
+                            <td>Monto Neto</td>
+                            <td class="text-right">' . number_format($datos['neto'], 0, ',', '.') . '</td>
+                        </tr>
+                        <tr class="fila-resaltada">
+                            <td>IVA (19%)</td>
+                            <td class="text-right">' . number_format($datos['iva'], 0, ',', '.') . '</td>
+                        </tr>
+                        <tr class="fila-resaltada" style="border-top: 1px solid #cbd5e1;">
+                            <td>Total Consumo del Mes</td>
+                            <td class="text-right">' . number_format($datos['total_mes'], 0, ',', '.') . '</td>
+                        </tr>';
+
+    if ($datos['monto_subsidio'] > 0) {
+      $html .= '<tr>
+                <td style="color: #2563eb;">Subsidio Estatal</td>
+                <td class="text-right" style="color: #2563eb;">-' . number_format($datos['monto_subsidio'], 0, ',', '.') . '</td>
+              </tr>';
+    }
+    if ($datos['deuda_anterior'] > 0) {
+      $html .= '<tr>
+                <td style="color: #dc2626; font-weight: bold;">Saldo Anterior Pendiente</td>
+                <td class="text-right" style="color: #dc2626; font-weight: bold;">' . number_format($datos['deuda_anterior'], 0, ',', '.') . '</td>
+              </tr>';
+    }
+    if ($datos['multa_valor'] > 0) {
+      $html .= '<tr>
+                <td>Multas / Intereses</td>
+                <td class="text-right">' . number_format($datos['multa_valor'], 0, ',', '.') . '</td>
+              </tr>';
+    }
+    if ($datos['abono'] > 0) {
+      $html .= '<tr>
+                <td style="color: #2563eb;">Abono / Saldo a Favor</td>
+                <td class="text-right" style="color: #2563eb;">-' . number_format($datos['abono'], 0, ',', '.') . '</td>
+              </tr>';
+    }
+
+    $html .= '
+                        <tr class="fila-total">
+                            <td>TOTAL A PAGAR</td>
+                            <td class="text-right">$ ' . number_format($datos['total_pagar'], 0, ',', '.') . '</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+
+            <!-- COLUMNA DATOS CLIENTE Y DOCUMENTO -->
+            <td width="50%" valign="top" style="border-left: 1.5px solid #e2e8f0; padding-left: 12px;">
+                <div class="seccion-header">DATOS DEL CLIENTE</div>
+                <table class="tabla-info">
+                    <tr>
+                        <td width="38%"><b>Nombre:</b></td>
+                        <td>' . htmlspecialchars($datos['nombre_socio']) . '</td>
+                    </tr>
+                    <tr>
+                        <td><b>R.U.T.:</b></td>
+                        <td>' . htmlspecialchars($datos['rut_socio']) . '</td>
+                    </tr>
+                    <tr>
+                        <td><b>Dirección:</b></td>
+                        <td>' . htmlspecialchars($datos['direccion']) . '</td>
+                    </tr>
+                    <tr>
+                        <td><b>Localidad:</b></td>
+                        <td>' . htmlspecialchars($datos['sector']) . '</td>
+                    </tr>
+                    <tr>
+                        <td><b>Nº Socio / Rol:</b></td>
+                        <td>' . htmlspecialchars($datos['rol']) . '</td>
+                    </tr>
+                    <tr>
+                        <td><b>Tarifa:</b></td>
+                        <td>' . htmlspecialchars($datos['tarifa']) . '</td>
+                    </tr>
+                </table>
+
+                <div style="margin-top: 14px;"></div>
+
+                <div class="seccion-header">INFORMACIÓN DEL DOCUMENTO</div>
+                <table class="tabla-info">
+                    <tr>
+                        <td width="38%"><b>Fecha Emisión:</b></td>
+                        <td>' . date("d-m-Y", strtotime($datos['fecha_emision'])) . '</td>
+                    </tr>
+                    <tr>
+                        <td><b>Vencimiento:</b></td>
+                        <td style="color:#dc2626; font-weight:bold;">' . date("d-m-Y", strtotime($datos['fecha_venc_pdf'])) . '</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div class="linea-division"></div>
+
+    <!-- DATOS DE CONSUMO, TABLA AMPLIADA Y TOTAL PAGAR -->
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+            <!-- LECTURAS -->
+            <td width="32%" valign="top" style="padding-right: 8px;">
+                <div class="seccion-header">DATOS DE CONSUMO</div>
+                <table class="tabla-info" style="background:#f8fafc; padding:6px; border:1px solid #e2e8f0; border-radius:4px;">
+                    <tr>
+                        <td><b>Mes Lectura:</b></td>
+                        <td>' . htmlspecialchars($datos['mes_lectura']) . '</td>
+                    </tr>
+                    <tr>
+                        <td><b>Nº Medidor:</b></td>
+                        <td>' . htmlspecialchars($datos['num_medidor']) . '</td>
+                    </tr>
+                    <tr>
+                        <td><b>Lectura Anterior:</b></td>
+                        <td class="text-right">' . number_format($datos['consumo_anterior'], 0, ',', '.') . ' kWh</td>
+                    </tr>
+                    <tr>
+                        <td><b>Lectura Actual:</b></td>
+                        <td class="text-right">' . number_format($datos['consumo_actual'], 0, ',', '.') . ' kWh</td>
+                    </tr>
+                    <tr style="border-top:1px solid #cbd5e1; font-weight:bold;">
+                        <td style="padding-top:4px;"><b>Consumo Medido:</b></td>
+                        <td class="text-right" style="color:#1e3a8a; padding-top:4px;">' . number_format($datos['metros'], 0, ',', '.') . ' kWh</td>
+                    </tr>
+                </table>
+            </td>
+
+            <!-- TABLA DE CONSUMO (MÁS ANCHA Y GRANDE) -->
+            <td width="42%" valign="top" align="center" style="padding-right: 8px;">';
+    if (!empty($rutaTmpTabla) && file_exists($rutaTmpTabla)) {
+      $html .= '<div style="border: 1px solid #cbd5e1; background:#fff; padding:4px; border-radius:4px;">
+                <img src="' . $rutaTmpTabla . '" style="width: 100%; height: auto; max-height: 140px;">
+              </div>';
+    } else {
+      $html .= '&nbsp;';
+    }
+    $html .= '
+            </td>
+
+            <!-- DESTACADO TOTAL A PAGAR -->
+            <td width="30%" valign="middle">
+                <div class="box-total-pagar">
+                    <span style="font-size:9pt; font-weight:bold; color:#0f172a; text-transform:uppercase;">Total a Pagar</span>
+                    <div class="total-monto">$ ' . number_format($datos['total_pagar'], 0, ",", ".") . '</div>
+                    <span style="font-size:8pt; font-weight:bold; color:#dc2626;">VENCIMIENTO<br>' . date("d-m-Y", strtotime($datos['fecha_venc_pdf'])) . '</span>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="linea-division"></div>
+
+    <!-- GRÁFICO HISTÓRICO AMPLIADO EN ALTO Y ANCHO -->
+    <table border="0">
+        <tr>
+            <td align="center" style="background:#f8fafc; border:1px solid #cbd5e1; padding:8px; border-radius:4px;">';
+    if (!empty($rutaTmpGrafico) && file_exists($rutaTmpGrafico)) {
+      $html .= '<img src="' . $rutaTmpGrafico . '" style="width: 98%; max-height: 230px;">';
+    } else {
+      $html .= '<span style="color:#94a3b8; font-style:italic;">Gráfico evolutivo de consumo no disponible</span>';
+    }
+    $html .= '
+            </td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 8px;"></div>
+
+    <!-- OBSERVACIONES -->
+    <div class="obs">
+        <b>Observaciones:</b> ' . (!empty($datos['observaciones']) ? nl2br(htmlspecialchars($datos['observaciones'])) : 'Sin observaciones registradas.') . '
+    </div>';
+
+    $mpdf->WriteHTML($html);
+    $mpdf->Output($rutaCompleta, 'F');
+
+    return 'boletas_electricas/' . $nombreArchivo;
+  } catch (\Exception $e) {
+    log_message('error', 'PDF ELECTRICO: ' . $e->getMessage());
+    return false;
+  } finally {
+    if (!empty($rutaTmpTabla) && file_exists($rutaTmpTabla)) {
+      @unlink($rutaTmpTabla);
+    }
+    if (!empty($rutaTmpGrafico) && file_exists($rutaTmpGrafico)) {
+      @unlink($rutaTmpGrafico);
+    }
+  }
+}
   public function emitir_dte_new()
   {
 
@@ -2849,6 +4091,100 @@ $Totales["porcdescuento_exento"]="0";
         }
       }
     }
+
+    $datosMetros = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=1 and m.id_tipo_documento=1")->getRow();
+    $datosMetros39 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=3 and m.id_tipo_documento=3")->getRow();
+
+    $datosMetros34 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=2 and m.id_tipo_documento=2")->getRow();
+    $datosMetros33 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=4 and m.id_tipo_documento=4")->getRow();
+
+
+    // print_r($datosMetros->maximo);
+
+    $ultimo = $datosMetros->maximo;
+    $ultimo39 = $datosMetros39->maximo;
+
+    $ultimo33 = $datosMetros33->maximo;
+    $ultimo34 = $datosMetros34->maximo;
+
+    $datosAPR     = [
+      'ultimo_folio' => $ultimo,
+      'ultimo_folio_afecta' => $ultimo39,
+      'ultimo_folio_fe' => $ultimo34,
+      'ultimo_folio_fa' => $ultimo33,
+      'id' => $id_apr
+    ];
+
+    if (!$this->apr->save($datosAPR)) {
+      $this->error .= "ERROR AL ACTUALIZAR ULTIMO FOLIO CONTACTE AL ADM <br><br>";
+    }
+
+    if ($this->error == "") {
+      echo 1;
+    } else {
+      echo $this->error;
+    }
+  }
+
+  public function emitir_dte_electrico()
+  {
+
+    ini_set('max_execution_time', 480);
+    ini_set('max_input_time', 480);
+    ini_set('memory_limit', 5120 . 'M');
+
+    $this->validar_sesion();
+    $id_apr = $this->sesión->id_apr_ses;
+
+    $tipo_integracion = $this->sesión->tipo_integracion_ses;
+
+    $datosAprs = $this->apr->select("*")
+      ->where("id", $id_apr)
+      ->first();
+
+    $f_sii = $datosAprs["ultimo_folio"];
+    $f_sii39 = $datosAprs["ultimo_folio_afecta"];
+    $f_sii33 = $datosAprs["ultimo_folio_fa"];
+    $f_sii34 = $datosAprs["ultimo_folio_fe"];
+    
+    // echo $f_sii39;
+    // exit();
+    
+
+    $folios = $this->request->getPost("arr_boletas");
+
+    foreach ($folios as $folio) {
+
+      $consulta = "SELECT 
+                CASE 
+                    WHEN td.id =1  THEN 41
+                    WHEN td.id = 2 THEN 34
+                    WHEN td.id = 3 THEN 39
+                    WHEN td.id = 4 THEN 33
+                    ELSE 'OTRO TIPO' 
+                END AS tipo
+                from metros m
+                inner join arranques a on a.id_socio=m.id_socio and a.id_apr=m.id_apr
+                inner join tipo_documento td on td.id=a.id_tipo_documento
+                where m.id=$folio and m.id_apr=$id_apr";
+      $query = $this->db->query($consulta);
+      $result  = $query->getResultArray();
+
+      $tipo_dte = (int)$result[0]['tipo'];
+
+      if ($tipo_dte == 41) {
+        $f_sii=$f_sii++;
+      } elseif ($tipo_dte == 39) {
+        $f_sii=$f_sii39++;
+      } elseif ($tipo_dte == 33) {
+        $f_sii=$f_sii33++;
+      } elseif ($tipo_dte == 34) {
+        $f_sii=$f_sii34++;
+      }
+
+       $this->procesa_dte_electrico( $folio, $f_sii);  
+    }       
+  
 
     $datosMetros = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=1 and m.id_tipo_documento=1")->getRow();
     $datosMetros39 = $this->db->query("SELECT ifnull(max(folio_bolect),0) as maximo from metros m inner join arranques a on a.id_socio=m.id_socio where m.id_apr=$id_apr and url_boleta is not null and a.id_tipo_documento=3 and m.id_tipo_documento=3")->getRow();
@@ -3889,6 +5225,53 @@ $Totales["porcdescuento_exento"]="0";
     }
     header("Content-type:application/pdf");
     echo $mpdf->Output();
+    exit();
+  }
+
+  public function imprimir_dte_electrico($arr_boletas)
+  {
+    ini_set('max_execution_time', 480);
+    ini_set('max_input_time', 480);
+    ini_set('memory_limit', '5120M');
+
+    $this->validar_sesion();
+    $id_apr = $this->sesión->id_apr_ses;
+
+    $folios = explode(",", $arr_boletas);
+
+    $mpdf = new \Mpdf\Mpdf([
+      'tempDir' => WRITEPATH . 'mpdf'
+    ]);
+
+    foreach ($folios as $folio) {
+      $datosMetros = $this->metros->select("folio_bolect")
+        ->where("id", trim($folio))
+        ->first();
+
+      if (!$datosMetros) {
+        continue;
+      }
+
+      $folio_sii = $datosMetros["folio_bolect"];
+
+      // Ruta al archivo en el servidor
+      $filePath = FCPATH . 'boletas_electricas/' . $folio_sii . '_' . $id_apr . '.pdf';
+
+      if (file_exists($filePath)) {
+        // Se lee el archivo existente directamente
+        $pagecount = $mpdf->SetSourceFile($filePath);
+
+        // Si las boletas tienen más de una página, se importan todas
+        for ($i = 1; $i <= $pagecount; $i++) {
+          $tplId = $mpdf->ImportPage($i);
+          $mpdf->AddPage();
+          $mpdf->UseTemplate($tplId);
+        }
+      }
+    }
+
+    // Salida del PDF combinado al navegador
+    $mpdf->Output('boletas_combinadas.pdf', 'I');
     exit();
   }
   public function imprimir_dte_new_format($arr_boletas)

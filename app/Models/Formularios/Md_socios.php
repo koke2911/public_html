@@ -62,7 +62,7 @@ class Md_socios extends Model {
               s.fono
 						from 
 							socios s
-							inner join usuarios u on u.id = s.id_usuario
+							left join usuarios u on u.id = s.id_usuario
 							left join comunas c on c.id = s.id_comuna
 							left join provincias p on p.id = c.id_provincia
 						where

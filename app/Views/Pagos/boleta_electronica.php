@@ -4,6 +4,13 @@ $Bafecta = $_SESSION['Bafecta'];
 $Fafecta = $_SESSION['Fafecta'];
 $Fexenta = $_SESSION['Fexenta'];
 $id_apr =  $_SESSION['id_apr_ses'];
+$tipo_apr =  $_SESSION['tipo_apr'];
+
+if ($tipo_apr == "A") {
+  $glosa =  'DTE';
+} else {
+  $glosa =  'Doc';
+}
 ?>
 <main>
   <div class="container-fluid">
@@ -15,9 +22,11 @@ $id_apr =  $_SESSION['id_apr_ses'];
         <div class="card-body">
           <div class="container-fluid">
             <center>
+
               <button type="button" name="btn_emitir" id="btn_emitir" class="btn btn-success"><i class="fas fa-receipt"></i> Emitir DTE</button>
               <button type="button" name="btn_imprimir" id="btn_imprimir" class="btn btn-primary"><i class="fas fa-print"></i> Imprimir DTE</button>
               <button type="button" name="btn_aviso_cobranza" id="btn_aviso_cobranza" class="btn btn-info"><i class="fas fa-print"></i> Aviso de Cobranza</button>
+
               <button type="button" name="btn_enviar_mail" id="btn_enviar_mail" class="btn btn-info"><i class="fas fa-print"></i> Enviar Email</button>
               <button type="button" name="btn_punto_blue" id="btn_punto_blue" class="btn btn-info"><i class="fas fa-paper-plane"></i> PuntoBlue</button>
             </center>
@@ -25,7 +34,8 @@ $id_apr =  $_SESSION['id_apr_ses'];
         </div>
       </div>
       <br>
-      <input type="hidden"  id="id_apr" name="id_apr" value="<?php echo $id_apr; ?>"/>
+      <input type="hidden" id="id_apr" name="id_apr" value="<?php echo $id_apr; ?>" />
+      <input type="hidden" id="tipo_apr" name="tipo_apr" value="<?php echo $tipo_apr; ?>" />
       <div class="row">
         <div class="col-md-4">
           <div class="form-group">
