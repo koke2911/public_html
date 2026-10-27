@@ -16,6 +16,8 @@ function des_habilitar (a, b) {
   $("#cmb_region").prop("disabled", a);
   $("#cmb_sucursal_sii").prop("disabled", a);
   $("#cmb_tipo").prop("disabled", a);
+  $("#tx_rut_repre").prop("disabled", a);
+  $("#txt_nombre_repre").prop("disabled", a);
   $("#cmb_tipo_integracion").prop("disabled", a);
   $("#cmb_provincia").prop("disabled", a);
   $("#cmb_comuna").prop("disabled", a);
@@ -80,6 +82,9 @@ function mostrar_datos_apr (data) {
   $("#cmb_region").val(data["id_region"]);
   $("#cmb_sucursal_sii").val(data["sucursal_sii"]);
   $("#cmb_tipo").val(data["tipo"]);
+  $("#tx_rut_repre").val(data["rut_representante"]);
+  $("#txt_nombre_repre").val(data["nombre_representante"]);  
+  
   $("#cmb_tipo_integracion").val(data["tipo_integracion"]);
   $("#cmb_provincia").val(data["id_provincia"]);
   $("#cmb_comuna").val(data["id_comuna"]);
@@ -296,6 +301,10 @@ function guardar_apr () {
       ultimo_folio33: $("#txt_ultimo33").val(),
       ultimo_folio_nc: $("#txt_ultimoNc").val(),
       tipo: $("#cmb_tipo").val(),
+      tx_rut_repre: $("#tx_rut_repre").val(),
+      txt_nombre_repre: $("#txt_nombre_repre").val(),
+      
+
       
       
 

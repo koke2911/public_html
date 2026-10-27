@@ -472,5 +472,11 @@ class Ctrl_menu extends BaseController {
     echo view('Formularios/control_presion');
   }
 
+  public function obstruccion()
+  {
+    $this->validar_sesion();
+    echo view('Formularios/obstruccion');
+  }
+
   
 }

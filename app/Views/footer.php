@@ -24,6 +24,10 @@
     color: var(--text-muted, #B7A290);
     user-select: none;
   }
+
+  .text-secondary {
+    margin-left: 20em
+  }
 </style>
 
 <!-- MODAL ACTUALIZAR CLAVE -->

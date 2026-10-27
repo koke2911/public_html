@@ -289,16 +289,21 @@ class Ctrl_socios extends BaseController {
       $mpdf->SetXY(50,77);
       $mpdf->Cell(0, 0, $rut.'-'.$dv, 0, 1, 'L');
 
+      $id_apr= $this->sesión->id_apr_ses;
 
+    $consulta = "SELECT rut_representante, nombre_representante from apr where id=$id_apr";
+    $query = $this->db->query($consulta);
+    $data  = $query->getResultArray();
 
-            // print_r($data);
-            // exit();
+    $rut_representante = $data[0]['rut_representante'];
+    $nombre_representante = $data[0]['nombre_representante'];
+
+    $mpdf->Line(25, 128, 90, 128);
+    $mpdf->SetXY(25, 132);
+    $mpdf->Cell(0, 0, $rut_representante . ' ' . $nombre_representante , 0, 1, 'L');
+    $mpdf->SetXY(50, 77);
 
       return $mpdf->Output("Certificado Dotacion " . $id_socio . ".pdf","D");
-
-       // header("Content-type:application/pdf");
-   
-       //   return redirect()->to($mpdf->Output());
 
 
     }

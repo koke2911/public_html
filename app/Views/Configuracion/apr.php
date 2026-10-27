@@ -243,6 +243,18 @@
                           </select>
                         </div>
                       </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="tx_rut_repre">RUT representante</label>
+                          <input type='text' class="form-control" id='tx_rut_repre' name="tx_rut_repre" />
+                        </div>
+                      </div>
+                      <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                          <label class="small mb-1" for="txt_nombre_repre">NOMBRE representante</label>
+                          <input type='text' class="form-control" id='txt_nombre_repre' name="txt_nombre_repre" />
+                        </div>
+                      </div>
                     </div>
                   </form>
                 </div>

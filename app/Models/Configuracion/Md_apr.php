@@ -44,7 +44,9 @@ class Md_apr extends Model {
    'ultimo_folio_fe',
    'ultimo_folio_fa',
    'utimo_notac',
-   'tipo'
+   'tipo',
+   'rut_representante',
+   'nombre_representante'
   ];
 
   public function datatable_apr($db) {
@@ -79,7 +81,10 @@ class Md_apr extends Model {
                 ultimo_folio_fe,
                 ultimo_folio_fa,
                 utimo_notac,
-                tipo
+                tipo,
+                rut_representante,
+                nombre_representante
+
 						from 
 							apr
 							inner join usuarios u on u.id = apr.id_usuario
@@ -121,8 +126,9 @@ class Md_apr extends Model {
         'ultimo_folio_fe' => $key['ultimo_folio_fe'],
         'ultimo_folio_fa' => $key['ultimo_folio_fa'],
         'utimo_notac' => $key['utimo_notac'],
-        'tipo' => $key['tipo']
-
+        'tipo' => $key['tipo'],
+        'rut_representante' => $key['rut_representante'],
+        'nombre_representante' => $key['nombre_representante']
       ];
 
       $data[] = $row;
