@@ -88,9 +88,9 @@ $sesión = session();
         <i class="fas fa-bars"></i>
       </button>
 
-      <h3 style="background: #dc3545; color: white; padding: 10px; margin: 0; border-radius: 5px; text-align: center;">
+      <!-- <h3 style="background: #dc3545; color: white; padding: 10px; margin: 0; border-radius: 5px; text-align: center;">
         <marquee behavior="alternate" scrollamount="4">🚧 SITIO DE PRUEBAS 🚧</marquee>
-      </h3>
+      </h3> -->
 
       <!-- Navbar contenido a la derecha -->
       <ul class="navbar-nav ml-auto mr-0 mr-md-3 my-2 my-md-0 align-items-center">
